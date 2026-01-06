@@ -43,7 +43,7 @@ Phase 1에서는 단일 서버 기준으로 **“라이브 룸 + 채팅” 기�
 
 Phase 2에서는 **멀티 인스턴스 환경에서 채팅이 정상 동작하도록 확장하고, 운영 관점의 관측 가능성을 추가**하는 것을 목표로 합니다.
 
-![live-platform-lab-1](docs/images/live-platform-lab-2.png)
+![live-platform-lab-2](docs/images/live-platform-lab-2.png)
 
 ### 목표
 

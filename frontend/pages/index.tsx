@@ -203,7 +203,7 @@ export default function Home() {
         }}>
           {/* 메인 채팅방 */}
           <div style={{
-            width: '70%',
+            width: 'calc(66.67% - 6.67px)',
           }}>
             <ChatRoom title={selectedChatRoom} isMain={true} nickname="메인 사용자" />
           </div>

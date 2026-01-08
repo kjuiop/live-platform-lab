@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 interface ChatRoomProps {
   title: string;
   isMain?: boolean;
+  nickname?: string;
 }
 
 interface Message {
@@ -12,10 +13,10 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false }) => {
+const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: propNickname }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [nickname, setNickname] = useState('사용자');
+  const [nickname, setNickname] = useState(propNickname || '사용자');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -64,7 +65,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false }) => {
         fontSize: isMain ? '18px' : '14px',
         borderRadius: '6px 6px 0 0',
       }}>
-        {title}
+        {nickname}의 채팅창
       </div>
       <div style={{
         flex: 1,
@@ -165,6 +166,14 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false }) => {
 };
 
 export default function Home() {
+  const [selectedChatRoom, setSelectedChatRoom] = useState('메인 채팅방');
+  const chatRooms = ['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9'];
+
+  const handleCreateChatRoom = () => {
+    // 채팅방 생성 로직 (추후 구현)
+    alert('채팅방 생성 기능은 추후 구현 예정입니다.');
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -185,11 +194,89 @@ export default function Home() {
           Live Platform Lab - 채팅방
         </h1>
 
-        {/* 메인 채팅방 */}
+        {/* 메인 채팅방과 컨트롤 카드 */}
         <div style={{
           marginBottom: '30px',
+          display: 'flex',
+          gap: '20px',
+          alignItems: 'flex-start',
         }}>
-          <ChatRoom title="메인 채팅방" isMain={true} />
+          {/* 메인 채팅방 */}
+          <div style={{
+            width: '70%',
+          }}>
+            <ChatRoom title={selectedChatRoom} isMain={true} nickname="메인 사용자" />
+          </div>
+
+          {/* 컨트롤 카드 */}
+          <div style={{
+            flex: 1,
+            backgroundColor: '#ffffff',
+            border: '2px solid #e0e0e0',
+            borderRadius: '8px',
+            padding: '20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '400px',
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '15px',
+            }}>
+              채팅방 선택
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+            }}>
+              <select
+                value={selectedChatRoom}
+                onChange={(e) => setSelectedChatRoom(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 15px',
+                  border: '1px solid #d0d0d0',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+              >
+                {chatRooms.map((room) => (
+                  <option key={room} value={room}>
+                    {room}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleCreateChatRoom}
+                style={{
+                  padding: '10px 16px',
+                  backgroundColor: '#28a745',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#218838';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#28a745';
+                }}
+              >
+                생성
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* 서브 채팅방 3x3 그리드 */}
@@ -199,7 +286,7 @@ export default function Home() {
           gap: '20px',
         }}>
           {Array.from({ length: 9 }, (_, i) => (
-            <ChatRoom key={i} title={`서브 채팅방 ${i + 1}`} />
+            <ChatRoom key={i} title={`서브 채팅방 ${i + 1}`} nickname={`사용자${i + 1}`} />
           ))}
         </div>
       </div>

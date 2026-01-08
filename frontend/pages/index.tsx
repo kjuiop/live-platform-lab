@@ -167,11 +167,31 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
 
 export default function Home() {
   const [selectedChatRoom, setSelectedChatRoom] = useState('메인 채팅방');
-  const chatRooms = ['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9'];
+  const [chatRooms, setChatRooms] = useState(['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9']);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
 
   const handleCreateChatRoom = () => {
-    // 채팅방 생성 로직 (추후 구현)
-    alert('채팅방 생성 기능은 추후 구현 예정입니다.');
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setNewChatRoomTitle('');
+  };
+
+  const handleSaveChatRoom = () => {
+    if (newChatRoomTitle.trim()) {
+      setChatRooms([...chatRooms, newChatRoomTitle.trim()]);
+      setSelectedChatRoom(newChatRoomTitle.trim());
+      handleCloseModal();
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSaveChatRoom();
+    }
   };
 
   return (
@@ -290,6 +310,123 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* 채팅방 생성 모달 */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={handleCloseModal}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '30px',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '20px',
+              color: '#333',
+            }}>
+              채팅방 생성
+            </h2>
+            <div style={{
+              marginBottom: '20px',
+            }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+              }}>
+                채팅방 제목
+              </label>
+              <input
+                type="text"
+                value={newChatRoomTitle}
+                onChange={(e) => setNewChatRoomTitle(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="채팅방 제목을 입력하세요"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d0d0d0',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+                autoFocus
+              />
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6c757d',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#5a6268';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#6c757d';
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveChatRoom}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#218838';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#28a745';
+                }}
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -19,7 +19,7 @@ if ! printf "%s" "$first_line" | grep -Eq "$pattern"; then
   echo "❌ 커밋 메시지 형식이 올바르지 않습니다."
   echo ""
   echo "형식:"
-  echo "  [#이슈번호] type(scope): 한 줄 요약"
+  echo "  [#이슈번호] type: 한 줄 요약"
   echo ""
   echo "예시:"
   echo "  [#12] feat: websocket 채팅 기본 구조 구현"

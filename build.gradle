@@ -2,10 +2,11 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 allprojects {
-    group = 'com.giglab'
+    group = 'org.giglab'
     version = '0.0.1-SNAPSHOT'
     
     repositories {
@@ -16,6 +17,7 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
+    apply plugin: 'com.diffplug.spotless'
     
     java {
         toolchain {
@@ -29,7 +31,41 @@ subprojects {
         ignoreFailures = false
     }
     
+    spotless {
+        java {
+            target 'src/**/*.java'
+            googleJavaFormat('1.22.0')
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+            
+            // 라이선스 헤더 (선택사항)
+            // licenseHeader '/* Licensed under Apache-2.0 */\n'
+        }
+        
+        format 'misc', {
+            target '*.md', '.gitignore'
+            trimTrailingWhitespace()
+            indentWithSpaces(4)
+            endWithNewline()
+        }
+        
+        // Gradle 파일은 최소한의 포맷팅만 적용
+        format 'gradle', {
+            target '*.gradle'
+            trimTrailingWhitespace()
+            endWithNewline()
+            // 빈 줄은 유지 (제거하지 않음)
+        }
+    }
+    
     tasks.named('test') {
         useJUnitPlatform()
+    }
+    
+    // 빌드 시 코드 품질 체크 (체크 실패 시 빌드 실패)
+    tasks.named('build') {
+        dependsOn 'spotlessCheck'
+        dependsOn 'checkstyleMain'
     }
 }

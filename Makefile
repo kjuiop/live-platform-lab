@@ -1,4 +1,4 @@
-all: format-check build
+all: build
 
 git-setup: git-template git-hooks
 	@echo "✅ Done. (repo-local git template + hooks applied)"

@@ -39,10 +39,19 @@ jobs:
       - name: Build Next.js App (static export)
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "Build output contents:"
+          ls -la out/ || echo "out/ directory not found"
+          echo "Checking for JS files:"
+          find out/ -name "*.js" -type f | head -20 || echo "No JS files found"
+          echo "Checking for HTML files:"
+          find out/ -name "*.html" -type f || echo "No HTML files found"
+
       # ✅ next.config.js에 output:'export'가 설정돼 있으면 out/ 생성됨
       - name: Upload to S3
         run: |
-          aws s3 sync out/ s3://giglab-client-app/live-platform-lab/ --delete
+          aws s3 sync out/ s3://giglab-client-app/live-platform-lab/ --delete --exclude "*.map"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

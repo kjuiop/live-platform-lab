@@ -95,6 +95,8 @@
         <module name="InterfaceIsType"/>
         <module name="VisibilityModifier">
             <property name="protectedAllowed" value="true"/>
+            <property name="ignoreAnnotationCanonicalNames"
+                      value="lombok.Getter"/>
         </module>
 
         <!-- Miscellaneous -->

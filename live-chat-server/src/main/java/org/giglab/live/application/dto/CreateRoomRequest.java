@@ -12,6 +12,6 @@ import lombok.Getter;
 public class CreateRoomRequest {
 
   @NotBlank
-  @Size(max = 20, message = "채팅방 이름은 20자를 초과할 수 없습니다.")
+  @Size(max = 50, message = "채팅방 이름은 50자를 초과할 수 없습니다.")
   private String title;
 }

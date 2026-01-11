@@ -5,3 +5,19 @@ Content-Type: application/json
 {
   "title": "테스트 채팅방 입니다."
 }
+
+### 채팅방 제목이 빈 값일 때 400 응답
+POST http://localhost:8080/api/v1/rooms
+Content-Type: application/json
+
+{
+  "title": ""
+}
+
+### 채팅방 제목이 50 이상인 경우 400 응답
+POST http://localhost:8080/api/v1/rooms
+Content-Type: application/json
+
+{
+  "title": "이 채팅방은 제목 길이 제한 테스트를 위해 일부러 오십자를 초과하도록 만든 채팅방 제목입니다"
+}

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 public class Room {
 
-  private static final int MAX_TITLE_LENGTH = 20;
+  private static final int MAX_TITLE_LENGTH = 50;
 
   private String roomId;
 

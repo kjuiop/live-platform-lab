@@ -156,22 +156,4 @@ public class RedisRoomRepository implements RoomRepository {
       throw new RedisOperationException("FIND_BY_ID", roomId, e.getMessage(), e);
     }
   }
-
-  private void addToRoomIndex(Room room) {
-    try {
-      ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
-
-      // 생성 시간을 epoch seconds로 변환하여 score로 사용
-      LocalDateTime createdAt = room.getCreatedAt();
-      long score = createdAt.atZone(ZoneId.systemDefault())
-        .toInstant()
-        .getEpochSecond();
-
-      zSetOps.add(ROOM_INDEX_KEY, room.getRoomId(), score);
-    } catch (Exception e) {
-      log.error("Failed to add room to index: roomId={}, error={}",
-        room.getRoomId(), e.getMessage(), e);
-      throw new RedisOperationException("ADD_TO_INDEX", ROOM_INDEX_KEY, e.getMessage(), e);
-    }
-  }
 }

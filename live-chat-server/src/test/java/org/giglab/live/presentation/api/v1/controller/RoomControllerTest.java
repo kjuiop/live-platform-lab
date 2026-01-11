@@ -2,6 +2,7 @@ package org.giglab.live.presentation.api.v1.controller;
 
 import org.giglab.live.application.dto.CreateRoomRequest;
 import org.giglab.live.application.dto.CreateRoomResponse;
+import org.giglab.live.application.dto.GetRoomResponse;
 import org.giglab.live.application.service.RoomService;
 import org.giglab.live.presentation.api.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
@@ -15,10 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -160,5 +164,29 @@ class RoomControllerTest {
       .andDo(print())
       .andExpect(status().isCreated())
       .andExpect(jsonPath("$.data.title").value("A".repeat(50)));
+  }
+
+  @Test
+  @DisplayName("채팅방 목록 조회 성공 - 최신순 정렬 확인")
+  void getRooms_ReturnsInLatestOrder() throws Exception {
+    // given
+    GetRoomResponse latest = new GetRoomResponse("ROOM_003", "최신 채팅방");
+    GetRoomResponse middle = new GetRoomResponse("ROOM_002", "중간 채팅방");
+    GetRoomResponse oldest = new GetRoomResponse("ROOM_001", "오래된 채팅방");
+
+    List<GetRoomResponse> responses = Arrays.asList(latest, middle, oldest);
+
+    given(roomService.getRooms(3))
+      .willReturn(responses);
+
+    // when & then
+    mockMvc.perform(get("/api/v1/rooms")
+        .param("size", "3"))
+      .andDo(print())
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.data[0].roomId").value("ROOM_003"))  // 최신이 첫 번째
+      .andExpect(jsonPath("$.data[0].title").value("최신 채팅방"))
+      .andExpect(jsonPath("$.data[1].roomId").value("ROOM_002"))
+      .andExpect(jsonPath("$.data[2].roomId").value("ROOM_001"));  // 오래된 것이 마지막
   }
 }

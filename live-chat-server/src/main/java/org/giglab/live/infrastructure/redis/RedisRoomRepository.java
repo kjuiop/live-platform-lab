@@ -79,7 +79,7 @@ public class RedisRoomRepository implements RoomRepository {
       ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
       Set<Object> roomIds = zSetOps.reverseRange(ROOM_INDEX_KEY, 0, limit - 1);
 
-      if (roomIds.isEmpty()) {
+      if (roomIds == null || roomIds.isEmpty()) {
         return Collections.emptyList();
       }
 

@@ -1,6 +1,7 @@
 package org.giglab.live.domain.model;
 
 import org.giglab.live.domain.model.type.RoomStatus;
+import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,7 @@ class RoomTest {
 
     // when & then
     assertThatThrownBy(() -> Room.create(title))
-      .isInstanceOf(IllegalArgumentException.class)
+      .isInstanceOf(InvalidRequestException.class)
       .hasMessageContaining("Title cannot exceed 50 characters");
   }
 }

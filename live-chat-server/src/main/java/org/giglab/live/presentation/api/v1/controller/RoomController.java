@@ -26,7 +26,7 @@ public class RoomController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<GetRoomResponse>>> getRooms(
-    @RequestParam(defaultValue = "20") int size
+    @RequestParam(defaultValue = "10") int size
   ) {
     List<GetRoomResponse> responses = roomService.getRooms(size);
     return new ResponseEntity<>(ApiResponse.success(responses), HttpStatus.OK);

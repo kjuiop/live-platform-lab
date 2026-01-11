@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoomService {
 
+  private static final int MAX_SIZE = 20;
+
   private final RoomRepository roomRepository;
 
   public CreateRoomResponse createRoom(CreateRoomRequest request) {
@@ -34,7 +36,8 @@ public class RoomService {
   }
 
   public List<GetRoomResponse> getRooms(int size) {
-    List<String> roomIds = roomRepository.findLatestRoomIds(size);
+    int validSize = Math.min(MAX_SIZE, size);
+    List<String> roomIds = roomRepository.findLatestRoomIds(validSize);
     if (roomIds.isEmpty()) {
       return Collections.emptyList();
     }

@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -109,6 +110,17 @@ public class RedisRoomRepository implements RoomRepository {
         return Stream.empty();
       }
 
+      List<String> expiredRoomIds = new ArrayList<>();
+      for (int i=0; i<roomIds.size(); i++) {
+        if (rooms.get(i) == null) {
+          expiredRoomIds.add(roomIds.get(i));
+        }
+      }
+
+      if (!expiredRoomIds.isEmpty()) {
+        removeIndexAsync(expiredRoomIds);
+      }
+
       return rooms.stream()
         .filter(Objects::nonNull)
         .map(obj -> (Room) obj);
@@ -156,5 +168,16 @@ public class RedisRoomRepository implements RoomRepository {
         roomId, roomKey, e.getMessage(), e);
       throw new RedisOperationException("FIND_BY_ID", roomId, e.getMessage(), e);
     }
+  }
+
+  private void removeIndexAsync(List<String> expiredRoomIds) {
+    CompletableFuture.runAsync(() -> {
+      try {
+        ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
+        zSetOps.remove(ROOM_INDEX_KEY, expiredRoomIds.toArray());
+      } catch (Exception e) {
+        log.error("Failed to remove expired room IDs: error={}", e.getMessage(), e);
+      }
+    });
   }
 }

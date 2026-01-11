@@ -43,9 +43,10 @@ public class RedisRoomRepository implements RoomRepository {
     try {
 
       LocalDateTime createdAt = room.getCreatedAt();
-      long score = createdAt.atZone(ZoneId.systemDefault())
+      long score = createdAt
+        .atZone(ZoneId.systemDefault())
         .toInstant()
-          .getEpochSecond();
+        .toEpochMilli();
 
       List<Object> results = redisTemplate.execute(new SessionCallback<List<Object>>() {
         @Override

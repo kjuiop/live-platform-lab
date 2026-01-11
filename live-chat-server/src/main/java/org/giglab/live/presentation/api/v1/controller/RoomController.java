@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.dto.CreateRoomRequest;
 import org.giglab.live.application.dto.CreateRoomResponse;
 import org.giglab.live.application.service.RoomService;
-import org.giglab.live.presentation.api.v1.controller.utils.ApiResponse;
+import org.giglab.live.presentation.api.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

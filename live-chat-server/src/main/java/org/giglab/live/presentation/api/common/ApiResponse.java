@@ -1,4 +1,4 @@
-package org.giglab.live.presentation.api.v1.controller.utils;
+package org.giglab.live.presentation.api.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -3,9 +3,14 @@ package org.giglab.live.application.service;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.dto.CreateRoomRequest;
 import org.giglab.live.application.dto.CreateRoomResponse;
+import org.giglab.live.application.dto.GetRoomResponse;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author : JAKE
@@ -26,5 +31,14 @@ public class RoomService {
       saved.getCreatedAt(),
       saved.getUpdatedAt()
     );
+  }
+
+  public List<GetRoomResponse> getRooms(int size) {
+    List<String> roomIds = roomRepository.findLatestRoomIds(size);
+    return roomIds.stream()
+      .map(roomRepository::findById)
+      .flatMap(Optional::stream)
+      .map(GetRoomResponse::from)
+      .collect(Collectors.toList());
   }
 }

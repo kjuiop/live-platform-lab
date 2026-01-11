@@ -11,6 +11,10 @@ import org.springframework.stereotype.Repository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author : JAKE
@@ -46,6 +50,41 @@ public class RedisRoomRepository implements RoomRepository {
       log.error("Failed to save room to Redis: roomId={}, key={}, error={}",
         room.getRoomId(), roomKey, e.getMessage(), e);
       throw new RedisOperationException("SAVE", roomKey, e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public List<String> findLatestRoomIds(int limit) {
+
+    try {
+      ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
+      Set<Object> roomIds = zSetOps.reverseRange(ROOM_INDEX_KEY, 0, limit -1);
+
+      if (roomIds.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      return roomIds.stream()
+        .map(Object::toString)
+        .toList();
+
+    } catch (Exception e) {
+      log.error("Failed to get latest rooms: limit={}, error={}", limit, e.getMessage(), e);
+      throw new RedisOperationException("GET_LATEST_ROOMS", ROOM_INDEX_KEY, e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public Optional<Room> findById(String roomId) {
+    String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, roomId);
+
+    try {
+      Room room = (Room) redisTemplate.opsForValue().get(roomKey);
+      return Optional.ofNullable(room);
+    } catch (Exception e) {
+      log.error("Failed to find room by id: roomId={}, key={}, error={}",
+        roomId, roomKey, e.getMessage(), e);
+      throw new RedisOperationException("FIND_BY_ID", roomId, e.getMessage(), e);
     }
   }
 

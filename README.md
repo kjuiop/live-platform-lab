@@ -25,8 +25,8 @@ Phase 1에서는 단일 서버 기준으로 **“라이브 룸 + 채팅” 기�
 ### 사용 기술
 
 **Backend**
-- Java 17
-- Spring Boot
+- Java 21
+- Spring Boot 4.0.1
 - Spring WebSocket
 - Redis
 

@@ -27,6 +27,6 @@ public class RoomController {
     @RequestBody @Valid CreateRoomRequest request
     ) {
     CreateRoomResponse response = roomService.createRoom(request);
-    return new ResponseEntity<>(ApiResponse.OK(response), HttpStatus.OK);
+    return new ResponseEntity<>(ApiResponse.OK(response), HttpStatus.CREATED);
   }
 }

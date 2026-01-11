@@ -24,13 +24,13 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<ErrorResponse> handleEntityNotFoundException(NotFoundException e) {
     return ResponseEntity.badRequest()
-      .body(new ErrorResponse(e.getMessage(), "E001"));
+      .body(new ErrorResponse("E001", e.getMessage()));
   }
 
   @ExceptionHandler(IllegalStateException.class)
   public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e) {
     return ResponseEntity.badRequest()
-      .body(new ErrorResponse(e.getMessage(), "E002"));
+      .body(new ErrorResponse("E002", e.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
       .collect(Collectors.joining(", "));
 
     return ResponseEntity.badRequest()
-      .body(new ErrorResponse(errorMessage, "E003"));
+      .body(new ErrorResponse("E003", errorMessage));
   }
 
   @ExceptionHandler(Exception.class)

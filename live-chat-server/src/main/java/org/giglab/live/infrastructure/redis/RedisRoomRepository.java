@@ -11,10 +11,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author : JAKE
@@ -58,7 +57,7 @@ public class RedisRoomRepository implements RoomRepository {
 
     try {
       ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
-      Set<Object> roomIds = zSetOps.reverseRange(ROOM_INDEX_KEY, 0, limit -1);
+      Set<Object> roomIds = zSetOps.reverseRange(ROOM_INDEX_KEY, 0, limit - 1);
 
       if (roomIds.isEmpty()) {
         return Collections.emptyList();
@@ -71,6 +70,54 @@ public class RedisRoomRepository implements RoomRepository {
     } catch (Exception e) {
       log.error("Failed to get latest rooms: limit={}, error={}", limit, e.getMessage(), e);
       throw new RedisOperationException("GET_LATEST_ROOMS", ROOM_INDEX_KEY, e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public Stream<Room> getRoomsByIds(List<String> roomIds) {
+    if (roomIds.isEmpty()) {
+      return Stream.empty();
+    }
+
+    try {
+      List<String> keys = roomIds.stream()
+        .map(roomId -> String.format("%s:%s", ROOM_KEY_PREFIX, roomId))
+        .toList();
+
+      List<Object> rooms = redisTemplate.opsForValue().multiGet(keys);
+
+      return rooms.stream()
+        .filter(Objects::nonNull)
+        .map(obj -> (Room) obj);
+    } catch (Exception e) {
+      log.error("Failed to get rooms: roomId={}, error={}", roomIds, e.getMessage(), e);
+      throw new RedisOperationException("FIND_BY_IDS", ROOM_KEY_PREFIX, e.getMessage(), e);
+    }
+  }
+
+  @Deprecated
+  public List<Room> getRoomsByIdsAsList(List<String> roomIds) {
+    if (roomIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    try {
+      // 1. key 순회
+      List<String> keys = roomIds.stream()
+        .map(roomId -> String.format("%s:%s", ROOM_KEY_PREFIX, roomId))
+        .toList();
+
+      List<Object> rooms = redisTemplate.opsForValue().multiGet(keys);
+
+      // 2. Room 으로 변환
+      // 3. service 에서 다시 GetRoomResponse 로 변환
+      return rooms.stream()
+        .filter(Objects::nonNull)
+        .map(obj -> (Room) obj)
+        .collect(Collectors.toList());
+    } catch (Exception e) {
+      log.error("Failed to get rooms: roomId={}, error={}", roomIds, e.getMessage(), e);
+      throw new RedisOperationException("FIND_BY_IDS", ROOM_KEY_PREFIX, e.getMessage(), e);
     }
   }
 

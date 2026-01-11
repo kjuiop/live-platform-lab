@@ -8,8 +8,8 @@ import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -35,9 +35,11 @@ public class RoomService {
 
   public List<GetRoomResponse> getRooms(int size) {
     List<String> roomIds = roomRepository.findLatestRoomIds(size);
-    return roomIds.stream()
-      .map(roomRepository::findById)
-      .flatMap(Optional::stream)
+    if (roomIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return roomRepository.getRoomsByIds(roomIds)
       .map(GetRoomResponse::from)
       .collect(Collectors.toList());
   }

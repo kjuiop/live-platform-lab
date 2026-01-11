@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
+import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 import org.giglab.live.domain.model.type.RoomStatus;
 
 import java.time.LocalDateTime;
@@ -56,10 +57,10 @@ public class Room {
 
   private static void validateTitle(String title) {
     if (title == null || title.trim().isEmpty()) {
-      throw new IllegalArgumentException("Title cannot be null or empty");
+      throw new InvalidRequestException("Title cannot be null or empty");
     }
     if (title.length() > MAX_TITLE_LENGTH) {
-      throw new IllegalArgumentException(
+      throw new InvalidRequestException(
         String.format("Title cannot exceed %d characters. Current length: %d", 
           MAX_TITLE_LENGTH, title.length())
       );

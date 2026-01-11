@@ -34,11 +34,11 @@ class RoomTest {
   @DisplayName("채팅방 제목 길이 초과 시 예외 발생")
   void createRoom_TitleLengthExceeded() {
     // given
-    String title = "This title is way too long to be accepted";
+    String title = "A".repeat(51);
 
     // when & then
     assertThatThrownBy(() -> Room.create(title))
       .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("Title cannot exceed 20 characters");
+      .hasMessageContaining("Title cannot exceed 50 characters");
   }
 }

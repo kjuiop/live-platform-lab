@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.config;
+package org.giglab.live.infrastructure.redis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

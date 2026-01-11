@@ -4,7 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
 import org.giglab.live.infrastructure.redis.exception.RedisOperationException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
@@ -38,11 +41,27 @@ public class RedisRoomRepository implements RoomRepository {
     String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, room.getRoomId());
 
     try {
-      // 1. 채팅방 정보 저장
-      redisTemplate.opsForValue().set(roomKey, room, ROOM_TTL);
 
-      // 2. ZSET 인덱스에 채팅방 추가
-      addToRoomIndex(room);
+      LocalDateTime createdAt = room.getCreatedAt();
+      long score = createdAt.atZone(ZoneId.systemDefault())
+        .toInstant()
+          .getEpochSecond();
+
+      List<Object> results = redisTemplate.execute(new SessionCallback<List<Object>>() {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <K, V> List<Object> execute(RedisOperations<K, V> operations) throws DataAccessException {
+          operations.multi();
+
+          operations.opsForValue().set((K) roomKey, (V) room, ROOM_TTL);
+          operations.opsForZSet().add((K) ROOM_INDEX_KEY, (V) room.getRoomId(), score);
+          return operations.exec();
+        }
+      });
+
+      if (results == null || results.isEmpty()) {
+        throw new RedisOperationException("SAVE", roomKey, "Transaction failed", null);
+      }
 
       return room;
     } catch (Exception e) {
@@ -85,6 +104,9 @@ public class RedisRoomRepository implements RoomRepository {
         .toList();
 
       List<Object> rooms = redisTemplate.opsForValue().multiGet(keys);
+      if (rooms == null || rooms.isEmpty()) {
+        return Stream.empty();
+      }
 
       return rooms.stream()
         .filter(Objects::nonNull)

@@ -12,6 +12,6 @@ public class RoomIdGenerator {
 
   protected static String generate() {
     String uuid = UUID.randomUUID().toString().replace("-", "").toUpperCase();
-    return String.format("%s_%s", PREFIX, uuid.substring(0, 12).toUpperCase());
+    return String.format("%s_%s", PREFIX, uuid.substring(0, 12));
   }
 }

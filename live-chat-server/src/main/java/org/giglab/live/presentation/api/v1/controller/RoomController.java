@@ -22,7 +22,6 @@ public class RoomController {
   private final RoomService roomService;
 
   @PostMapping
-  @ResponseBody
   public ResponseEntity<ApiResponse> createRoom(
     @RequestBody @Valid CreateRoomRequest request
     ) {

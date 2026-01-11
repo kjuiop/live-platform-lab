@@ -31,11 +31,11 @@ public class Room {
 
   @JsonCreator
   public Room(
-    @JsonProperty("room_id") String roomId,
+    @JsonProperty("roomId") String roomId,
     @JsonProperty("title") String title,
     @JsonProperty("status") RoomStatus status,
-    @JsonProperty("created_at") LocalDateTime createdAt,
-    @JsonProperty("updated_at") LocalDateTime updatedAt
+    @JsonProperty("createdAt") LocalDateTime createdAt,
+    @JsonProperty("updatedAt") LocalDateTime updatedAt
   ) {
     this.roomId = roomId;
     this.title = title;

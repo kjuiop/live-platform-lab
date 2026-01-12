@@ -1,12 +1,12 @@
 package org.giglab.live.domain.model;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.giglab.live.domain.model.type.RoomStatus;
 import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * @author : JAKE
@@ -39,7 +39,7 @@ class RoomTest {
 
     // when & then
     assertThatThrownBy(() -> Room.create(title))
-      .isInstanceOf(InvalidRequestException.class)
-      .hasMessageContaining("Title cannot exceed 50 characters");
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Title cannot exceed 50 characters");
   }
 }

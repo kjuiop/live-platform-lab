@@ -1,5 +1,8 @@
 package org.giglab.live.application.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.dto.CreateRoomRequest;
 import org.giglab.live.application.dto.CreateRoomResponse;
@@ -7,10 +10,6 @@ import org.giglab.live.application.dto.GetRoomResponse;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author : JAKE
@@ -28,11 +27,7 @@ public class RoomService {
     Room room = Room.create(request.getTitle());
     Room saved = roomRepository.save(room);
     return new CreateRoomResponse(
-      saved.getRoomId(),
-      saved.getTitle(),
-      saved.getCreatedAt(),
-      saved.getUpdatedAt()
-    );
+        saved.getRoomId(), saved.getTitle(), saved.getCreatedAt(), saved.getUpdatedAt());
   }
 
   public List<GetRoomResponse> getRooms(int size) {
@@ -42,8 +37,9 @@ public class RoomService {
       return Collections.emptyList();
     }
 
-    return roomRepository.getRoomsByIds(roomIds)
-      .map(GetRoomResponse::from)
-      .collect(Collectors.toList());
+    return roomRepository
+        .getRoomsByIds(roomIds)
+        .map(GetRoomResponse::from)
+        .collect(Collectors.toList());
   }
 }

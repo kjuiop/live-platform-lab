@@ -2,12 +2,11 @@ package org.giglab.live.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
-import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 import org.giglab.live.domain.model.type.RoomStatus;
-
-import java.time.LocalDateTime;
+import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 
 /**
  * @author : JAKE
@@ -23,8 +22,7 @@ public class Room {
 
   private String title;
 
-  @Builder.Default
-  private RoomStatus status = RoomStatus.ACTIVE;
+  @Builder.Default private RoomStatus status = RoomStatus.ACTIVE;
 
   private LocalDateTime createdAt;
 
@@ -32,12 +30,11 @@ public class Room {
 
   @JsonCreator
   public Room(
-    @JsonProperty("roomId") String roomId,
-    @JsonProperty("title") String title,
-    @JsonProperty("status") RoomStatus status,
-    @JsonProperty("createdAt") LocalDateTime createdAt,
-    @JsonProperty("updatedAt") LocalDateTime updatedAt
-  ) {
+      @JsonProperty("roomId") String roomId,
+      @JsonProperty("title") String title,
+      @JsonProperty("status") RoomStatus status,
+      @JsonProperty("createdAt") LocalDateTime createdAt,
+      @JsonProperty("updatedAt") LocalDateTime updatedAt) {
     this.roomId = roomId;
     this.title = title;
     this.status = status;
@@ -48,11 +45,11 @@ public class Room {
   public static Room create(String title) {
     validateTitle(title);
     return Room.builder()
-      .roomId(RoomIdGenerator.generate())
-      .title(title)
-      .createdAt(LocalDateTime.now())
-      .updatedAt(LocalDateTime.now())
-      .build();
+        .roomId(RoomIdGenerator.generate())
+        .title(title)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
+        .build();
   }
 
   private static void validateTitle(String title) {
@@ -61,9 +58,9 @@ public class Room {
     }
     if (title.length() > MAX_TITLE_LENGTH) {
       throw new InvalidRequestException(
-        String.format("Title cannot exceed %d characters. Current length: %d", 
-          MAX_TITLE_LENGTH, title.length())
-      );
+          String.format(
+              "Title cannot exceed %d characters. Current length: %d",
+              MAX_TITLE_LENGTH, title.length()));
     }
   }
 }

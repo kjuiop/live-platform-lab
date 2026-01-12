@@ -16,9 +16,6 @@ public class GetRoomResponse {
   private String title;
 
   public static GetRoomResponse from(Room room) {
-    return new GetRoomResponse(
-      room.getRoomId(),
-      room.getTitle()
-    );
+    return new GetRoomResponse(room.getRoomId(), room.getTitle());
   }
 }

@@ -13,7 +13,9 @@ public class RedisOperationException extends RuntimeException {
   private final String key;
 
   public RedisOperationException(String operation, String key, String message, Throwable cause) {
-    super(String.format("Redis %s operation failed for key '%s': %s", operation, key, message), cause);
+    super(
+        String.format("Redis %s operation failed for key '%s': %s", operation, key, message),
+        cause);
     this.operation = operation;
     this.key = key;
   }

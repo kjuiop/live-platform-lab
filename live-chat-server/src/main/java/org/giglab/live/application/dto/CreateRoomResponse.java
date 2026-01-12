@@ -7,8 +7,4 @@ import java.time.LocalDateTime;
  * @date : 26. 1. 11.
  */
 public record CreateRoomResponse(
-  String roomId,
-  String title,
-  LocalDateTime createdAt,
-  LocalDateTime updatedAt) {
-}
+    String roomId, String title, LocalDateTime createdAt, LocalDateTime updatedAt) {}

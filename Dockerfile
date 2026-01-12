@@ -1,4 +1,4 @@
-FROM gradle:8.14-jdk21-alpine AS build
+FROM gradle:8.14-jdk21 AS build
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY gradlew .
 COPY gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties ./gradle/wrapper/
 RUN chmod +x gradlew
 
-COPY build.gradle settings.gradle ./
+COPY build.gradle settings.gradle gradle.properties ./
 COPY live-chat-server/build.gradle ./live-chat-server/
 COPY gradle ./gradle
 

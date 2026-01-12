@@ -4,7 +4,7 @@ VERSION_NUM=$$(cat ./version.txt)
 
 TARGET_VERSION=$(VERSION_NUM).$(BUILD_NUM)
 
-MODULE_NAME=live-platform-lab
+MODULE_NAME=live-chat-server
 DOCKER_REPOSITORY=kjuiop
 
 all: build

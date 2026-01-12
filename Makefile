@@ -7,7 +7,7 @@ TARGET_VERSION=$(VERSION_NUM).$(BUILD_NUM)
 MODULE_NAME=live-chat-server
 DOCKER_REPOSITORY=kjuiop
 
-all: build
+all: format-check build
 
 build:
 	@echo "Building project (includes format check)..."
@@ -35,7 +35,8 @@ git-hooks:
 	@echo "Enabling repo hooks (.githooks)..."
 	@git config core.hooksPath .githooks
 	@chmod +x .githooks/commit-msg
-	@echo "Done. (commit-msg hook active)"
+	@chmod +x .githooks/pre-commit
+	@echo "Done. (commit-msg & pre-commit hook active)"
 
 # Code quality and formatting
 format-check:

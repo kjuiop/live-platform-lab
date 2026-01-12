@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  live-chat-server:
+    image: kjuiop/live-chat-server:0.0.1
+    build: .
+    container_name: live-chat-server
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'    # CPU 2코어로 제한
+          memory: 1G   # 전체 메모리 1GB로 제한
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - live-platform-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: live-platform-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana
+    container_name: live-platform-grafana
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: live-platform-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Redis Exporter
+  redis_exporter:
+    image: oliver006/redis_exporter
+    container_name: live-platform-redis_exporter
+    ports:
+      - "9121:9121"
+    command:
+      - '--redis.addr=redis://redis:6379'
+    depends_on:
+      - redis
+    networks:
+      - live-platform-network
+
+volumes:
+  grafana_data:
+  redis_data:
+
+networks:
+  live-platform-network:

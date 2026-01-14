@@ -1,6 +1,6 @@
 package org.giglab.live.application.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,7 +11,7 @@ public class ChatMessageResponse {
   private Long channelId;
   private String sender;
   private String message;
-  private LocalDateTime sentAt;
+  private Instant sentAt;
 
   /**
    * ChatMessageRequest로부터 ChatMessageResponse를 생성합니다.
@@ -21,6 +21,6 @@ public class ChatMessageResponse {
    */
   public static ChatMessageResponse from(ChatMessageRequest request) {
     return new ChatMessageResponse(
-        request.getChannelId(), request.getSender(), request.getMessage(), LocalDateTime.now());
+        request.getChannelId(), request.getSender(), request.getMessage(), Instant.now());
   }
 }

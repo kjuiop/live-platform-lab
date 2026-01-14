@@ -1,8 +1,7 @@
 package org.giglab.live.infrastructure.redis;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,8 +42,8 @@ public class RedisRoomRepository implements RoomRepository {
 
     try {
 
-      LocalDateTime createdAt = room.getCreatedAt();
-      long score = createdAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+      Instant createdAt = room.getCreatedAt();
+      long score = createdAt.toEpochMilli();
 
       List<Object> results =
           redisTemplate.execute(

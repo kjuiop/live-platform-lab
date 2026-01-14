@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import org.giglab.live.application.dto.CreateRoomRequest;
@@ -51,8 +51,8 @@ class RoomControllerTest {
         new CreateRoomResponse(
             "ROOM_123456789ABC",
             "테스트 방송",
-            LocalDateTime.of(2024, 1, 11, 10, 0, 0),
-            LocalDateTime.of(2024, 1, 11, 10, 0, 0));
+            Instant.parse("2024-01-11T01:00:00Z"),
+            Instant.parse("2024-01-11T01:00:00Z"));
 
     given(roomService.createRoom(any(CreateRoomRequest.class))).willReturn(response);
 
@@ -154,8 +154,7 @@ class RoomControllerTest {
     request.setTitle("A".repeat(50)); // 정확히 50자
 
     CreateRoomResponse response =
-        new CreateRoomResponse(
-            "ROOM_123456789ABC", "A".repeat(50), LocalDateTime.now(), LocalDateTime.now());
+        new CreateRoomResponse("ROOM_123456789ABC", "A".repeat(50), Instant.now(), Instant.now());
 
     given(roomService.createRoom(any(CreateRoomRequest.class))).willReturn(response);
 

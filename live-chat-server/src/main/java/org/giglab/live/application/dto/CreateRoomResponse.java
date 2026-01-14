@@ -1,6 +1,6 @@
 package org.giglab.live.application.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CreateRoomResponse(
-    String roomId, String title, LocalDateTime createdAt, LocalDateTime updatedAt) {}
+    String roomId, String title, Instant createdAt, Instant updatedAt) {}

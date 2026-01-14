@@ -2,7 +2,7 @@ package org.giglab.live.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 import lombok.Getter;
 import org.giglab.live.domain.model.type.RoomStatus;
@@ -20,17 +20,17 @@ public class Room {
 
   @Builder.Default private RoomStatus status = RoomStatus.ACTIVE;
 
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
-  private LocalDateTime updatedAt;
+  private Instant updatedAt;
 
   @JsonCreator
   public Room(
       @JsonProperty("roomId") String roomId,
       @JsonProperty("title") String title,
       @JsonProperty("status") RoomStatus status,
-      @JsonProperty("createdAt") LocalDateTime createdAt,
-      @JsonProperty("updatedAt") LocalDateTime updatedAt) {
+      @JsonProperty("createdAt") Instant createdAt,
+      @JsonProperty("updatedAt") Instant updatedAt) {
     this.roomId = roomId;
     this.title = title;
     this.status = status;
@@ -43,8 +43,8 @@ public class Room {
     return Room.builder()
         .roomId(RoomIdGenerator.generate())
         .title(title)
-        .createdAt(LocalDateTime.now())
-        .updatedAt(LocalDateTime.now())
+        .createdAt(Instant.now())
+        .updatedAt(Instant.now())
         .build();
   }
 

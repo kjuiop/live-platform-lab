@@ -208,7 +208,7 @@ export default function StompTest() {
         
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
           min-height: 100vh;
           padding: 20px;
         }
@@ -223,7 +223,7 @@ export default function StompTest() {
         }
         
         .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           padding: 30px;
           text-align: center;

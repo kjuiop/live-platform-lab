@@ -127,7 +127,7 @@ export default function Home() {
         
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
           min-height: 100vh;
           padding: 20px;
         }
@@ -138,7 +138,7 @@ export default function Home() {
         }
         
         .page-header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           padding: 30px;
           text-align: center;
@@ -189,10 +189,10 @@ export default function Home() {
         
         .control-select {
           flex: 1;
-          padding: 12px 16px;
+          padding: 8px 12px;
           border: 1px solid #d1d5db;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 13px;
           background: white;
           cursor: pointer;
           outline: none;
@@ -205,12 +205,12 @@ export default function Home() {
         }
         
         .btn-create {
-          padding: 12px 24px;
+          padding: 8px 16px;
           background: #10b981;
           color: white;
           border: none;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
@@ -253,7 +253,7 @@ export default function Home() {
         }
         
         .chat-room-header.main {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           font-size: 18px;
         }
@@ -266,6 +266,7 @@ export default function Home() {
           flex-direction: column;
           gap: 8px;
           font-size: 11px;
+          color: #1f2937;
         }
         
         .chat-room.main .chat-room-messages {
@@ -360,7 +361,7 @@ export default function Home() {
         }
         
         .chat-send-btn.main {
-          background: #667eea;
+          background: #6366f1;
         }
         
         .chat-send-btn:hover {
@@ -369,7 +370,7 @@ export default function Home() {
         }
         
         .chat-send-btn.main:hover {
-          background: #5568d3;
+          background: #4f46e5;
         }
         
         .chat-send-btn:not(.main):hover {

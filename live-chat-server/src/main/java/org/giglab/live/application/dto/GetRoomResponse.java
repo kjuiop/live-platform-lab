@@ -4,10 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.giglab.live.domain.model.Room;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Getter
 @AllArgsConstructor
 public class GetRoomResponse {

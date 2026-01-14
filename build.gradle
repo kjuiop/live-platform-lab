@@ -24,13 +24,22 @@ subprojects {
             languageVersion = JavaLanguageVersion.of(21)
         }
     }
-    
+
     checkstyle {
-        toolVersion = "10.12.1"
-        configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
-        ignoreFailures = false
+        toolVersion = '13.0.0'
+        maxWarnings = 0 // 경고가 0개 이상이라면 빌드 시에 에러 발생
+        configFile = file("$rootDir/config/checkstyle/google_checks.xml") // rule 적용
+        ignoreFailures = false // 위반 시 실패(강제)
     }
-    
+
+    tasks.withType(Checkstyle).configureEach {
+        // 리포트 출력
+        reports {
+            xml.required = false
+            html.required = true
+        }
+    }
+
     spotless {
         java {
             target 'src/**/*.java'
@@ -57,6 +66,10 @@ subprojects {
     
     tasks.named('test') {
         useJUnitPlatform()
+    }
+
+    tasks.named('check') {
+        dependsOn 'spotlessCheck', 'checkstyleMain', 'checkstyleTest'
     }
     
     // 빌드 시 코드 품질 체크 (체크 실패 시 빌드 실패)

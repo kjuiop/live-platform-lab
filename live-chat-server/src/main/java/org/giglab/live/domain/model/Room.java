@@ -8,10 +8,6 @@ import lombok.Getter;
 import org.giglab.live.domain.model.type.RoomStatus;
 import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Builder
 @Getter
 public class Room {

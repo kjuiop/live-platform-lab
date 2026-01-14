@@ -33,7 +33,7 @@ class RoomTest {
 
   @Test
   @DisplayName("채팅방 제목 길이 초과 시 예외 발생")
-  void createRoom_TitleLengthExceeded() {
+  void createRoomTitleLengthExceeded() {
     // given
     String title = "A".repeat(51);
 

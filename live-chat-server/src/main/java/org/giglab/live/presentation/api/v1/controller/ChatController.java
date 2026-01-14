@@ -8,10 +8,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 13.
- */
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -19,6 +15,12 @@ public class ChatController {
 
   private final SimpMessageSendingOperations operations;
 
+  /**
+   * 클라이언트로부터 채팅 메시지를 수신하고 브로드캐스트합니다.
+   *
+   * @param request 채팅 메시지 요청
+   * @return 채팅 메시지 응답 (sentAt 포함)
+   */
   @MessageMapping("/chat.send")
   public ChatMessageResponse sendMessage(ChatMessageRequest request) {
     log.info(

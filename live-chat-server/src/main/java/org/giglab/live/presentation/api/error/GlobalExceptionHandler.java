@@ -12,10 +12,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {

@@ -2,10 +2,6 @@ package org.giglab.live.domain.model;
 
 import java.util.UUID;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 public class RoomIdGenerator {
 
   private static final String PREFIX = "ROOM";

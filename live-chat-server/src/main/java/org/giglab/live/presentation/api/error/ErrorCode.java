@@ -3,10 +3,6 @@ package org.giglab.live.presentation.api.error;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {

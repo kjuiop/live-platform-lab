@@ -11,10 +11,6 @@ import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Service
 @RequiredArgsConstructor
 public class RoomService {

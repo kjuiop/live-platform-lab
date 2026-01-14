@@ -1,9 +1,13 @@
 package org.giglab.live.infrastructure.redis;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,10 +22,6 @@ import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Slf4j
 @Repository
 public class RedisRoomRepository implements RoomRepository {
@@ -42,8 +42,8 @@ public class RedisRoomRepository implements RoomRepository {
 
     try {
 
-      LocalDateTime createdAt = room.getCreatedAt();
-      long score = createdAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+      Instant createdAt = room.getCreatedAt();
+      long score = createdAt.toEpochMilli();
 
       List<Object> results =
           redisTemplate.execute(
@@ -80,8 +80,8 @@ public class RedisRoomRepository implements RoomRepository {
   public List<String> findLatestRoomIds(int limit) {
 
     try {
-      ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
-      Set<Object> roomIds = zSetOps.reverseRange(ROOM_INDEX_KEY, 0, limit - 1);
+      ZSetOperations<String, Object> zsetOps = redisTemplate.opsForZSet();
+      Set<Object> roomIds = zsetOps.reverseRange(ROOM_INDEX_KEY, 0, limit - 1);
 
       if (roomIds == null || roomIds.isEmpty()) {
         return Collections.emptyList();
@@ -175,8 +175,8 @@ public class RedisRoomRepository implements RoomRepository {
     CompletableFuture.runAsync(
         () -> {
           try {
-            ZSetOperations<String, Object> zSetOps = redisTemplate.opsForZSet();
-            zSetOps.remove(ROOM_INDEX_KEY, expiredRoomIds.toArray());
+            ZSetOperations<String, Object> zsetOps = redisTemplate.opsForZSet();
+            zsetOps.remove(ROOM_INDEX_KEY, expiredRoomIds.toArray());
           } catch (Exception e) {
             log.error("Failed to remove expired room IDs: error={}", e.getMessage(), e);
           }

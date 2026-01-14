@@ -5,10 +5,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Getter
 @Setter
 public class CreateRoomRequest {

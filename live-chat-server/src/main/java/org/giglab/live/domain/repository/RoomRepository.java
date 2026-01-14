@@ -5,10 +5,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.giglab.live.domain.model.Room;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 public interface RoomRepository {
 
   Room save(Room room);

@@ -9,7 +9,14 @@ if ! git diff --cached --name-only --diff-filter=ACM | grep -E '\.java$' > /dev/
   exit 0
 fi
 
-./gradlew spotlessCheck
+./gradlew -q spotlessApply
+
+git add -u
+
+if ! git diff --cached --quiet; then
+  echo "[pre-commit] Spotless applied. Staged diff summary:"
+  git diff --cached --stat
+fi
 
 echo "[pre-commit] Running Checkstyle..."
 

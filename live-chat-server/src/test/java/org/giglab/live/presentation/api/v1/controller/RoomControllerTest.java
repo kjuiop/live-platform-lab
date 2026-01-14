@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import org.giglab.live.application.dto.CreateRoomRequest;
@@ -42,7 +42,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 성공 - 201 CREATED")
-  void createRoom_Success_Returns201() throws Exception {
+  void createRoomSuccessReturns201() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle("테스트 방송");
@@ -51,8 +51,8 @@ class RoomControllerTest {
         new CreateRoomResponse(
             "ROOM_123456789ABC",
             "테스트 방송",
-            LocalDateTime.of(2024, 1, 11, 10, 0, 0),
-            LocalDateTime.of(2024, 1, 11, 10, 0, 0));
+            Instant.parse("2024-01-11T01:00:00Z"),
+            Instant.parse("2024-01-11T01:00:00Z"));
 
     given(roomService.createRoom(any(CreateRoomRequest.class))).willReturn(response);
 
@@ -72,7 +72,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 실패 - 빈 제목 400 BAD_REQUEST")
-  void createRoom_EmptyTitle_Returns400() throws Exception {
+  void createRoomEmptyTitleReturns400() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle(""); // 빈 문자열
@@ -91,7 +91,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 실패 - 50자 초과 제목 400 BAD_REQUEST")
-  void createRoom_TitleExceeds50Characters_Returns400() throws Exception {
+  void createRoomTitleExceeds50CharactersReturns400() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle("A".repeat(51)); // 51자
@@ -112,7 +112,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 실패 - null 제목 400 BAD_REQUEST")
-  void createRoom_NullTitle_Returns400() throws Exception {
+  void createRoomNullTitleReturns400() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle(null); // null
@@ -130,7 +130,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 실패 - 공백만 있는 제목 400 BAD_REQUEST")
-  void createRoom_BlankTitle_Returns400() throws Exception {
+  void createRoomBlankTitleReturns400() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle("   "); // 공백만
@@ -148,14 +148,13 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 생성 성공 - 정확히 50자 제목 201 CREATED")
-  void createRoom_TitleExactly50Characters_Returns201() throws Exception {
+  void createRoomTitleExactly50CharactersReturns201() throws Exception {
     // given
     CreateRoomRequest request = new CreateRoomRequest();
     request.setTitle("A".repeat(50)); // 정확히 50자
 
     CreateRoomResponse response =
-        new CreateRoomResponse(
-            "ROOM_123456789ABC", "A".repeat(50), LocalDateTime.now(), LocalDateTime.now());
+        new CreateRoomResponse("ROOM_123456789ABC", "A".repeat(50), Instant.now(), Instant.now());
 
     given(roomService.createRoom(any(CreateRoomRequest.class))).willReturn(response);
 
@@ -172,7 +171,7 @@ class RoomControllerTest {
 
   @Test
   @DisplayName("채팅방 목록 조회 성공 - 최신순 정렬 확인")
-  void getRooms_ReturnsInLatestOrder() throws Exception {
+  void getRoomsReturnsInLatestOrder() throws Exception {
     // given
     GetRoomResponse latest = new GetRoomResponse("ROOM_003", "최신 채팅방");
     GetRoomResponse middle = new GetRoomResponse("ROOM_002", "중간 채팅방");

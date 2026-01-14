@@ -7,10 +7,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

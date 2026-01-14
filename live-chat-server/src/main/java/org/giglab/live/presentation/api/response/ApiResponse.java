@@ -2,10 +2,6 @@ package org.giglab.live.presentation.api.response;
 
 import lombok.Getter;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 @Getter
 public class ApiResponse<T> {
   private final T data;

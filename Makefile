@@ -11,7 +11,7 @@ all: format-check build
 
 build:
 	@echo "Building project (includes format check)..."
-	@./gradlew build
+	@./gradlew clean build
 
 config:
 	@if [ ! -d $(TARGET_DIR) ]; then mkdir $(TARGET_DIR); fi

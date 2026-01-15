@@ -62,7 +62,12 @@ export default function StompTest() {
       return;
     }
     
-    const socket = new SockJS('http://localhost:8080/ws');
+    // 환경 변수 또는 기본값 사용
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080';
+    const wsEndpoint = `${wsUrl}/ws`;
+    log(`연결 URL: ${wsEndpoint}`, 'info');
+    
+    const socket = new SockJS(wsEndpoint);
     const client = StompJs.Stomp.over(socket);
     
     client.debug = () => {

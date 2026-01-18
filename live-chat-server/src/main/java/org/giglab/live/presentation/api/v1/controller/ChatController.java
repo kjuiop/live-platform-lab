@@ -1,5 +1,6 @@
 package org.giglab.live.presentation.api.v1.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.dto.ChatMessageRequest;
@@ -24,7 +25,7 @@ public class ChatController {
    * @return 채팅 메시지 응답 (sentAt 포함)
    */
   @MessageMapping("/chat.send")
-  public ChatMessageResponse sendMessage(ChatMessageRequest request) {
+  public ChatMessageResponse sendMessage(@Valid ChatMessageRequest request) {
     String destination = SUBSCRIBE_PREFIX + request.getRoomId();
     ChatMessageResponse response = ChatMessageResponse.from(request);
     operations.convertAndSend(destination, response);

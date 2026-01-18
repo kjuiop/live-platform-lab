@@ -214,7 +214,7 @@ export default function Home() {
       
       // 성공 시 채팅방 목록에 추가
       const newRoom: RoomListItem = { roomId: response.roomId, title: response.title };
-      setRooms((prev) => [...prev, newRoom]);
+      setRooms((prev) => [newRoom, ...prev.filter((r) => r.roomId !== newRoom.roomId)]);
       setSelectedRoomId(response.roomId);
       
       // 모달 닫기

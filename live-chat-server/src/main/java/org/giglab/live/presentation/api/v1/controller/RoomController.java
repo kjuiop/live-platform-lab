@@ -1,7 +1,7 @@
 package org.giglab.live.presentation.api.v1.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.dto.CreateRoomRequest;
@@ -27,7 +27,7 @@ public class RoomController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<GetRoomResponse>>> getRooms(
-      @RequestParam(defaultValue = "10") @Min(1) int size) {
+      @RequestParam(defaultValue = "10") @Positive int size) {
     List<GetRoomResponse> responses = roomService.getRooms(size);
     return new ResponseEntity<>(ApiResponse.success(responses), HttpStatus.OK);
   }

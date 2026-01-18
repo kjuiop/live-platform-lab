@@ -24,14 +24,14 @@ public class ChatController {
   @MessageMapping("/chat.send")
   public ChatMessageResponse sendMessage(ChatMessageRequest request) {
     log.info(
-        "메시지 수신 - Channel: {}, Sender: {}, Message: {}",
-        request.getChannelId(),
+        "메시지 수신 - Room: {}, Sender: {}, Message: {}",
+        request.getRoomId(),
         request.getSender(),
         request.getMessage());
 
     ChatMessageResponse response = ChatMessageResponse.from(request);
 
-    operations.convertAndSend("/sub/channel/" + response.getChannelId(), response);
+    operations.convertAndSend("/sub/room/" + response.getRoomId(), response);
 
     return response;
   }

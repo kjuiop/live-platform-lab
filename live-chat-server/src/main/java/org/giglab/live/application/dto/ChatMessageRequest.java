@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessageRequest {
-  @NotNull private Long channelId;
+  @NotNull private String roomId;
   @NotEmpty private String sender;
   private String message;
 }

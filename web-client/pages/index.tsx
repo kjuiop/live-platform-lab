@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Script from 'next/script';
 
 interface ChatRoomProps {
   title: string;
   isMain?: boolean;
   nickname?: string;
+  connectionStatusText?: string;
+  connectedRoomTitle?: string;
 }
 
 interface Message {
@@ -38,7 +41,13 @@ interface RoomListItem {
   title: string;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: propNickname }) => {
+const ChatRoom: React.FC<ChatRoomProps> = ({
+  title,
+  isMain = false,
+  nickname: propNickname,
+  connectionStatusText,
+  connectedRoomTitle,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [nickname, setNickname] = useState(propNickname || '사용자');
@@ -74,7 +83,15 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
   return (
     <div className={`chat-room ${isMain ? 'main' : ''}`}>
       <div className={`chat-room-header ${isMain ? 'main' : ''}`}>
-        {nickname}의 채팅창
+        <span>{nickname}의 채팅창</span>
+        <span className="connection-right">
+          {connectedRoomTitle ? (
+            <span className="connected-room-title">{connectedRoomTitle}</span>
+          ) : null}
+          {connectionStatusText ? (
+            <span className="connection-status">{connectionStatusText}</span>
+          ) : null}
+        </span>
       </div>
       <div className="chat-room-messages">
         {messages.length === 0 ? (
@@ -122,8 +139,18 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // WebSocket(STOMP) 상태
+  const stompClientRef = useRef<any>(null);
+  const subscriptionRef = useRef<any>(null);
+  const [areWsScriptsReady, setAreWsScriptsReady] = useState(false);
+  const [isWsConnected, setIsWsConnected] = useState(false);
+  const [connectedRoomId, setConnectedRoomId] = useState<string | null>(null);
+  const [wsError, setWsError] = useState<string | null>(null);
+  const [lastWsMessage, setLastWsMessage] = useState<string | null>(null);
+
   // API Base URL (환경 변수 또는 기본값)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL;
 
   // 채팅방 목록 조회 API 호출 함수
   const getRooms = async (size = 50): Promise<RoomListItem[]> => {
@@ -188,6 +215,94 @@ export default function Home() {
   const handleCreateChatRoom = () => {
     setIsModalOpen(true);
     setError(null); // 모달 열 때 에러 초기화
+  };
+
+  const markWsScriptsReady = () => {
+    if (typeof window === 'undefined') return;
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (SockJS && StompJs) {
+      setAreWsScriptsReady(true);
+    }
+  };
+
+  const disconnectWs = () => {
+    try {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+      if (stompClientRef.current) {
+        stompClientRef.current.disconnect?.();
+        stompClientRef.current = null;
+      }
+    } finally {
+      setIsWsConnected(false);
+      setConnectedRoomId(null);
+    }
+  };
+
+  const connectWsToRoom = (roomId: string) => {
+    if (!areWsScriptsReady) {
+      setWsError('WebSocket 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (!SockJS || !StompJs) {
+      setWsError('SockJS 또는 STOMP 라이브러리가 로드되지 않았습니다.');
+      return;
+    }
+
+    setWsError(null);
+    setLastWsMessage(null);
+
+    const wsEndpoint = `${WS_BASE_URL}/ws`;
+
+    // 기존 연결/구독 정리 후 재연결
+    disconnectWs();
+
+    const socket = new SockJS(wsEndpoint);
+    const client = StompJs.Stomp.over(socket);
+    client.debug = () => {};
+
+    client.connect(
+      {},
+      () => {
+        stompClientRef.current = client;
+        setIsWsConnected(true);
+        setConnectedRoomId(roomId);
+
+        const destination = `/sub/room/${roomId}`;
+        subscriptionRef.current = client.subscribe(destination, (message: any) => {
+          setLastWsMessage(message?.body ?? '');
+          // eslint-disable-next-line no-console
+          console.log('[STOMP MESSAGE]', destination, message?.body);
+        });
+      },
+      (e: any) => {
+        setWsError(typeof e === 'string' ? e : 'WebSocket 연결에 실패했습니다.');
+        setIsWsConnected(false);
+        setConnectedRoomId(null);
+      }
+    );
+  };
+
+  const handleConnectChatRoom = () => {
+    if (!selectedRoomId) {
+      setRoomsError('연결할 채팅방을 먼저 선택해주세요.');
+      return;
+    }
+    setRoomsError(null);
+
+    // 이미 이 방에 연결되어 있으면 "연결 끊기"로 동작
+    if (isWsConnected && connectedRoomId === selectedRoomId) {
+      disconnectWs();
+      return;
+    }
+
+    connectWsToRoom(selectedRoomId);
   };
 
   const handleCloseModal = () => {
@@ -264,6 +379,14 @@ export default function Home() {
     };
   }, []);
 
+  // 페이지 이탈/언마운트 시 연결 정리
+  useEffect(() => {
+    return () => {
+      disconnectWs();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
       handleSaveChatRoom();
@@ -272,6 +395,16 @@ export default function Home() {
 
   return (
     <>
+      <Script
+        src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"
+        strategy="afterInteractive"
+        onLoad={markWsScriptsReady}
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"
+        strategy="afterInteractive"
+        onLoad={markWsScriptsReady}
+      />
       <style jsx global>{`
         * {
           margin: 0;
@@ -376,6 +509,31 @@ export default function Home() {
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           background: #059669;
         }
+
+        .btn-connect {
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.2s;
+        }
+        
+        .btn-connect:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          filter: brightness(0.98);
+        }
+        
+        .btn-connect:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
         
         .sub-chat-grid {
           display: grid;
@@ -404,12 +562,45 @@ export default function Home() {
           font-weight: 600;
           font-size: 14px;
           border-bottom: 1px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         }
         
         .chat-room-header.main {
           background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           font-size: 18px;
+        }
+
+        .connection-status {
+          font-size: 13px;
+          font-weight: 600;
+          opacity: 0.95;
+          white-space: nowrap;
+        }
+
+        .connection-right {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .connected-room-title {
+          font-size: 13px;
+          font-weight: 600;
+          opacity: 0.95;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 320px;
+        }
+
+        .connected-room-title.muted {
+          opacity: 0.8;
+          font-weight: 500;
         }
         
         .chat-room-messages {
@@ -667,6 +858,12 @@ export default function Home() {
               title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
               isMain={true}
               nickname="메인 사용자"
+              connectionStatusText={isWsConnected ? '연결됨' : '연결 안 됨'}
+              connectedRoomTitle={
+                connectedRoomId
+                  ? rooms.find((r) => r.roomId === connectedRoomId)?.title || connectedRoomId
+                  : undefined
+              }
             />
           </div>
 
@@ -694,12 +891,29 @@ export default function Home() {
               <button onClick={handleCreateChatRoom} className="btn-create">
                 생성
               </button>
+              <button
+                onClick={handleConnectChatRoom}
+                className="btn-connect"
+                disabled={isRoomsLoading || rooms.length === 0 || !selectedRoomId || !areWsScriptsReady}
+                title={
+                  !areWsScriptsReady
+                    ? 'WebSocket 라이브러리 로딩 중...'
+                    : selectedRoomId
+                      ? (isWsConnected && connectedRoomId === selectedRoomId
+                        ? '연결을 끊습니다'
+                        : '선택한 채팅방에 연결')
+                      : '채팅방을 먼저 선택하세요'
+                }
+              >
+                {isWsConnected && connectedRoomId === selectedRoomId ? '연결 끊기' : '연결'}
+              </button>
             </div>
             {roomsError && (
               <div style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>
                 {roomsError}
               </div>
             )}
+            {/* 연결/에러 표시는 메인 채팅창 헤더로 이동 */}
           </div>
         </div>
 

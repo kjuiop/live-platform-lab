@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.redis.config;
+package org.giglab.live.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

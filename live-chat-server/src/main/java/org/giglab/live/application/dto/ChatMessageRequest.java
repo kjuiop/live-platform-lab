@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChatMessageRequest {
   @NotNull private String roomId;
+  @NotNull private String username;
   @NotEmpty private String sender;
   private String message;
 }

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class ChatController {
 
+  private static final String SUBSCRIBE_PREFIX = "/sub/room/";
+
   private final SimpMessageSendingOperations operations;
 
   /**
@@ -23,16 +25,9 @@ public class ChatController {
    */
   @MessageMapping("/chat.send")
   public ChatMessageResponse sendMessage(ChatMessageRequest request) {
-    log.info(
-        "메시지 수신 - Room: {}, Sender: {}, Message: {}",
-        request.getRoomId(),
-        request.getSender(),
-        request.getMessage());
-
+    String destination = SUBSCRIBE_PREFIX + request.getRoomId();
     ChatMessageResponse response = ChatMessageResponse.from(request);
-
-    operations.convertAndSend("/sub/room/" + response.getRoomId(), response);
-
+    operations.convertAndSend(destination, response);
     return response;
   }
 }

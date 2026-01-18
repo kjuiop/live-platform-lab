@@ -27,7 +27,7 @@ class ChatControllerTest {
   @DisplayName("메시지 전송 성공 - 올바른 destination으로 브로드캐스트")
   void sendMessageSuccessBroadcastsToCorrectDestination() {
     // given
-    ChatMessageRequest request = new ChatMessageRequest("ROOM_1", "test-user", "안녕하세요");
+    ChatMessageRequest request = new ChatMessageRequest("ROOM_1", "USER_1", "test-user", "안녕하세요");
 
     // when
     ChatMessageResponse response = chatController.sendMessage(request);
@@ -40,7 +40,7 @@ class ChatControllerTest {
   @DisplayName("메시지 전송 성공 - 응답 DTO에 sentAt 포함")
   void sendMessageSuccessReturnsResponseWithSentAt() {
     // given
-    ChatMessageRequest request = new ChatMessageRequest("ROOM_1", "jake", "테스트 메시지");
+    ChatMessageRequest request = new ChatMessageRequest("ROOM_1", "USER_1", "jake", "테스트 메시지");
 
     // when
     ChatMessageResponse response = chatController.sendMessage(request);
@@ -57,8 +57,8 @@ class ChatControllerTest {
   @DisplayName("메시지 전송 성공 - 채널별로 다른 destination으로 브로드캐스트")
   void sendMessageSuccessBroadcastsToChannelSpecificDestination() {
     // given
-    ChatMessageRequest request1 = new ChatMessageRequest("ROOM_1", "user1", "채널1 메시지");
-    ChatMessageRequest request2 = new ChatMessageRequest("ROOM_2", "user2", "채널2 메시지");
+    ChatMessageRequest request1 = new ChatMessageRequest("ROOM_1", "USER_1", "user1", "채널1 메시지");
+    ChatMessageRequest request2 = new ChatMessageRequest("ROOM_2", "USER_1", "user2", "채널2 메시지");
 
     // when
     chatController.sendMessage(request1);

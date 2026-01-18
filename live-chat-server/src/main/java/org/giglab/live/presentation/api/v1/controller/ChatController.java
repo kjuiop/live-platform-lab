@@ -1,5 +1,6 @@
 package org.giglab.live.presentation.api.v1.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.dto.ChatMessageRequest;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class ChatController {
 
+  private static final String SUBSCRIBE_PREFIX = "/sub/room/";
+
   private final SimpMessageSendingOperations operations;
 
   /**
@@ -22,17 +25,10 @@ public class ChatController {
    * @return 채팅 메시지 응답 (sentAt 포함)
    */
   @MessageMapping("/chat.send")
-  public ChatMessageResponse sendMessage(ChatMessageRequest request) {
-    log.info(
-        "메시지 수신 - Channel: {}, Sender: {}, Message: {}",
-        request.getChannelId(),
-        request.getSender(),
-        request.getMessage());
-
+  public ChatMessageResponse sendMessage(@Valid ChatMessageRequest request) {
+    String destination = SUBSCRIBE_PREFIX + request.getRoomId();
     ChatMessageResponse response = ChatMessageResponse.from(request);
-
-    operations.convertAndSend("/sub/channel/" + response.getChannelId(), response);
-
+    operations.convertAndSend(destination, response);
     return response;
   }
 }

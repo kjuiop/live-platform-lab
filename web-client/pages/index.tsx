@@ -1,9 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Script from 'next/script';
 
 interface ChatRoomProps {
   title: string;
   isMain?: boolean;
   nickname?: string;
+  connectionStatusText?: string;
+  connectedRoomTitle?: string;
+  externalMessages?: Message[];
+  onSendMessage?: (text: string, nickname: string) => void;
+  sendDisabled?: boolean;
 }
 
 interface Message {
@@ -13,7 +19,55 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: propNickname }) => {
+// API 응답 타입
+interface ApiResponse<T> {
+  data: T;
+  error: null | {
+    code: string;
+    message: string;
+  };
+}
+
+interface CreateRoomRequest {
+  title: string;
+}
+
+interface CreateRoomResponse {
+  roomId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface RoomListItem {
+  roomId: string;
+  title: string;
+}
+
+type DemoUser = {
+  key: string;
+  userId: string;
+  username: string;
+  sender: string;
+  isMain?: boolean;
+};
+
+type ConnectionState = {
+  connected: boolean;
+  connectedRoomId: string | null;
+  error: string | null;
+};
+
+const ChatRoom: React.FC<ChatRoomProps> = ({
+  title,
+  isMain = false,
+  nickname: propNickname,
+  connectionStatusText,
+  connectedRoomTitle,
+  externalMessages,
+  onSendMessage,
+  sendDisabled = false,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [nickname, setNickname] = useState(propNickname || '사용자');
@@ -23,19 +77,31 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const displayedMessages = externalMessages ?? messages;
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [displayedMessages]);
 
   const handleSend = () => {
+    if (sendDisabled) {
+      return;
+    }
     if (inputValue.trim()) {
-      const newMessage: Message = {
-        id: Date.now(),
-        nickname: nickname.trim() || '사용자',
-        text: inputValue.trim(),
-        timestamp: new Date(),
-      };
-      setMessages([...messages, newMessage]);
+      const text = inputValue.trim();
+      const nick = nickname.trim() || '사용자';
+
+      if (onSendMessage) {
+        onSendMessage(text, nick);
+      } else {
+        const newMessage: Message = {
+          id: Date.now(),
+          nickname: nick,
+          text,
+          timestamp: new Date(),
+        };
+        setMessages([...messages, newMessage]);
+      }
       setInputValue('');
     }
   };
@@ -49,14 +115,22 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
   return (
     <div className={`chat-room ${isMain ? 'main' : ''}`}>
       <div className={`chat-room-header ${isMain ? 'main' : ''}`}>
-        {nickname}의 채팅창
+        <span>{nickname}의 채팅창</span>
+        <span className="connection-right">
+          {connectedRoomTitle ? (
+            <span className="connected-room-title">{connectedRoomTitle}</span>
+          ) : null}
+          {connectionStatusText ? (
+            <span className="connection-status">{connectionStatusText}</span>
+          ) : null}
+        </span>
       </div>
       <div className="chat-room-messages">
-        {messages.length === 0 ? (
+        {displayedMessages.length === 0 ? (
           <div className="chat-room-empty">채팅 메시지가 여기에 표시됩니다...</div>
         ) : (
           <>
-            {messages.map((msg) => (
+            {displayedMessages.map((msg) => (
               <div key={msg.id} className="chat-message">
                 <div className="chat-message-content">
                   <span className="chat-message-nickname">{msg.nickname}</span>
@@ -78,8 +152,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
           onKeyPress={handleKeyPress}
           placeholder="메시지를 입력하세요..."
           className="chat-input"
+          disabled={sendDisabled}
         />
-        <button onClick={handleSend} className={`chat-send-btn ${isMain ? 'main' : ''}`}>
+        <button
+          onClick={handleSend}
+          className={`chat-send-btn ${isMain ? 'main' : ''}`}
+          disabled={sendDisabled}
+        >
           전송
         </button>
       </div>
@@ -88,36 +167,400 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
 };
 
 export default function Home() {
-  const [selectedChatRoom, setSelectedChatRoom] = useState('메인 채팅방');
-  const [chatRooms, setChatRooms] = useState(['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9']);
+  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
+  const [rooms, setRooms] = useState<RoomListItem[]>([]);
+  const [isRoomsLoading, setIsRoomsLoading] = useState(false);
+  const [roomsError, setRoomsError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreateChatRoom = () => {
-    setIsModalOpen(true);
-  };
+  // WebSocket(STOMP) 상태 (유저별로 분리 커넥션)
+  const clientsRef = useRef<Record<string, any>>({});
+  const subsRef = useRef<Record<string, any>>({});
+  const [areWsScriptsReady, setAreWsScriptsReady] = useState(false);
+  const [mainMessages, setMainMessages] = useState<Message[]>([]);
+  const [connections, setConnections] = useState<Record<string, ConnectionState>>({});
+  const seenMessageKeysRef = useRef<Set<string>>(new Set());
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setNewChatRoomTitle('');
-  };
+  // 데모용 사용자 목록 (각 채팅창 별 identity)
+  const demoUsers: DemoUser[] = [
+    { key: 'main', userId: 'main', username: 'main@example.com', sender: '메인 사용자', isMain: true },
+    { key: 'user1', userId: 'user1', username: 'user1@example.com', sender: '사용자1' },
+    { key: 'user2', userId: 'user2', username: 'user2@example.com', sender: '사용자2' },
+    { key: 'user3', userId: 'user3', username: 'user3@example.com', sender: '사용자3' },
+    { key: 'user4', userId: 'user4', username: 'user4@example.com', sender: '사용자4' },
+    { key: 'user5', userId: 'user5', username: 'user5@example.com', sender: '사용자5' },
+    { key: 'user6', userId: 'user6', username: 'user6@example.com', sender: '사용자6' },
+    { key: 'user7', userId: 'user7', username: 'user7@example.com', sender: '사용자7' },
+    { key: 'user8', userId: 'user8', username: 'user8@example.com', sender: '사용자8' },
+    { key: 'user9', userId: 'user9', username: 'user9@example.com', sender: '사용자9' },
+  ];
 
-  const handleSaveChatRoom = () => {
-    if (newChatRoomTitle.trim()) {
-      setChatRooms([...chatRooms, newChatRoomTitle.trim()]);
-      setSelectedChatRoom(newChatRoomTitle.trim());
-      handleCloseModal();
+  // API Base URL (환경 변수 또는 기본값)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL;
+
+  // 채팅방 목록 조회 API 호출 함수
+  const getRooms = async (size = 50): Promise<RoomListItem[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/rooms?size=${size}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `채팅방 목록 조회 실패: ${response.status}`
+        );
+      }
+
+      const apiResponse: ApiResponse<RoomListItem[]> = await response.json();
+      return apiResponse.data ?? [];
+    } catch (err) {
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        throw new Error(
+          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
+        );
+      }
+      throw err;
     }
   };
 
+  // 채팅방 생성 API 호출 함수
+  const createRoom = async (title: string): Promise<CreateRoomResponse> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `채팅방 생성 실패: ${response.status}`
+        );
+      }
+
+      const apiResponse: ApiResponse<CreateRoomResponse> = await response.json();
+      return apiResponse.data;
+    } catch (err) {
+      // 네트워크 에러 또는 기타 에러 처리
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        throw new Error(
+          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
+        );
+      }
+      throw err;
+    }
+  };
+
+  const handleCreateChatRoom = () => {
+    setIsModalOpen(true);
+    setError(null); // 모달 열 때 에러 초기화
+  };
+
+  const markWsScriptsReady = () => {
+    if (typeof window === 'undefined') return;
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (SockJS && StompJs) {
+      setAreWsScriptsReady(true);
+    }
+  };
+
+  const disconnectUserWs = (userKey: string) => {
+    try {
+      if (subsRef.current[userKey]) {
+        subsRef.current[userKey].unsubscribe?.();
+        delete subsRef.current[userKey];
+      }
+      if (clientsRef.current[userKey]) {
+        clientsRef.current[userKey].disconnect?.();
+        delete clientsRef.current[userKey];
+      }
+    } finally {
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: { connected: false, connectedRoomId: null, error: null },
+      }));
+    }
+  };
+
+  const appendIncomingMessage = (rawBody: string) => {
+    // 여러 커넥션에서 동일 브로드캐스트를 N번 받을 수 있어서 dedupe
+    const key = rawBody;
+    if (seenMessageKeysRef.current.has(key)) {
+      return;
+    }
+    seenMessageKeysRef.current.add(key);
+    if (seenMessageKeysRef.current.size > 500) {
+      // 간단한 사이즈 제한 (테스트용)
+      seenMessageKeysRef.current = new Set(Array.from(seenMessageKeysRef.current).slice(-250));
+    }
+
+    try {
+      const payload = JSON.parse(rawBody ?? '{}') as {
+        roomId?: string;
+        username?: string;
+        sender?: string;
+        message?: string;
+        sentAt?: string;
+      };
+
+      const text = payload.message ?? rawBody ?? '';
+      const nick = payload.sender || payload.username || '사용자';
+      const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
+
+      setMainMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          nickname: nick,
+          text,
+          timestamp: ts,
+        },
+      ]);
+    } catch {
+      setMainMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          nickname: '사용자',
+          text: rawBody ?? '',
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  };
+
+  const connectUserWsToRoom = (userKey: string, roomId: string) => {
+    if (!areWsScriptsReady) {
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: {
+          connected: false,
+          connectedRoomId: null,
+          error: 'WebSocket 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
+        },
+      }));
+      return;
+    }
+
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (!SockJS || !StompJs) {
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: {
+          connected: false,
+          connectedRoomId: null,
+          error: 'SockJS 또는 STOMP 라이브러리가 로드되지 않았습니다.',
+        },
+      }));
+      return;
+    }
+
+    // 기존 연결 정리 후 재연결
+    disconnectUserWs(userKey);
+
+    const wsEndpoint = `${WS_BASE_URL}/ws`;
+
+    const socket = new SockJS(wsEndpoint);
+    const client = StompJs.Stomp.over(socket);
+    client.debug = () => {};
+
+    client.connect(
+      {},
+      () => {
+        clientsRef.current[userKey] = client;
+        setConnections((prev) => ({
+          ...prev,
+          [userKey]: { connected: true, connectedRoomId: roomId, error: null },
+        }));
+
+        const destination = `/sub/room/${roomId}`;
+        subsRef.current[userKey] = client.subscribe(destination, (message: any) => {
+          // eslint-disable-next-line no-console
+          console.log('[STOMP MESSAGE]', destination, message?.body);
+          appendIncomingMessage(message?.body ?? '');
+        });
+      },
+      (e: any) => {
+        setConnections((prev) => ({
+          ...prev,
+          [userKey]: {
+            connected: false,
+            connectedRoomId: null,
+            error: typeof e === 'string' ? e : 'WebSocket 연결에 실패했습니다.',
+          },
+        }));
+      }
+    );
+  };
+
+  const handleConnectChatRoom = () => {
+    if (!selectedRoomId) {
+      setRoomsError('연결할 채팅방을 먼저 선택해주세요.');
+      return;
+    }
+    setRoomsError(null);
+
+    const allConnectedToSelected = demoUsers.every((u) => {
+      const s = connections[u.key];
+      return s?.connected && s.connectedRoomId === selectedRoomId;
+    });
+
+    if (allConnectedToSelected) {
+      // 전체 연결 끊기
+      demoUsers.forEach((u) => disconnectUserWs(u.key));
+      return;
+    }
+
+    // 전체 유저를 각각 별도 커넥션으로 연결
+    setMainMessages([]);
+    seenMessageKeysRef.current = new Set();
+    demoUsers.forEach((u) => connectUserWsToRoom(u.key, selectedRoomId));
+  };
+
+  const sendChatMessage = (
+    text: string,
+    identity: { userId: string; username: string; sender: string }
+  ) => {
+    const userKey = identity.userId === 'main' ? 'main' : identity.userId;
+    const state = connections[userKey];
+    const client = clientsRef.current[userKey];
+
+    if (!state?.connected || !client || !state.connectedRoomId) {
+      // 연결 상태 표시는 헤더에만 하기로 했으니, 여기서는 조용히 로그만 남김
+      // eslint-disable-next-line no-console
+      console.warn('WebSocket not connected. Cannot send message.');
+      return;
+    }
+
+    const messageData = {
+      roomId: state.connectedRoomId,
+      userId: identity.userId,
+      username: identity.username,
+      sender: identity.sender,
+      message: text,
+    };
+
+    try {
+      client.send('/pub/chat.send', {}, JSON.stringify(messageData));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to send STOMP message', e);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (isLoading) return; // 로딩 중에는 닫기 방지
+    setIsModalOpen(false);
+    setNewChatRoomTitle('');
+    setError(null);
+  };
+
+  const handleSaveChatRoom = async () => {
+    const title = newChatRoomTitle.trim();
+    
+    if (!title) {
+      setError('채팅방 제목을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // API 호출
+      const response = await createRoom(title);
+      
+      // 성공 시 채팅방 목록에 추가
+      const newRoom: RoomListItem = { roomId: response.roomId, title: response.title };
+      setRooms((prev) => [newRoom, ...prev.filter((r) => r.roomId !== newRoom.roomId)]);
+      setSelectedRoomId(response.roomId);
+      
+      // 모달 닫기
+      handleCloseModal();
+    } catch (err) {
+      // 에러 처리
+      const errorMessage = err instanceof Error ? err.message : '채팅방 생성에 실패했습니다.';
+      setError(errorMessage);
+      console.error('채팅방 생성 실패:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsRoomsLoading(true);
+      setRoomsError(null);
+      try {
+        const fetched = await getRooms(50);
+        if (cancelled) return;
+
+        setRooms(fetched);
+        if (fetched.length > 0) {
+          setSelectedRoomId((prev) => prev || fetched[0].roomId);
+        } else {
+          setSelectedRoomId('');
+        }
+      } catch (e) {
+        if (cancelled) return;
+        const message =
+          e instanceof Error ? e.message : '채팅방 목록 조회에 실패했습니다.';
+        setRoomsError(message);
+      } finally {
+        if (!cancelled) {
+          setIsRoomsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 페이지 이탈/언마운트 시 연결 정리
+  useEffect(() => {
+    return () => {
+      demoUsers.forEach((u) => disconnectUserWs(u.key));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isLoading) {
       handleSaveChatRoom();
     }
   };
 
   return (
     <>
+      <Script
+        src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"
+        strategy="afterInteractive"
+        onLoad={markWsScriptsReady}
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"
+        strategy="afterInteractive"
+        onLoad={markWsScriptsReady}
+      />
       <style jsx global>{`
         * {
           margin: 0;
@@ -222,6 +665,31 @@ export default function Home() {
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           background: #059669;
         }
+
+        .btn-connect {
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.2s;
+        }
+        
+        .btn-connect:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          filter: brightness(0.98);
+        }
+        
+        .btn-connect:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
         
         .sub-chat-grid {
           display: grid;
@@ -250,12 +718,45 @@ export default function Home() {
           font-weight: 600;
           font-size: 14px;
           border-bottom: 1px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         }
         
         .chat-room-header.main {
           background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           color: white;
           font-size: 18px;
+        }
+
+        .connection-status {
+          font-size: 13px;
+          font-weight: 600;
+          opacity: 0.95;
+          white-space: nowrap;
+        }
+
+        .connection-right {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .connected-room-title {
+          font-size: 13px;
+          font-weight: 600;
+          opacity: 0.95;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 320px;
+        }
+
+        .connected-room-title.muted {
+          opacity: 0.8;
+          font-weight: 500;
         }
         
         .chat-room-messages {
@@ -469,10 +970,22 @@ export default function Home() {
           transition: all 0.2s;
         }
         
-        .btn-save:hover {
+        .btn-save:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           background: #059669;
+        }
+        
+        .btn-save:disabled,
+        .btn-cancel:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+        
+        .modal-input:disabled {
+          background-color: #f3f4f6;
+          cursor: not-allowed;
         }
         
         @media (max-width: 768px) {
@@ -497,33 +1010,104 @@ export default function Home() {
 
         <div className="main-content">
           <div className="main-chat-wrapper">
-            <ChatRoom title={selectedChatRoom} isMain={true} nickname="메인 사용자" />
+            <ChatRoom
+              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
+              isMain={true}
+              nickname="메인 사용자"
+              connectionStatusText={
+                connections['main']?.connected ? '연결됨' : '연결 안 됨'
+              }
+              connectedRoomTitle={
+                connections['main']?.connectedRoomId
+                  ? rooms.find((r) => r.roomId === connections['main']?.connectedRoomId)?.title ||
+                    connections['main']?.connectedRoomId ||
+                    undefined
+                  : undefined
+              }
+              externalMessages={mainMessages}
+              onSendMessage={(text) =>
+                sendChatMessage(text, {
+                  userId: 'main',
+                  username: 'main@example.com',
+                  sender: '메인 사용자',
+                })
+              }
+              sendDisabled={!connections['main']?.connected}
+            />
           </div>
 
           <div className="control-panel">
             <div className="control-panel-title">채팅방 선택</div>
             <div className="control-panel-controls">
               <select
-                value={selectedChatRoom}
-                onChange={(e) => setSelectedChatRoom(e.target.value)}
+                value={selectedRoomId}
+                onChange={(e) => setSelectedRoomId(e.target.value)}
                 className="control-select"
+                disabled={isRoomsLoading || rooms.length === 0}
               >
-                {chatRooms.map((room) => (
-                  <option key={room} value={room}>
-                    {room}
-                  </option>
-                ))}
+                {isRoomsLoading ? (
+                  <option value="">불러오는 중...</option>
+                ) : rooms.length === 0 ? (
+                  <option value="">채팅방이 없습니다</option>
+                ) : (
+                  rooms.map((room) => (
+                    <option key={room.roomId} value={room.roomId}>
+                      {room.title}
+                    </option>
+                  ))
+                )}
               </select>
               <button onClick={handleCreateChatRoom} className="btn-create">
                 생성
               </button>
+              <button
+                onClick={handleConnectChatRoom}
+                className="btn-connect"
+                disabled={isRoomsLoading || rooms.length === 0 || !selectedRoomId || !areWsScriptsReady}
+                title={
+                  !areWsScriptsReady
+                    ? 'WebSocket 라이브러리 로딩 중...'
+                    : selectedRoomId
+                      ? '선택한 채팅방에 연결(테스트: 유저별로 분리 커넥션)'
+                      : '채팅방을 먼저 선택하세요'
+                }
+              >
+                {demoUsers.every((u) => connections[u.key]?.connected && connections[u.key]?.connectedRoomId === selectedRoomId)
+                  ? '연결 끊기'
+                  : '연결'}
+              </button>
             </div>
+            {roomsError && (
+              <div style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>
+                {roomsError}
+              </div>
+            )}
+            {/* 연결/에러 표시는 메인 채팅창 헤더로 이동 */}
           </div>
         </div>
 
         <div className="sub-chat-grid">
-          {Array.from({ length: 9 }, (_, i) => (
-            <ChatRoom key={i} title={`서브 채팅방 ${i + 1}`} nickname={`사용자${i + 1}`} />
+          {demoUsers
+            .filter((u) => !u.isMain)
+            .map((u) => (
+            <ChatRoom
+              key={u.userId}
+              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
+              nickname={u.sender}
+              connectionStatusText={
+                connections[u.key]?.connected ? '연결됨' : '연결 안 됨'
+              }
+              connectedRoomTitle={
+                connections[u.key]?.connectedRoomId
+                  ? rooms.find((r) => r.roomId === connections[u.key]?.connectedRoomId)?.title ||
+                    connections[u.key]?.connectedRoomId ||
+                    undefined
+                  : undefined
+              }
+              externalMessages={mainMessages}
+              onSendMessage={(text) => sendChatMessage(text, u)}
+              sendDisabled={!connections[u.key]?.connected}
+            />
           ))}
         </div>
       </div>
@@ -537,19 +1121,40 @@ export default function Home() {
               <input
                 type="text"
                 value={newChatRoomTitle}
-                onChange={(e) => setNewChatRoomTitle(e.target.value)}
+                onChange={(e) => {
+                  setNewChatRoomTitle(e.target.value);
+                  setError(null); // 입력 시 에러 초기화
+                }}
                 onKeyPress={handleKeyPress}
                 placeholder="채팅방 제목을 입력하세요"
                 className="modal-input"
                 autoFocus
+                disabled={isLoading}
               />
+              {error && (
+                <div className="modal-error" style={{ 
+                  color: '#ef4444', 
+                  fontSize: '14px', 
+                  marginTop: '8px' 
+                }}>
+                  {error}
+                </div>
+              )}
             </div>
             <div className="modal-actions">
-              <button onClick={handleCloseModal} className="btn-cancel">
+              <button 
+                onClick={handleCloseModal} 
+                className="btn-cancel"
+                disabled={isLoading}
+              >
                 취소
               </button>
-              <button onClick={handleSaveChatRoom} className="btn-save">
-                저장
+              <button 
+                onClick={handleSaveChatRoom} 
+                className="btn-save"
+                disabled={isLoading || !newChatRoomTitle.trim()}
+              >
+                {isLoading ? '생성 중...' : '저장'}
               </button>
             </div>
           </div>

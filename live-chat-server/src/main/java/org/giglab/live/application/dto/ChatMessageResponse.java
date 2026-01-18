@@ -8,7 +8,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ChatMessageResponse {
-  private Long channelId;
+  private String roomId;
+  private String username;
   private String sender;
   private String message;
   private Instant sentAt;
@@ -21,6 +22,10 @@ public class ChatMessageResponse {
    */
   public static ChatMessageResponse from(ChatMessageRequest request) {
     return new ChatMessageResponse(
-        request.getChannelId(), request.getSender(), request.getMessage(), Instant.now());
+        request.getRoomId(),
+        request.getUsername(),
+        request.getSender(),
+        request.getMessage(),
+        Instant.now());
   }
 }

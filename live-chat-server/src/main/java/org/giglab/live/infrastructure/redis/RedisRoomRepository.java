@@ -68,8 +68,7 @@ public class RedisRoomRepository implements RoomRepository {
         throw new RedisOperationException("SAVE", roomKey, "Transaction failed", null);
       }
 
-      Object savedObj = redisTemplate.opsForValue().get(roomKey);
-      return convertToRoom(savedObj);
+      return room;
     } catch (Exception e) {
       log.error(
           "Failed to save room to Redis: roomId={}, key={}, error={}",

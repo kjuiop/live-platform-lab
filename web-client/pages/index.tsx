@@ -1087,7 +1087,9 @@ export default function Home() {
         </div>
 
         <div className="sub-chat-grid">
-          {demoUsers.map((u) => (
+          {demoUsers
+            .filter((u) => !u.isMain)
+            .map((u) => (
             <ChatRoom
               key={u.userId}
               title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}

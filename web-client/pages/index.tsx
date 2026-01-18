@@ -13,6 +13,26 @@ interface Message {
   timestamp: Date;
 }
 
+// API 응답 타입
+interface ApiResponse<T> {
+  data: T;
+  error: null | {
+    code: string;
+    message: string;
+  };
+}
+
+interface CreateRoomRequest {
+  title: string;
+}
+
+interface CreateRoomResponse {
+  roomId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: propNickname }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -92,26 +112,88 @@ export default function Home() {
   const [chatRooms, setChatRooms] = useState(['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9']);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // API Base URL (환경 변수 또는 기본값)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // 채팅방 생성 API 호출 함수
+  const createRoom = async (title: string): Promise<CreateRoomResponse> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `채팅방 생성 실패: ${response.status}`
+        );
+      }
+
+      const apiResponse: ApiResponse<CreateRoomResponse> = await response.json();
+      return apiResponse.data;
+    } catch (err) {
+      // 네트워크 에러 또는 기타 에러 처리
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        throw new Error(
+          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
+        );
+      }
+      throw err;
+    }
+  };
 
   const handleCreateChatRoom = () => {
     setIsModalOpen(true);
+    setError(null); // 모달 열 때 에러 초기화
   };
 
   const handleCloseModal = () => {
+    if (isLoading) return; // 로딩 중에는 닫기 방지
     setIsModalOpen(false);
     setNewChatRoomTitle('');
+    setError(null);
   };
 
-  const handleSaveChatRoom = () => {
-    if (newChatRoomTitle.trim()) {
-      setChatRooms([...chatRooms, newChatRoomTitle.trim()]);
-      setSelectedChatRoom(newChatRoomTitle.trim());
+  const handleSaveChatRoom = async () => {
+    const title = newChatRoomTitle.trim();
+    
+    if (!title) {
+      setError('채팅방 제목을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // API 호출
+      const response = await createRoom(title);
+      
+      // 성공 시 채팅방 목록에 추가
+      setChatRooms([...chatRooms, response.title]);
+      setSelectedChatRoom(response.title);
+      
+      // 모달 닫기
       handleCloseModal();
+    } catch (err) {
+      // 에러 처리
+      const errorMessage = err instanceof Error ? err.message : '채팅방 생성에 실패했습니다.';
+      setError(errorMessage);
+      console.error('채팅방 생성 실패:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isLoading) {
       handleSaveChatRoom();
     }
   };
@@ -469,10 +551,22 @@ export default function Home() {
           transition: all 0.2s;
         }
         
-        .btn-save:hover {
+        .btn-save:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           background: #059669;
+        }
+        
+        .btn-save:disabled,
+        .btn-cancel:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+        
+        .modal-input:disabled {
+          background-color: #f3f4f6;
+          cursor: not-allowed;
         }
         
         @media (max-width: 768px) {
@@ -537,19 +631,40 @@ export default function Home() {
               <input
                 type="text"
                 value={newChatRoomTitle}
-                onChange={(e) => setNewChatRoomTitle(e.target.value)}
+                onChange={(e) => {
+                  setNewChatRoomTitle(e.target.value);
+                  setError(null); // 입력 시 에러 초기화
+                }}
                 onKeyPress={handleKeyPress}
                 placeholder="채팅방 제목을 입력하세요"
                 className="modal-input"
                 autoFocus
+                disabled={isLoading}
               />
+              {error && (
+                <div className="modal-error" style={{ 
+                  color: '#ef4444', 
+                  fontSize: '14px', 
+                  marginTop: '8px' 
+                }}>
+                  {error}
+                </div>
+              )}
             </div>
             <div className="modal-actions">
-              <button onClick={handleCloseModal} className="btn-cancel">
+              <button 
+                onClick={handleCloseModal} 
+                className="btn-cancel"
+                disabled={isLoading}
+              >
                 취소
               </button>
-              <button onClick={handleSaveChatRoom} className="btn-save">
-                저장
+              <button 
+                onClick={handleSaveChatRoom} 
+                className="btn-save"
+                disabled={isLoading || !newChatRoomTitle.trim()}
+              >
+                {isLoading ? '생성 중...' : '저장'}
               </button>
             </div>
           </div>

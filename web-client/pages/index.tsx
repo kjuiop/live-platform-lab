@@ -7,6 +7,9 @@ interface ChatRoomProps {
   nickname?: string;
   connectionStatusText?: string;
   connectedRoomTitle?: string;
+  externalMessages?: Message[];
+  onSendMessage?: (text: string, nickname: string) => void;
+  sendDisabled?: boolean;
 }
 
 interface Message {
@@ -47,6 +50,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   nickname: propNickname,
   connectionStatusText,
   connectedRoomTitle,
+  externalMessages,
+  onSendMessage,
+  sendDisabled = false,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -57,19 +63,28 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const displayedMessages = externalMessages ?? messages;
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [displayedMessages]);
 
   const handleSend = () => {
     if (inputValue.trim()) {
-      const newMessage: Message = {
-        id: Date.now(),
-        nickname: nickname.trim() || '사용자',
-        text: inputValue.trim(),
-        timestamp: new Date(),
-      };
-      setMessages([...messages, newMessage]);
+      const text = inputValue.trim();
+      const nick = nickname.trim() || '사용자';
+
+      if (onSendMessage) {
+        onSendMessage(text, nick);
+      } else {
+        const newMessage: Message = {
+          id: Date.now(),
+          nickname: nick,
+          text,
+          timestamp: new Date(),
+        };
+        setMessages([...messages, newMessage]);
+      }
       setInputValue('');
     }
   };
@@ -94,11 +109,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         </span>
       </div>
       <div className="chat-room-messages">
-        {messages.length === 0 ? (
+        {displayedMessages.length === 0 ? (
           <div className="chat-room-empty">채팅 메시지가 여기에 표시됩니다...</div>
         ) : (
           <>
-            {messages.map((msg) => (
+            {displayedMessages.map((msg) => (
               <div key={msg.id} className="chat-message">
                 <div className="chat-message-content">
                   <span className="chat-message-nickname">{msg.nickname}</span>
@@ -120,6 +135,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
           onKeyPress={handleKeyPress}
           placeholder="메시지를 입력하세요..."
           className="chat-input"
+          disabled={sendDisabled}
         />
         <button onClick={handleSend} className={`chat-send-btn ${isMain ? 'main' : ''}`}>
           전송
@@ -147,6 +163,7 @@ export default function Home() {
   const [connectedRoomId, setConnectedRoomId] = useState<string | null>(null);
   const [wsError, setWsError] = useState<string | null>(null);
   const [lastWsMessage, setLastWsMessage] = useState<string | null>(null);
+  const [mainMessages, setMainMessages] = useState<Message[]>([]);
 
   // API Base URL (환경 변수 또는 기본값)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -257,6 +274,7 @@ export default function Home() {
 
     setWsError(null);
     setLastWsMessage(null);
+    setMainMessages([]);
 
     const wsEndpoint = `${WS_BASE_URL}/ws`;
 
@@ -279,6 +297,40 @@ export default function Home() {
           setLastWsMessage(message?.body ?? '');
           // eslint-disable-next-line no-console
           console.log('[STOMP MESSAGE]', destination, message?.body);
+
+          try {
+            const payload = JSON.parse(message?.body ?? '{}') as {
+              roomId?: string;
+              username?: string;
+              sender?: string;
+              message?: string;
+              sentAt?: string;
+            };
+
+            const text = payload.message ?? message?.body ?? '';
+            const nick = payload.sender || payload.username || '사용자';
+            const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
+
+            setMainMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                nickname: nick,
+                text,
+                timestamp: ts,
+              },
+            ]);
+          } catch {
+            setMainMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                nickname: '사용자',
+                text: message?.body ?? '',
+                timestamp: new Date(),
+              },
+            ]);
+          }
         });
       },
       (e: any) => {
@@ -303,6 +355,29 @@ export default function Home() {
     }
 
     connectWsToRoom(selectedRoomId);
+  };
+
+  const sendChatMessage = (text: string, nickname: string) => {
+    if (!isWsConnected || !stompClientRef.current || !connectedRoomId) {
+      // 연결 상태 표시는 헤더에만 하기로 했으니, 여기서는 조용히 로그만 남김
+      // eslint-disable-next-line no-console
+      console.warn('WebSocket not connected. Cannot send message.');
+      return;
+    }
+
+    const messageData = {
+      roomId: connectedRoomId,
+      username: nickname,
+      sender: nickname,
+      message: text,
+    };
+
+    try {
+      stompClientRef.current.send('/pub/chat.send', {}, JSON.stringify(messageData));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to send STOMP message', e);
+    }
   };
 
   const handleCloseModal = () => {
@@ -864,6 +939,9 @@ export default function Home() {
                   ? rooms.find((r) => r.roomId === connectedRoomId)?.title || connectedRoomId
                   : undefined
               }
+              externalMessages={mainMessages}
+              onSendMessage={sendChatMessage}
+              sendDisabled={!isWsConnected || !connectedRoomId}
             />
           </div>
 

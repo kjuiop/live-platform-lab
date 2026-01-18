@@ -1,8 +1,8 @@
 package org.giglab.live.infrastructure.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.domain.model.Room;
@@ -31,9 +32,12 @@ public class RedisRoomRepository implements RoomRepository {
   private static final Duration ROOM_TTL = Duration.ofDays(7);
 
   private final RedisTemplate<String, Object> redisTemplate;
+  private final ObjectMapper objectMapper;
 
-  public RedisRoomRepository(RedisTemplate<String, Object> redisTemplate) {
+  public RedisRoomRepository(
+      RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
     this.redisTemplate = redisTemplate;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -110,18 +114,17 @@ public class RedisRoomRepository implements RoomRepository {
         return Stream.empty();
       }
 
-      List<String> expiredRoomIds = new ArrayList<>();
-      for (int i = 0; i < roomIds.size(); i++) {
-        if (rooms.get(i) == null) {
-          expiredRoomIds.add(roomIds.get(i));
-        }
-      }
+      List<String> expiredRoomIds =
+          IntStream.range(0, rooms.size())
+              .filter(i -> rooms.get(i) == null)
+              .mapToObj(roomIds::get)
+              .toList();
 
       if (!expiredRoomIds.isEmpty()) {
         removeIndexAsync(expiredRoomIds);
       }
 
-      return rooms.stream().filter(Objects::nonNull).map(obj -> (Room) obj);
+      return rooms.stream().filter(Objects::nonNull).map(this::convertToRoom);
     } catch (Exception e) {
       log.error("Failed to get rooms: roomId={}, error={}", roomIds, e.getMessage(), e);
       throw new RedisOperationException("FIND_BY_IDS", ROOM_KEY_PREFIX, e.getMessage(), e);
@@ -145,7 +148,7 @@ public class RedisRoomRepository implements RoomRepository {
       // 3. service 에서 다시 GetRoomResponse 로 변환
       return rooms.stream()
           .filter(Objects::nonNull)
-          .map(obj -> (Room) obj)
+          .map(this::convertToRoom)
           .collect(Collectors.toList());
     } catch (Exception e) {
       log.error("Failed to get rooms: roomId={}, error={}", roomIds, e.getMessage(), e);
@@ -169,6 +172,17 @@ public class RedisRoomRepository implements RoomRepository {
           e);
       throw new RedisOperationException("FIND_BY_ID", roomId, e.getMessage(), e);
     }
+  }
+
+  private Room convertToRoom(Object obj) {
+    if (obj == null) {
+      return null;
+    }
+    if (obj instanceof Room) {
+      return (Room) obj;
+    }
+
+    return objectMapper.convertValue(obj, Room.class);
   }
 
   private void removeIndexAsync(List<String> expiredRoomIds) {

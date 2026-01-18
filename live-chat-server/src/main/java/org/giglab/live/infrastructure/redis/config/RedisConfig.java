@@ -10,7 +10,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 public class RedisConfig {
 
   @Bean
-  public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+  public RedisTemplate<String, Object> redisTemplate(
+      RedisConnectionFactory connectionFactory, JsonRedisSerializer jsonRedisSerializer) {
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
 
@@ -18,10 +19,9 @@ public class RedisConfig {
     template.setKeySerializer(RedisSerializer.string());
     template.setHashKeySerializer(RedisSerializer.string());
 
-    // value 는 JSON 으로 직렬화
-    template.setValueSerializer(RedisSerializer.json());
-    template.setHashValueSerializer(RedisSerializer.json());
-
+    // value 는 JSON 으로 직렬화 (custom serializer 사용)
+    template.setValueSerializer(jsonRedisSerializer);
+    template.setHashValueSerializer(jsonRedisSerializer);
     template.afterPropertiesSet();
     return template;
   }

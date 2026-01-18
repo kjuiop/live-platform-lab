@@ -33,6 +33,11 @@ interface CreateRoomResponse {
   updatedAt: string;
 }
 
+interface RoomListItem {
+  roomId: string;
+  title: string;
+}
+
 const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: propNickname }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -108,8 +113,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ title, isMain = false, nickname: pr
 };
 
 export default function Home() {
-  const [selectedChatRoom, setSelectedChatRoom] = useState('메인 채팅방');
-  const [chatRooms, setChatRooms] = useState(['메인 채팅방', '서브 채팅방 1', '서브 채팅방 2', '서브 채팅방 3', '서브 채팅방 4', '서브 채팅방 5', '서브 채팅방 6', '서브 채팅방 7', '서브 채팅방 8', '서브 채팅방 9']);
+  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
+  const [rooms, setRooms] = useState<RoomListItem[]>([]);
+  const [isRoomsLoading, setIsRoomsLoading] = useState(false);
+  const [roomsError, setRoomsError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -117,6 +124,35 @@ export default function Home() {
 
   // API Base URL (환경 변수 또는 기본값)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // 채팅방 목록 조회 API 호출 함수
+  const getRooms = async (size = 50): Promise<RoomListItem[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/rooms?size=${size}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message || `채팅방 목록 조회 실패: ${response.status}`
+        );
+      }
+
+      const apiResponse: ApiResponse<RoomListItem[]> = await response.json();
+      return apiResponse.data ?? [];
+    } catch (err) {
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        throw new Error(
+          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
+        );
+      }
+      throw err;
+    }
+  };
 
   // 채팅방 생성 API 호출 함수
   const createRoom = async (title: string): Promise<CreateRoomResponse> => {
@@ -177,8 +213,9 @@ export default function Home() {
       const response = await createRoom(title);
       
       // 성공 시 채팅방 목록에 추가
-      setChatRooms([...chatRooms, response.title]);
-      setSelectedChatRoom(response.title);
+      const newRoom: RoomListItem = { roomId: response.roomId, title: response.title };
+      setRooms((prev) => [...prev, newRoom]);
+      setSelectedRoomId(response.roomId);
       
       // 모달 닫기
       handleCloseModal();
@@ -191,6 +228,41 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsRoomsLoading(true);
+      setRoomsError(null);
+      try {
+        const fetched = await getRooms(50);
+        if (cancelled) return;
+
+        setRooms(fetched);
+        if (fetched.length > 0) {
+          setSelectedRoomId((prev) => prev || fetched[0].roomId);
+        } else {
+          setSelectedRoomId('');
+        }
+      } catch (e) {
+        if (cancelled) return;
+        const message =
+          e instanceof Error ? e.message : '채팅방 목록 조회에 실패했습니다.';
+        setRoomsError(message);
+      } finally {
+        if (!cancelled) {
+          setIsRoomsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
@@ -591,27 +663,43 @@ export default function Home() {
 
         <div className="main-content">
           <div className="main-chat-wrapper">
-            <ChatRoom title={selectedChatRoom} isMain={true} nickname="메인 사용자" />
+            <ChatRoom
+              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
+              isMain={true}
+              nickname="메인 사용자"
+            />
           </div>
 
           <div className="control-panel">
             <div className="control-panel-title">채팅방 선택</div>
             <div className="control-panel-controls">
               <select
-                value={selectedChatRoom}
-                onChange={(e) => setSelectedChatRoom(e.target.value)}
+                value={selectedRoomId}
+                onChange={(e) => setSelectedRoomId(e.target.value)}
                 className="control-select"
+                disabled={isRoomsLoading || rooms.length === 0}
               >
-                {chatRooms.map((room) => (
-                  <option key={room} value={room}>
-                    {room}
-                  </option>
-                ))}
+                {isRoomsLoading ? (
+                  <option value="">불러오는 중...</option>
+                ) : rooms.length === 0 ? (
+                  <option value="">채팅방이 없습니다</option>
+                ) : (
+                  rooms.map((room) => (
+                    <option key={room.roomId} value={room.roomId}>
+                      {room.title}
+                    </option>
+                  ))
+                )}
               </select>
               <button onClick={handleCreateChatRoom} className="btn-create">
                 생성
               </button>
             </div>
+            {roomsError && (
+              <div style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>
+                {roomsError}
+              </div>
+            )}
           </div>
         </div>
 

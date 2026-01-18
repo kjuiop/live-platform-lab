@@ -2,7 +2,6 @@ package org.giglab.live.infrastructure.redis;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.domain.model.Room;
@@ -110,12 +110,11 @@ public class RedisRoomRepository implements RoomRepository {
         return Stream.empty();
       }
 
-      List<String> expiredRoomIds = new ArrayList<>();
-      for (int i = 0; i < roomIds.size(); i++) {
-        if (rooms.get(i) == null) {
-          expiredRoomIds.add(roomIds.get(i));
-        }
-      }
+      List<String> expiredRoomIds =
+          IntStream.range(0, rooms.size())
+              .filter(i -> rooms.get(i) == null)
+              .mapToObj(roomIds::get)
+              .toList();
 
       if (!expiredRoomIds.isEmpty()) {
         removeIndexAsync(expiredRoomIds);

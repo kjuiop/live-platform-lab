@@ -44,6 +44,20 @@ interface RoomListItem {
   title: string;
 }
 
+type DemoUser = {
+  key: string;
+  userId: string;
+  username: string;
+  sender: string;
+  isMain?: boolean;
+};
+
+type ConnectionState = {
+  connected: boolean;
+  connectedRoomId: string | null;
+  error: string | null;
+};
+
 const ChatRoom: React.FC<ChatRoomProps> = ({
   title,
   isMain = false,
@@ -70,6 +84,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   }, [displayedMessages]);
 
   const handleSend = () => {
+    if (sendDisabled) {
+      return;
+    }
     if (inputValue.trim()) {
       const text = inputValue.trim();
       const nick = nickname.trim() || '사용자';
@@ -137,7 +154,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
           className="chat-input"
           disabled={sendDisabled}
         />
-        <button onClick={handleSend} className={`chat-send-btn ${isMain ? 'main' : ''}`}>
+        <button
+          onClick={handleSend}
+          className={`chat-send-btn ${isMain ? 'main' : ''}`}
+          disabled={sendDisabled}
+        >
           전송
         </button>
       </div>
@@ -155,15 +176,27 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // WebSocket(STOMP) 상태
-  const stompClientRef = useRef<any>(null);
-  const subscriptionRef = useRef<any>(null);
+  // WebSocket(STOMP) 상태 (유저별로 분리 커넥션)
+  const clientsRef = useRef<Record<string, any>>({});
+  const subsRef = useRef<Record<string, any>>({});
   const [areWsScriptsReady, setAreWsScriptsReady] = useState(false);
-  const [isWsConnected, setIsWsConnected] = useState(false);
-  const [connectedRoomId, setConnectedRoomId] = useState<string | null>(null);
-  const [wsError, setWsError] = useState<string | null>(null);
-  const [lastWsMessage, setLastWsMessage] = useState<string | null>(null);
   const [mainMessages, setMainMessages] = useState<Message[]>([]);
+  const [connections, setConnections] = useState<Record<string, ConnectionState>>({});
+  const seenMessageKeysRef = useRef<Set<string>>(new Set());
+
+  // 데모용 사용자 목록 (각 채팅창 별 identity)
+  const demoUsers: DemoUser[] = [
+    { key: 'main', userId: 'main', username: 'main@example.com', sender: '메인 사용자', isMain: true },
+    { key: 'user1', userId: 'user1', username: 'user1@example.com', sender: '사용자1' },
+    { key: 'user2', userId: 'user2', username: 'user2@example.com', sender: '사용자2' },
+    { key: 'user3', userId: 'user3', username: 'user3@example.com', sender: '사용자3' },
+    { key: 'user4', userId: 'user4', username: 'user4@example.com', sender: '사용자4' },
+    { key: 'user5', userId: 'user5', username: 'user5@example.com', sender: '사용자5' },
+    { key: 'user6', userId: 'user6', username: 'user6@example.com', sender: '사용자6' },
+    { key: 'user7', userId: 'user7', username: 'user7@example.com', sender: '사용자7' },
+    { key: 'user8', userId: 'user8', username: 'user8@example.com', sender: '사용자8' },
+    { key: 'user9', userId: 'user9', username: 'user9@example.com', sender: '사용자9' },
+  ];
 
   // API Base URL (환경 변수 또는 기본값)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -243,43 +276,102 @@ export default function Home() {
     }
   };
 
-  const disconnectWs = () => {
+  const disconnectUserWs = (userKey: string) => {
     try {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
+      if (subsRef.current[userKey]) {
+        subsRef.current[userKey].unsubscribe?.();
+        delete subsRef.current[userKey];
       }
-      if (stompClientRef.current) {
-        stompClientRef.current.disconnect?.();
-        stompClientRef.current = null;
+      if (clientsRef.current[userKey]) {
+        clientsRef.current[userKey].disconnect?.();
+        delete clientsRef.current[userKey];
       }
     } finally {
-      setIsWsConnected(false);
-      setConnectedRoomId(null);
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: { connected: false, connectedRoomId: null, error: null },
+      }));
     }
   };
 
-  const connectWsToRoom = (roomId: string) => {
+  const appendIncomingMessage = (rawBody: string) => {
+    // 여러 커넥션에서 동일 브로드캐스트를 N번 받을 수 있어서 dedupe
+    const key = rawBody;
+    if (seenMessageKeysRef.current.has(key)) {
+      return;
+    }
+    seenMessageKeysRef.current.add(key);
+    if (seenMessageKeysRef.current.size > 500) {
+      // 간단한 사이즈 제한 (테스트용)
+      seenMessageKeysRef.current = new Set(Array.from(seenMessageKeysRef.current).slice(-250));
+    }
+
+    try {
+      const payload = JSON.parse(rawBody ?? '{}') as {
+        roomId?: string;
+        username?: string;
+        sender?: string;
+        message?: string;
+        sentAt?: string;
+      };
+
+      const text = payload.message ?? rawBody ?? '';
+      const nick = payload.sender || payload.username || '사용자';
+      const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
+
+      setMainMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          nickname: nick,
+          text,
+          timestamp: ts,
+        },
+      ]);
+    } catch {
+      setMainMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          nickname: '사용자',
+          text: rawBody ?? '',
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  };
+
+  const connectUserWsToRoom = (userKey: string, roomId: string) => {
     if (!areWsScriptsReady) {
-      setWsError('WebSocket 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: {
+          connected: false,
+          connectedRoomId: null,
+          error: 'WebSocket 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
+        },
+      }));
       return;
     }
 
     const SockJS = (window as any).SockJS;
     const StompJs = (window as any).StompJs;
     if (!SockJS || !StompJs) {
-      setWsError('SockJS 또는 STOMP 라이브러리가 로드되지 않았습니다.');
+      setConnections((prev) => ({
+        ...prev,
+        [userKey]: {
+          connected: false,
+          connectedRoomId: null,
+          error: 'SockJS 또는 STOMP 라이브러리가 로드되지 않았습니다.',
+        },
+      }));
       return;
     }
 
-    setWsError(null);
-    setLastWsMessage(null);
-    setMainMessages([]);
+    // 기존 연결 정리 후 재연결
+    disconnectUserWs(userKey);
 
     const wsEndpoint = `${WS_BASE_URL}/ws`;
-
-    // 기존 연결/구독 정리 후 재연결
-    disconnectWs();
 
     const socket = new SockJS(wsEndpoint);
     const client = StompJs.Stomp.over(socket);
@@ -288,55 +380,28 @@ export default function Home() {
     client.connect(
       {},
       () => {
-        stompClientRef.current = client;
-        setIsWsConnected(true);
-        setConnectedRoomId(roomId);
+        clientsRef.current[userKey] = client;
+        setConnections((prev) => ({
+          ...prev,
+          [userKey]: { connected: true, connectedRoomId: roomId, error: null },
+        }));
 
         const destination = `/sub/room/${roomId}`;
-        subscriptionRef.current = client.subscribe(destination, (message: any) => {
-          setLastWsMessage(message?.body ?? '');
+        subsRef.current[userKey] = client.subscribe(destination, (message: any) => {
           // eslint-disable-next-line no-console
           console.log('[STOMP MESSAGE]', destination, message?.body);
-
-          try {
-            const payload = JSON.parse(message?.body ?? '{}') as {
-              roomId?: string;
-              username?: string;
-              sender?: string;
-              message?: string;
-              sentAt?: string;
-            };
-
-            const text = payload.message ?? message?.body ?? '';
-            const nick = payload.sender || payload.username || '사용자';
-            const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
-
-            setMainMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                nickname: nick,
-                text,
-                timestamp: ts,
-              },
-            ]);
-          } catch {
-            setMainMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                nickname: '사용자',
-                text: message?.body ?? '',
-                timestamp: new Date(),
-              },
-            ]);
-          }
+          appendIncomingMessage(message?.body ?? '');
         });
       },
       (e: any) => {
-        setWsError(typeof e === 'string' ? e : 'WebSocket 연결에 실패했습니다.');
-        setIsWsConnected(false);
-        setConnectedRoomId(null);
+        setConnections((prev) => ({
+          ...prev,
+          [userKey]: {
+            connected: false,
+            connectedRoomId: null,
+            error: typeof e === 'string' ? e : 'WebSocket 연결에 실패했습니다.',
+          },
+        }));
       }
     );
   };
@@ -348,17 +413,32 @@ export default function Home() {
     }
     setRoomsError(null);
 
-    // 이미 이 방에 연결되어 있으면 "연결 끊기"로 동작
-    if (isWsConnected && connectedRoomId === selectedRoomId) {
-      disconnectWs();
+    const allConnectedToSelected = demoUsers.every((u) => {
+      const s = connections[u.key];
+      return s?.connected && s.connectedRoomId === selectedRoomId;
+    });
+
+    if (allConnectedToSelected) {
+      // 전체 연결 끊기
+      demoUsers.forEach((u) => disconnectUserWs(u.key));
       return;
     }
 
-    connectWsToRoom(selectedRoomId);
+    // 전체 유저를 각각 별도 커넥션으로 연결
+    setMainMessages([]);
+    seenMessageKeysRef.current = new Set();
+    demoUsers.forEach((u) => connectUserWsToRoom(u.key, selectedRoomId));
   };
 
-  const sendChatMessage = (text: string, nickname: string) => {
-    if (!isWsConnected || !stompClientRef.current || !connectedRoomId) {
+  const sendChatMessage = (
+    text: string,
+    identity: { userId: string; username: string; sender: string }
+  ) => {
+    const userKey = identity.userId === 'main' ? 'main' : identity.userId;
+    const state = connections[userKey];
+    const client = clientsRef.current[userKey];
+
+    if (!state?.connected || !client || !state.connectedRoomId) {
       // 연결 상태 표시는 헤더에만 하기로 했으니, 여기서는 조용히 로그만 남김
       // eslint-disable-next-line no-console
       console.warn('WebSocket not connected. Cannot send message.');
@@ -366,14 +446,15 @@ export default function Home() {
     }
 
     const messageData = {
-      roomId: connectedRoomId,
-      username: nickname,
-      sender: nickname,
+      roomId: state.connectedRoomId,
+      userId: identity.userId,
+      username: identity.username,
+      sender: identity.sender,
       message: text,
     };
 
     try {
-      stompClientRef.current.send('/pub/chat.send', {}, JSON.stringify(messageData));
+      client.send('/pub/chat.send', {}, JSON.stringify(messageData));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to send STOMP message', e);
@@ -457,7 +538,7 @@ export default function Home() {
   // 페이지 이탈/언마운트 시 연결 정리
   useEffect(() => {
     return () => {
-      disconnectWs();
+      demoUsers.forEach((u) => disconnectUserWs(u.key));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -933,15 +1014,25 @@ export default function Home() {
               title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
               isMain={true}
               nickname="메인 사용자"
-              connectionStatusText={isWsConnected ? '연결됨' : '연결 안 됨'}
+              connectionStatusText={
+                connections['main']?.connected ? '연결됨' : '연결 안 됨'
+              }
               connectedRoomTitle={
-                connectedRoomId
-                  ? rooms.find((r) => r.roomId === connectedRoomId)?.title || connectedRoomId
+                connections['main']?.connectedRoomId
+                  ? rooms.find((r) => r.roomId === connections['main']?.connectedRoomId)?.title ||
+                    connections['main']?.connectedRoomId ||
+                    undefined
                   : undefined
               }
               externalMessages={mainMessages}
-              onSendMessage={sendChatMessage}
-              sendDisabled={!isWsConnected || !connectedRoomId}
+              onSendMessage={(text) =>
+                sendChatMessage(text, {
+                  userId: 'main',
+                  username: 'main@example.com',
+                  sender: '메인 사용자',
+                })
+              }
+              sendDisabled={!connections['main']?.connected}
             />
           </div>
 
@@ -977,13 +1068,13 @@ export default function Home() {
                   !areWsScriptsReady
                     ? 'WebSocket 라이브러리 로딩 중...'
                     : selectedRoomId
-                      ? (isWsConnected && connectedRoomId === selectedRoomId
-                        ? '연결을 끊습니다'
-                        : '선택한 채팅방에 연결')
+                      ? '선택한 채팅방에 연결(테스트: 유저별로 분리 커넥션)'
                       : '채팅방을 먼저 선택하세요'
                 }
               >
-                {isWsConnected && connectedRoomId === selectedRoomId ? '연결 끊기' : '연결'}
+                {demoUsers.every((u) => connections[u.key]?.connected && connections[u.key]?.connectedRoomId === selectedRoomId)
+                  ? '연결 끊기'
+                  : '연결'}
               </button>
             </div>
             {roomsError && (
@@ -996,8 +1087,25 @@ export default function Home() {
         </div>
 
         <div className="sub-chat-grid">
-          {Array.from({ length: 9 }, (_, i) => (
-            <ChatRoom key={i} title={`서브 채팅방 ${i + 1}`} nickname={`사용자${i + 1}`} />
+          {demoUsers.map((u) => (
+            <ChatRoom
+              key={u.userId}
+              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
+              nickname={u.sender}
+              connectionStatusText={
+                connections[u.key]?.connected ? '연결됨' : '연결 안 됨'
+              }
+              connectedRoomTitle={
+                connections[u.key]?.connectedRoomId
+                  ? rooms.find((r) => r.roomId === connections[u.key]?.connectedRoomId)?.title ||
+                    connections[u.key]?.connectedRoomId ||
+                    undefined
+                  : undefined
+              }
+              externalMessages={mainMessages}
+              onSendMessage={(text) => sendChatMessage(text, u)}
+              sendDisabled={!connections[u.key]?.connected}
+            />
           ))}
         </div>
       </div>

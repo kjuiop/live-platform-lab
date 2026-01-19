@@ -1,4 +1,4 @@
-package org.giglab.live.application.dto;
+package org.giglab.live.application.dto.room;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

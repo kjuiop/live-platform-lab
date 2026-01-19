@@ -13,7 +13,7 @@ public class ActionDispatcher {
   private final Map<String, ActionHandler<ActionRequest, ActionResponse>> handlers;
 
   public ActionDispatcher(List<ActionHandler<ActionRequest, ActionResponse>> list) {
-    this.handlers = list.stream().collect(Collectors.toMap(ActionHandler::action, h -> h));
+    this.handlers = list.stream().collect(Collectors.toMap(h -> h.action().getKey(), h -> h));
   }
 
   public ActionResponse dispatch(ActionRequest req) {

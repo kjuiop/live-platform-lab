@@ -309,14 +309,14 @@ export default function Home() {
     try {
       const payload = JSON.parse(rawBody ?? '{}') as {
         roomId?: string;
-        username?: string;
-        sender?: string;
-        message?: string;
+        action?: string;
+        actor?: { userId?: string; username?: string; sender?: string };
+        payload?: { message?: string };
         sentAt?: string;
       };
 
-      const text = payload.message ?? rawBody ?? '';
-      const nick = payload.sender || payload.username || '사용자';
+      const text = payload.payload?.message ?? rawBody ?? '';
+      const nick = payload.actor?.sender || payload.actor?.username || '사용자';
       const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
 
       setMainMessages((prev) => [
@@ -447,14 +447,17 @@ export default function Home() {
 
     const messageData = {
       roomId: state.connectedRoomId,
-      userId: identity.userId,
-      username: identity.username,
-      sender: identity.sender,
-      message: text,
+      action: 'CHAT.MESSAGE',
+      actor: {
+        userId: identity.userId,
+        username: identity.username,
+        sender: identity.sender,
+      },
+      payload: { message: text },
     };
 
     try {
-      client.send('/pub/chat.send', {}, JSON.stringify(messageData));
+      client.send('/send/room.action', {}, JSON.stringify(messageData));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to send STOMP message', e);

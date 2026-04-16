@@ -75,8 +75,24 @@ class RoomActionControllerTest {
         .thenThrow(new IllegalArgumentException("Unsupported action"));
 
     // When & Then
+    // 단위 테스트에서 직접 handle() 호출 시 예외가 전파됨
+    // 실제 Spring STOMP 인프라에서는 @MessageExceptionHandler 가 이를 가로채 세션을 유지함
     assertThrows(IllegalArgumentException.class, () -> controller.handle(request));
     verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
+  }
+
+  @Test
+  void handleExceptionShouldNotBroadcast() {
+    // Given
+    IllegalArgumentException exception =
+        new IllegalArgumentException("Unsupported action: UNKNOWN");
+
+    // When
+    controller.handleException(exception);
+
+    // Then
+    verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
+    verify(messaging, never()).convertAndSendToUser(anyString(), anyString(), any(Object.class));
   }
 
   @Test

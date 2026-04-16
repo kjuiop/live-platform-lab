@@ -16,7 +16,7 @@ public class JoinRoom implements ActionHandler<ActionRequest, ActionResponse> {
 
   @Override
   public ActionResponse execute(ActionRequest req) {
-    if (req.action() == null) {
+    if (req.actor() == null) {
       throw new IllegalArgumentException("actor is required for CHAT.JOIN");
     }
     return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());

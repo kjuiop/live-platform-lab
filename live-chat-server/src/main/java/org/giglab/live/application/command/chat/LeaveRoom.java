@@ -16,9 +16,6 @@ public class LeaveRoom implements ActionHandler<ActionRequest, ActionResponse> {
 
   @Override
   public ActionResponse execute(ActionRequest req) {
-    if (req.actor() == null) {
-      throw new IllegalArgumentException("actor is required for CHAT.LEAVE");
-    }
     return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
   }
 }

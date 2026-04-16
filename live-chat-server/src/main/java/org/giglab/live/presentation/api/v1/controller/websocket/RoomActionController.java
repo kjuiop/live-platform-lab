@@ -1,5 +1,6 @@
 package org.giglab.live.presentation.api.v1.controller.websocket;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionDispatcher;
@@ -21,7 +22,7 @@ public class RoomActionController {
   private final SimpMessageSendingOperations operations;
 
   @MessageMapping(DESTINATION)
-  public void handle(ActionRequest req) {
+  public void handle(@Valid ActionRequest req) {
     ActionResponse res = dispatcher.dispatch(req);
     operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), res);
   }

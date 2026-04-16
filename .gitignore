@@ -47,3 +47,4 @@ db_dev.mv.db
 db_dev.trace.db
 .env
 .DS_Store
+docs/claude

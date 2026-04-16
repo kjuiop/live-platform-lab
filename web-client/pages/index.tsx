@@ -1,1168 +1,341 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Script from 'next/script';
+import React from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
 
-interface ChatRoomProps {
-  title: string;
-  isMain?: boolean;
-  nickname?: string;
-  connectionStatusText?: string;
-  connectedRoomTitle?: string;
-  externalMessages?: Message[];
-  onSendMessage?: (text: string, nickname: string) => void;
-  sendDisabled?: boolean;
-}
+const features = [
+  {
+    icon: '📄',
+    title: 'PDF 상품 임베딩',
+    description: '상품 정보 PDF를 업로드하면 자동으로 벡터화하여 AI 검색에 활용합니다.',
+    status: 'planned',
+  },
+  {
+    icon: '🤖',
+    title: 'AI 고객 Q&A',
+    description: '방송 중 고객 질문에 RAG 기반으로 상품 정보를 근거로 한 답변을 제공합니다.',
+    status: 'planned',
+  },
+  {
+    icon: '💬',
+    title: '실시간 채팅',
+    description: 'WebSocket/STOMP 기반의 라이브 채팅으로 고객과 실시간으로 소통합니다.',
+    status: 'done',
+  },
+  {
+    icon: '📊',
+    title: '호스트 인사이트',
+    description: '채팅 메시지를 분석하여 호스트에게 실시간 반응 및 인사이트를 제공합니다.',
+    status: 'planned',
+  },
+];
 
-interface Message {
-  id: number;
-  nickname: string;
-  text: string;
-  timestamp: Date;
-}
-
-// API 응답 타입
-interface ApiResponse<T> {
-  data: T;
-  error: null | {
-    code: string;
-    message: string;
-  };
-}
-
-interface CreateRoomRequest {
-  title: string;
-}
-
-interface CreateRoomResponse {
-  roomId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface RoomListItem {
-  roomId: string;
-  title: string;
-}
-
-type DemoUser = {
-  key: string;
-  userId: string;
-  username: string;
-  sender: string;
-  isMain?: boolean;
-};
-
-type ConnectionState = {
-  connected: boolean;
-  connectedRoomId: string | null;
-  error: string | null;
-};
-
-const ChatRoom: React.FC<ChatRoomProps> = ({
-  title,
-  isMain = false,
-  nickname: propNickname,
-  connectionStatusText,
-  connectedRoomTitle,
-  externalMessages,
-  onSendMessage,
-  sendDisabled = false,
-}) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [nickname, setNickname] = useState(propNickname || '사용자');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const displayedMessages = externalMessages ?? messages;
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [displayedMessages]);
-
-  const handleSend = () => {
-    if (sendDisabled) {
-      return;
-    }
-    if (inputValue.trim()) {
-      const text = inputValue.trim();
-      const nick = nickname.trim() || '사용자';
-
-      if (onSendMessage) {
-        onSendMessage(text, nick);
-      } else {
-        const newMessage: Message = {
-          id: Date.now(),
-          nickname: nick,
-          text,
-          timestamp: new Date(),
-        };
-        setMessages([...messages, newMessage]);
-      }
-      setInputValue('');
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSend();
-    }
-  };
-
-  return (
-    <div className={`chat-room ${isMain ? 'main' : ''}`}>
-      <div className={`chat-room-header ${isMain ? 'main' : ''}`}>
-        <span>{nickname}의 채팅창</span>
-        <span className="connection-right">
-          {connectedRoomTitle ? (
-            <span className="connected-room-title">{connectedRoomTitle}</span>
-          ) : null}
-          {connectionStatusText ? (
-            <span className="connection-status">{connectionStatusText}</span>
-          ) : null}
-        </span>
-      </div>
-      <div className="chat-room-messages">
-        {displayedMessages.length === 0 ? (
-          <div className="chat-room-empty">채팅 메시지가 여기에 표시됩니다...</div>
-        ) : (
-          <>
-            {displayedMessages.map((msg) => (
-              <div key={msg.id} className="chat-message">
-                <div className="chat-message-content">
-                  <span className="chat-message-nickname">{msg.nickname}</span>
-                  <span className="chat-message-separator">|</span>
-                  <span className="chat-message-text">{msg.text}</span>
-                  <span className="chat-message-time">{msg.timestamp.toLocaleTimeString()}</span>
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </>
-        )}
-      </div>
-      <div className="chat-room-input">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="메시지를 입력하세요..."
-          className="chat-input"
-          disabled={sendDisabled}
-        />
-        <button
-          onClick={handleSend}
-          className={`chat-send-btn ${isMain ? 'main' : ''}`}
-          disabled={sendDisabled}
-        >
-          전송
-        </button>
-      </div>
-    </div>
-  );
-};
+const techStack = [
+  { name: 'Spring Boot', desc: 'Java 백엔드' },
+  { name: 'Spring AI', desc: 'LLM / RAG' },
+  { name: 'ElasticSearch', desc: '벡터 + 키워드 검색' },
+  { name: 'STOMP / WebSocket', desc: '실시간 채팅' },
+  { name: 'Redis', desc: '캐싱' },
+  { name: 'Next.js', desc: '프론트엔드' },
+];
 
 export default function Home() {
-  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-  const [rooms, setRooms] = useState<RoomListItem[]>([]);
-  const [isRoomsLoading, setIsRoomsLoading] = useState(false);
-  const [roomsError, setRoomsError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newChatRoomTitle, setNewChatRoomTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // WebSocket(STOMP) 상태 (유저별로 분리 커넥션)
-  const clientsRef = useRef<Record<string, any>>({});
-  const subsRef = useRef<Record<string, any>>({});
-  const [areWsScriptsReady, setAreWsScriptsReady] = useState(false);
-  const [mainMessages, setMainMessages] = useState<Message[]>([]);
-  const [connections, setConnections] = useState<Record<string, ConnectionState>>({});
-  const seenMessageKeysRef = useRef<Set<string>>(new Set());
-
-  // 데모용 사용자 목록 (각 채팅창 별 identity)
-  const demoUsers: DemoUser[] = [
-    { key: 'main', userId: 'main', username: 'main@example.com', sender: '메인 사용자', isMain: true },
-    { key: 'user1', userId: 'user1', username: 'user1@example.com', sender: '사용자1' },
-    { key: 'user2', userId: 'user2', username: 'user2@example.com', sender: '사용자2' },
-    { key: 'user3', userId: 'user3', username: 'user3@example.com', sender: '사용자3' },
-    { key: 'user4', userId: 'user4', username: 'user4@example.com', sender: '사용자4' },
-    { key: 'user5', userId: 'user5', username: 'user5@example.com', sender: '사용자5' },
-    { key: 'user6', userId: 'user6', username: 'user6@example.com', sender: '사용자6' },
-    { key: 'user7', userId: 'user7', username: 'user7@example.com', sender: '사용자7' },
-    { key: 'user8', userId: 'user8', username: 'user8@example.com', sender: '사용자8' },
-    { key: 'user9', userId: 'user9', username: 'user9@example.com', sender: '사용자9' },
-  ];
-
-  // API Base URL (환경 변수 또는 기본값)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL;
-
-  // 채팅방 목록 조회 API 호출 함수
-  const getRooms = async (size = 50): Promise<RoomListItem[]> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/rooms?size=${size}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || `채팅방 목록 조회 실패: ${response.status}`
-        );
-      }
-
-      const apiResponse: ApiResponse<RoomListItem[]> = await response.json();
-      return apiResponse.data ?? [];
-    } catch (err) {
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        throw new Error(
-          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
-        );
-      }
-      throw err;
-    }
-  };
-
-  // 채팅방 생성 API 호출 함수
-  const createRoom = async (title: string): Promise<CreateRoomResponse> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || `채팅방 생성 실패: ${response.status}`
-        );
-      }
-
-      const apiResponse: ApiResponse<CreateRoomResponse> = await response.json();
-      return apiResponse.data;
-    } catch (err) {
-      // 네트워크 에러 또는 기타 에러 처리
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        throw new Error(
-          `서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요. (${API_BASE_URL})`
-        );
-      }
-      throw err;
-    }
-  };
-
-  const handleCreateChatRoom = () => {
-    setIsModalOpen(true);
-    setError(null); // 모달 열 때 에러 초기화
-  };
-
-  const markWsScriptsReady = () => {
-    if (typeof window === 'undefined') return;
-    const SockJS = (window as any).SockJS;
-    const StompJs = (window as any).StompJs;
-    if (SockJS && StompJs) {
-      setAreWsScriptsReady(true);
-    }
-  };
-
-  const disconnectUserWs = (userKey: string) => {
-    try {
-      if (subsRef.current[userKey]) {
-        subsRef.current[userKey].unsubscribe?.();
-        delete subsRef.current[userKey];
-      }
-      if (clientsRef.current[userKey]) {
-        clientsRef.current[userKey].disconnect?.();
-        delete clientsRef.current[userKey];
-      }
-    } finally {
-      setConnections((prev) => ({
-        ...prev,
-        [userKey]: { connected: false, connectedRoomId: null, error: null },
-      }));
-    }
-  };
-
-  const appendIncomingMessage = (rawBody: string) => {
-    // 여러 커넥션에서 동일 브로드캐스트를 N번 받을 수 있어서 dedupe
-    const key = rawBody;
-    if (seenMessageKeysRef.current.has(key)) {
-      return;
-    }
-    seenMessageKeysRef.current.add(key);
-    if (seenMessageKeysRef.current.size > 500) {
-      // 간단한 사이즈 제한 (테스트용)
-      seenMessageKeysRef.current = new Set(Array.from(seenMessageKeysRef.current).slice(-250));
-    }
-
-    try {
-      const payload = JSON.parse(rawBody ?? '{}') as {
-        roomId?: string;
-        action?: string;
-        actor?: { userId?: string; username?: string; sender?: string };
-        payload?: { message?: string };
-        sentAt?: string;
-      };
-
-      const text = payload.payload?.message ?? rawBody ?? '';
-      const nick = payload.actor?.sender || payload.actor?.username || '사용자';
-      const ts = payload.sentAt ? new Date(payload.sentAt) : new Date();
-
-      setMainMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + Math.random(),
-          nickname: nick,
-          text,
-          timestamp: ts,
-        },
-      ]);
-    } catch {
-      setMainMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + Math.random(),
-          nickname: '사용자',
-          text: rawBody ?? '',
-          timestamp: new Date(),
-        },
-      ]);
-    }
-  };
-
-  const connectUserWsToRoom = (userKey: string, roomId: string) => {
-    if (!areWsScriptsReady) {
-      setConnections((prev) => ({
-        ...prev,
-        [userKey]: {
-          connected: false,
-          connectedRoomId: null,
-          error: 'WebSocket 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
-        },
-      }));
-      return;
-    }
-
-    const SockJS = (window as any).SockJS;
-    const StompJs = (window as any).StompJs;
-    if (!SockJS || !StompJs) {
-      setConnections((prev) => ({
-        ...prev,
-        [userKey]: {
-          connected: false,
-          connectedRoomId: null,
-          error: 'SockJS 또는 STOMP 라이브러리가 로드되지 않았습니다.',
-        },
-      }));
-      return;
-    }
-
-    // 기존 연결 정리 후 재연결
-    disconnectUserWs(userKey);
-
-    const wsEndpoint = `${WS_BASE_URL}/ws`;
-
-    const socket = new SockJS(wsEndpoint);
-    const client = StompJs.Stomp.over(socket);
-    client.debug = () => {};
-
-    client.connect(
-      {},
-      () => {
-        clientsRef.current[userKey] = client;
-        setConnections((prev) => ({
-          ...prev,
-          [userKey]: { connected: true, connectedRoomId: roomId, error: null },
-        }));
-
-        const destination = `/sub/room/${roomId}`;
-        subsRef.current[userKey] = client.subscribe(destination, (message: any) => {
-          // eslint-disable-next-line no-console
-          console.log('[STOMP MESSAGE]', destination, message?.body);
-          appendIncomingMessage(message?.body ?? '');
-        });
-      },
-      (e: any) => {
-        setConnections((prev) => ({
-          ...prev,
-          [userKey]: {
-            connected: false,
-            connectedRoomId: null,
-            error: typeof e === 'string' ? e : 'WebSocket 연결에 실패했습니다.',
-          },
-        }));
-      }
-    );
-  };
-
-  const handleConnectChatRoom = () => {
-    if (!selectedRoomId) {
-      setRoomsError('연결할 채팅방을 먼저 선택해주세요.');
-      return;
-    }
-    setRoomsError(null);
-
-    const allConnectedToSelected = demoUsers.every((u) => {
-      const s = connections[u.key];
-      return s?.connected && s.connectedRoomId === selectedRoomId;
-    });
-
-    if (allConnectedToSelected) {
-      // 전체 연결 끊기
-      demoUsers.forEach((u) => disconnectUserWs(u.key));
-      return;
-    }
-
-    // 전체 유저를 각각 별도 커넥션으로 연결
-    setMainMessages([]);
-    seenMessageKeysRef.current = new Set();
-    demoUsers.forEach((u) => connectUserWsToRoom(u.key, selectedRoomId));
-  };
-
-  const sendChatMessage = (
-    text: string,
-    identity: { userId: string; username: string; sender: string }
-  ) => {
-    const userKey = identity.userId === 'main' ? 'main' : identity.userId;
-    const state = connections[userKey];
-    const client = clientsRef.current[userKey];
-
-    if (!state?.connected || !client || !state.connectedRoomId) {
-      // 연결 상태 표시는 헤더에만 하기로 했으니, 여기서는 조용히 로그만 남김
-      // eslint-disable-next-line no-console
-      console.warn('WebSocket not connected. Cannot send message.');
-      return;
-    }
-
-    const messageData = {
-      roomId: state.connectedRoomId,
-      action: 'CHAT.MESSAGE',
-      actor: {
-        userId: identity.userId,
-        username: identity.username,
-        sender: identity.sender,
-      },
-      payload: { message: text },
-    };
-
-    try {
-      client.send('/send/room.action', {}, JSON.stringify(messageData));
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to send STOMP message', e);
-    }
-  };
-
-  const handleCloseModal = () => {
-    if (isLoading) return; // 로딩 중에는 닫기 방지
-    setIsModalOpen(false);
-    setNewChatRoomTitle('');
-    setError(null);
-  };
-
-  const handleSaveChatRoom = async () => {
-    const title = newChatRoomTitle.trim();
-    
-    if (!title) {
-      setError('채팅방 제목을 입력해주세요.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // API 호출
-      const response = await createRoom(title);
-      
-      // 성공 시 채팅방 목록에 추가
-      const newRoom: RoomListItem = { roomId: response.roomId, title: response.title };
-      setRooms((prev) => [newRoom, ...prev.filter((r) => r.roomId !== newRoom.roomId)]);
-      setSelectedRoomId(response.roomId);
-      
-      // 모달 닫기
-      handleCloseModal();
-    } catch (err) {
-      // 에러 처리
-      const errorMessage = err instanceof Error ? err.message : '채팅방 생성에 실패했습니다.';
-      setError(errorMessage);
-      console.error('채팅방 생성 실패:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      setIsRoomsLoading(true);
-      setRoomsError(null);
-      try {
-        const fetched = await getRooms(50);
-        if (cancelled) return;
-
-        setRooms(fetched);
-        if (fetched.length > 0) {
-          setSelectedRoomId((prev) => prev || fetched[0].roomId);
-        } else {
-          setSelectedRoomId('');
-        }
-      } catch (e) {
-        if (cancelled) return;
-        const message =
-          e instanceof Error ? e.message : '채팅방 목록 조회에 실패했습니다.';
-        setRoomsError(message);
-      } finally {
-        if (!cancelled) {
-          setIsRoomsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // 페이지 이탈/언마운트 시 연결 정리
-  useEffect(() => {
-    return () => {
-      demoUsers.forEach((u) => disconnectUserWs(u.key));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSaveChatRoom();
-    }
-  };
-
   return (
     <>
-      <Script
-        src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"
-        strategy="afterInteractive"
-        onLoad={markWsScriptsReady}
-      />
-      <Script
-        src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"
-        strategy="afterInteractive"
-        onLoad={markWsScriptsReady}
-      />
+      <Head>
+        <title>Live Platform Lab</title>
+        <meta name="description" content="AI 기반 라이브 커머스 플랫폼" />
+      </Head>
+
       <style jsx global>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: #0f172a;
+          color: #e2e8f0;
           min-height: 100vh;
-          padding: 20px;
         }
-        
-        .main-container {
-          max-width: 1400px;
+        a { text-decoration: none; color: inherit; }
+      `}</style>
+
+      <style jsx>{`
+        .container {
+          max-width: 1100px;
           margin: 0 auto;
-        }
-        
-        .page-header {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-          color: white;
-          padding: 30px;
-          text-align: center;
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-          margin-bottom: 30px;
-        }
-        
-        .page-header h1 {
-          font-size: 28px;
-          margin: 0;
-        }
-        
-        .main-content {
-          display: flex;
-          gap: 20px;
-          margin-bottom: 30px;
-          align-items: flex-start;
-        }
-        
-        .main-chat-wrapper {
-          width: calc(66.67% - 6.67px);
-        }
-        
-        .control-panel {
-          flex: 1;
-          background: white;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-          min-height: 400px;
-        }
-        
-        .control-panel-title {
-          font-size: 20px;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 15px;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 10px;
-        }
-        
-        .control-panel-controls {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
-        
-        .control-select {
-          flex: 1;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 13px;
-          background: white;
-          cursor: pointer;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        
-        .control-select:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .btn-create {
-          padding: 8px 16px;
-          background: #10b981;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s;
-        }
-        
-        .btn-create:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          background: #059669;
+          padding: 60px 24px;
         }
 
-        .btn-connect {
-          padding: 8px 16px;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
+        /* Hero */
+        .hero {
+          text-align: center;
+          margin-bottom: 80px;
+        }
+        .hero-badge {
+          display: inline-block;
+          background: rgba(99, 102, 241, 0.15);
+          border: 1px solid rgba(99, 102, 241, 0.4);
+          color: #a5b4fc;
           font-size: 13px;
           font-weight: 600;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s;
+          padding: 6px 16px;
+          border-radius: 999px;
+          margin-bottom: 24px;
+          letter-spacing: 0.05em;
         }
-        
-        .btn-connect:hover:not(:disabled) {
+        .hero h1 {
+          font-size: 52px;
+          font-weight: 800;
+          line-height: 1.15;
+          margin-bottom: 20px;
+          background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .hero p {
+          font-size: 18px;
+          color: #94a3b8;
+          max-width: 560px;
+          margin: 0 auto 40px;
+          line-height: 1.7;
+        }
+        .hero-actions {
+          display: flex;
+          gap: 16px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+        .btn-primary {
+          padding: 14px 32px;
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          color: white;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 600;
+          transition: opacity 0.2s, transform 0.2s;
+        }
+        .btn-primary:hover {
+          opacity: 0.9;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          filter: brightness(0.98);
         }
-        
-        .btn-connect:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
+        .btn-secondary {
+          padding: 14px 32px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: #cbd5e1;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 600;
+          transition: background 0.2s, transform 0.2s;
         }
-        
-        .sub-chat-grid {
+        .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateY(-2px);
+        }
+
+        /* Section title */
+        .section-title {
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          color: #6366f1;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+        .section-heading {
+          font-size: 28px;
+          font-weight: 700;
+          color: #f1f5f9;
+          margin-bottom: 40px;
+        }
+
+        /* Features */
+        .features-section {
+          margin-bottom: 80px;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+        .feature-card {
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          padding: 28px;
+          transition: border-color 0.2s, background 0.2s;
+        }
+        .feature-card:hover {
+          border-color: rgba(99, 102, 241, 0.4);
+          background: rgba(99, 102, 241, 0.05);
+        }
+        .feature-header {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 12px;
+        }
+        .feature-icon {
+          font-size: 28px;
+        }
+        .feature-title {
+          font-size: 17px;
+          font-weight: 700;
+          color: #f1f5f9;
+        }
+        .feature-desc {
+          font-size: 14px;
+          color: #94a3b8;
+          line-height: 1.65;
+        }
+        .status-badge {
+          display: inline-block;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 10px;
+          border-radius: 999px;
+          margin-top: 14px;
+        }
+        .status-done {
+          background: rgba(16, 185, 129, 0.15);
+          color: #6ee7b7;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-planned {
+          background: rgba(99, 102, 241, 0.12);
+          color: #a5b4fc;
+          border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        /* Tech stack */
+        .tech-section {
+          margin-bottom: 80px;
+        }
+        .tech-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
+          gap: 14px;
         }
-        
-        .chat-room {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-          display: flex;
-          flex-direction: column;
-          height: 200px;
-          overflow: hidden;
+        .tech-item {
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          padding: 16px 20px;
         }
-        
-        .chat-room.main {
-          height: 400px;
-        }
-        
-        .chat-room-header {
-          padding: 12px 16px;
-          background: #f9fafb;
-          color: #1f2937;
-          font-weight: 600;
+        .tech-name {
           font-size: 14px;
-          border-bottom: 1px solid #e5e7eb;
+          font-weight: 700;
+          color: #e2e8f0;
+          margin-bottom: 4px;
+        }
+        .tech-desc {
+          font-size: 12px;
+          color: #64748b;
+        }
+
+        /* Dev links */
+        .dev-section {
+          border-top: 1px solid rgba(255, 255, 255, 0.07);
+          padding-top: 40px;
+        }
+        .dev-links {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-        
-        .chat-room-header.main {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-          color: white;
-          font-size: 18px;
-        }
-
-        .connection-status {
-          font-size: 13px;
-          font-weight: 600;
-          opacity: 0.95;
-          white-space: nowrap;
-        }
-
-        .connection-right {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          min-width: 0;
-        }
-
-        .connected-room-title {
-          font-size: 13px;
-          font-weight: 600;
-          opacity: 0.95;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 320px;
-        }
-
-        .connected-room-title.muted {
-          opacity: 0.8;
-          font-weight: 500;
-        }
-        
-        .chat-room-messages {
-          flex: 1;
-          padding: 12px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          font-size: 11px;
-          color: #1f2937;
-        }
-        
-        .chat-room.main .chat-room-messages {
-          font-size: 14px;
-        }
-        
-        .chat-room-empty {
-          color: #9ca3af;
-          font-style: italic;
-          font-size: 10px;
-          text-align: center;
-          margin-top: 20px;
-        }
-        
-        .chat-room.main .chat-room-empty {
-          font-size: 13px;
-        }
-        
-        .chat-message {
-          padding: 8px 12px;
-          background: #f9fafb;
-          border-radius: 6px;
-          word-break: break-word;
-        }
-        
-        .chat-message-content {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          gap: 14px;
           flex-wrap: wrap;
-          font-size: 11px;
         }
-        
-        .chat-room.main .chat-message-content {
-          font-size: 13px;
-        }
-        
-        .chat-message-nickname {
-          font-weight: 600;
-          color: #667eea;
-        }
-        
-        .chat-message-separator {
-          color: #9ca3af;
-        }
-        
-        .chat-message-text {
-          flex: 1;
-        }
-        
-        .chat-message-time {
-          font-size: 10px;
-          color: #9ca3af;
-        }
-        
-        .chat-room.main .chat-message-time {
-          font-size: 10px;
-        }
-        
-        .chat-room-input {
-          border-top: 1px solid #e5e7eb;
-          padding: 12px;
-          display: flex;
-          gap: 8px;
-        }
-        
-        .chat-input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        
-        .chat-input:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .chat-send-btn {
-          padding: 10px 20px;
-          background: #6c757d;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .chat-send-btn.main {
-          background: #6366f1;
-        }
-        
-        .chat-send-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .chat-send-btn.main:hover {
-          background: #4f46e5;
-        }
-        
-        .chat-send-btn:not(.main):hover {
-          background: #5a6268;
-        }
-        
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+        .dev-link {
           display: flex;
           align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        
-        .modal-content {
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          width: 90%;
-          max-width: 500px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        
-        .modal-title {
-          font-size: 24px;
-          font-weight: 600;
-          margin-bottom: 20px;
-          color: #1f2937;
-        }
-        
-        .modal-form-group {
-          margin-bottom: 20px;
-        }
-        
-        .modal-label {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #374151;
-        }
-        
-        .modal-input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        
-        .modal-input:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .modal-actions {
-          display: flex;
           gap: 10px;
-          justify-content: flex-end;
-        }
-        
-        .btn-cancel {
-          padding: 10px 20px;
-          background: #6c757d;
-          color: white;
-          border: none;
-          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          padding: 14px 20px;
           font-size: 14px;
           font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
+          color: #94a3b8;
+          transition: border-color 0.2s, color 0.2s;
         }
-        
-        .btn-cancel:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          background: #5a6268;
+        .dev-link:hover {
+          border-color: rgba(99, 102, 241, 0.5);
+          color: #a5b4fc;
         }
-        
-        .btn-save {
-          padding: 10px 20px;
-          background: #10b981;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .btn-save:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          background: #059669;
-        }
-        
-        .btn-save:disabled,
-        .btn-cancel:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-        
-        .modal-input:disabled {
-          background-color: #f3f4f6;
-          cursor: not-allowed;
-        }
-        
-        @media (max-width: 768px) {
-          .main-content {
-            flex-direction: column;
-          }
-          
-          .main-chat-wrapper {
-            width: 100%;
-          }
-          
-          .sub-chat-grid {
-            grid-template-columns: 1fr;
-          }
+
+        @media (max-width: 640px) {
+          .hero h1 { font-size: 34px; }
+          .features-grid { grid-template-columns: 1fr; }
+          .tech-grid { grid-template-columns: repeat(2, 1fr); }
         }
       `}</style>
 
-      <div className="main-container">
-        <div className="page-header">
-          <h1>🚀 Live Platform Lab - 채팅방</h1>
-        </div>
-
-        <div className="main-content">
-          <div className="main-chat-wrapper">
-            <ChatRoom
-              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
-              isMain={true}
-              nickname="메인 사용자"
-              connectionStatusText={
-                connections['main']?.connected ? '연결됨' : '연결 안 됨'
-              }
-              connectedRoomTitle={
-                connections['main']?.connectedRoomId
-                  ? rooms.find((r) => r.roomId === connections['main']?.connectedRoomId)?.title ||
-                    connections['main']?.connectedRoomId ||
-                    undefined
-                  : undefined
-              }
-              externalMessages={mainMessages}
-              onSendMessage={(text) =>
-                sendChatMessage(text, {
-                  userId: 'main',
-                  username: 'main@example.com',
-                  sender: '메인 사용자',
-                })
-              }
-              sendDisabled={!connections['main']?.connected}
-            />
+      <div className="container">
+        {/* Hero */}
+        <section className="hero">
+          <div className="hero-badge">AI × Live Commerce</div>
+          <h1>Live Platform Lab</h1>
+          <p>
+            상품 PDF 임베딩부터 실시간 AI 답변, 호스트 인사이트까지 —
+            라이브 커머스를 위한 AI 플랫폼 실험실입니다.
+          </p>
+          <div className="hero-actions">
+            <a
+              href="https://github.com/kjuiop/live-platform-lab"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary"
+            >
+              GitHub
+            </a>
           </div>
+        </section>
 
-          <div className="control-panel">
-            <div className="control-panel-title">채팅방 선택</div>
-            <div className="control-panel-controls">
-              <select
-                value={selectedRoomId}
-                onChange={(e) => setSelectedRoomId(e.target.value)}
-                className="control-select"
-                disabled={isRoomsLoading || rooms.length === 0}
-              >
-                {isRoomsLoading ? (
-                  <option value="">불러오는 중...</option>
-                ) : rooms.length === 0 ? (
-                  <option value="">채팅방이 없습니다</option>
-                ) : (
-                  rooms.map((room) => (
-                    <option key={room.roomId} value={room.roomId}>
-                      {room.title}
-                    </option>
-                  ))
-                )}
-              </select>
-              <button onClick={handleCreateChatRoom} className="btn-create">
-                생성
-              </button>
-              <button
-                onClick={handleConnectChatRoom}
-                className="btn-connect"
-                disabled={isRoomsLoading || rooms.length === 0 || !selectedRoomId || !areWsScriptsReady}
-                title={
-                  !areWsScriptsReady
-                    ? 'WebSocket 라이브러리 로딩 중...'
-                    : selectedRoomId
-                      ? '선택한 채팅방에 연결(테스트: 유저별로 분리 커넥션)'
-                      : '채팅방을 먼저 선택하세요'
-                }
-              >
-                {demoUsers.every((u) => connections[u.key]?.connected && connections[u.key]?.connectedRoomId === selectedRoomId)
-                  ? '연결 끊기'
-                  : '연결'}
-              </button>
-            </div>
-            {roomsError && (
-              <div style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>
-                {roomsError}
-              </div>
-            )}
-            {/* 연결/에러 표시는 메인 채팅창 헤더로 이동 */}
-          </div>
-        </div>
-
-        <div className="sub-chat-grid">
-          {demoUsers
-            .filter((u) => !u.isMain)
-            .map((u) => (
-            <ChatRoom
-              key={u.userId}
-              title={rooms.find((r) => r.roomId === selectedRoomId)?.title || ''}
-              nickname={u.sender}
-              connectionStatusText={
-                connections[u.key]?.connected ? '연결됨' : '연결 안 됨'
-              }
-              connectedRoomTitle={
-                connections[u.key]?.connectedRoomId
-                  ? rooms.find((r) => r.roomId === connections[u.key]?.connectedRoomId)?.title ||
-                    connections[u.key]?.connectedRoomId ||
-                    undefined
-                  : undefined
-              }
-              externalMessages={mainMessages}
-              onSendMessage={(text) => sendChatMessage(text, u)}
-              sendDisabled={!connections[u.key]?.connected}
-            />
-          ))}
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">채팅방 생성</h2>
-            <div className="modal-form-group">
-              <label className="modal-label">채팅방 제목</label>
-              <input
-                type="text"
-                value={newChatRoomTitle}
-                onChange={(e) => {
-                  setNewChatRoomTitle(e.target.value);
-                  setError(null); // 입력 시 에러 초기화
-                }}
-                onKeyPress={handleKeyPress}
-                placeholder="채팅방 제목을 입력하세요"
-                className="modal-input"
-                autoFocus
-                disabled={isLoading}
-              />
-              {error && (
-                <div className="modal-error" style={{ 
-                  color: '#ef4444', 
-                  fontSize: '14px', 
-                  marginTop: '8px' 
-                }}>
-                  {error}
+        {/* Features */}
+        <section className="features-section">
+          <div className="section-title">Features</div>
+          <div className="section-heading">주요 기능</div>
+          <div className="features-grid">
+            {features.map((f) => (
+              <div key={f.title} className="feature-card">
+                <div className="feature-header">
+                  <span className="feature-icon">{f.icon}</span>
+                  <span className="feature-title">{f.title}</span>
                 </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button 
-                onClick={handleCloseModal} 
-                className="btn-cancel"
-                disabled={isLoading}
-              >
-                취소
-              </button>
-              <button 
-                onClick={handleSaveChatRoom} 
-                className="btn-save"
-                disabled={isLoading || !newChatRoomTitle.trim()}
-              >
-                {isLoading ? '생성 중...' : '저장'}
-              </button>
-            </div>
+                <p className="feature-desc">{f.description}</p>
+                <span className={`status-badge ${f.status === 'done' ? 'status-done' : 'status-planned'}`}>
+                  {f.status === 'done' ? '구현 완료' : '개발 예정'}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
+        </section>
+
+        {/* Tech Stack */}
+        <section className="tech-section">
+          <div className="section-title">Stack</div>
+          <div className="section-heading">기술 스택</div>
+          <div className="tech-grid">
+            {techStack.map((t) => (
+              <div key={t.name} className="tech-item">
+                <div className="tech-name">{t.name}</div>
+                <div className="tech-desc">{t.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Dev Links */}
+        <section className="dev-section">
+          <div className="section-title">Dev</div>
+          <div className="section-heading">개발 도구</div>
+          <div className="dev-links">
+            <Link href="/chat" className="dev-link">
+              💬 채팅방 데모
+            </Link>
+            <Link href="/stomp-test" className="dev-link">
+              🔌 STOMP 채팅 테스트
+            </Link>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

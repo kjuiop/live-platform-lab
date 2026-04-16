@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import org.giglab.live.application.dto.CreateRoomRequest;
-import org.giglab.live.application.dto.CreateRoomResponse;
-import org.giglab.live.application.dto.GetRoomResponse;
+import org.giglab.live.application.dto.room.CreateRoomRequest;
+import org.giglab.live.application.dto.room.CreateRoomResponse;
+import org.giglab.live.application.dto.room.GetRoomResponse;
 import org.giglab.live.application.service.RoomService;
 import org.giglab.live.presentation.api.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;

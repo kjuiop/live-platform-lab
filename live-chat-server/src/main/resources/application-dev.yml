@@ -13,3 +13,6 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+
+cors:
+  allowed-origins: https://your-domain.com

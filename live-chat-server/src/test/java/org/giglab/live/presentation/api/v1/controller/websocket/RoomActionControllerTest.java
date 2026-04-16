@@ -79,20 +79,67 @@ class RoomActionControllerTest {
     verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
   }
 
+  @Test
+  void handleJoinShouldBroadcastToRoom() {
+    // Given
+    ActionRequest request = createRequest("ROOM_1", "CHAT.JOIN", Map.of());
+    ActionResponse response = createResponse("ROOM_1", "CHAT.JOIN", Map.of());
+
+    when(dispatcher.dispatch(request)).thenReturn(response);
+
+    // When
+    controller.handle(request);
+
+    // Then
+    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+  }
+
+  @Test
+  void handleLeaveShouldBroadcastToRoom() {
+    // Given
+    ActionRequest request = createRequest("ROOM_1", "CHAT.LEAVE", Map.of());
+    ActionResponse response = createResponse("ROOM_1", "CHAT.LEAVE", Map.of());
+
+    when(dispatcher.dispatch(request)).thenReturn(response);
+
+    // When
+    controller.handle(request);
+
+    // Then
+    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+  }
+
+  @Test
+  void handleSystemShouldBroadcastToRoom() {
+    // Given
+    ActionRequest request = createRequest("ROOM_1", "CHAT.SYSTEM", Map.of("message", "공지입니다."));
+    ActionResponse response = createResponse("ROOM_1", "CHAT.SYSTEM", Map.of("message", "공지입니다."));
+
+    when(dispatcher.dispatch(request)).thenReturn(response);
+
+    // When
+    controller.handle(request);
+
+    // Then
+    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+  }
+
   // Helper methods
   private ActionRequest createMessageRequest(String roomId, String message) {
-    return new ActionRequest(
-        roomId,
-        "CHAT.MESSAGE",
-        new Actor("user1", "user1@example.com", "사용자1"),
-        Map.of("message", message));
+    return createRequest(roomId, "CHAT.MESSAGE", Map.of("message", message));
   }
 
   private ActionResponse createMessageResponse(String roomId, String message) {
+    return createResponse(roomId, "CHAT.MESSAGE", Map.of("message", message));
+  }
+
+  private ActionRequest createRequest(String roomId, String action, Map<String, Object> payload) {
+    return new ActionRequest(
+        roomId, action, new Actor("user1", "user1@example.com", "사용자1"), payload);
+  }
+
+  private ActionResponse createResponse(String roomId, String action, Map<String, Object> payload) {
     return ActionResponse.of(
-        roomId,
-        "CHAT.MESSAGE",
-        new Actor("user1", "user1@example.com", "사용자1"),
-        Map.of("message", message));
+        roomId, action, new Actor("user1", "user1@example.com", "사용자1"), payload);
   }
 }

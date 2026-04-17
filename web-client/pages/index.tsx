@@ -277,11 +277,14 @@ export default function Home() {
             라이브 커머스를 위한 AI 플랫폼 실험실입니다.
           </p>
           <div className="hero-actions">
+            <Link href="/broadcasts" className="btn-primary">
+              📡 방송 목록 보기
+            </Link>
             <a
               href="https://github.com/kjuiop/live-platform-lab"
               target="_blank"
               rel="noreferrer"
-              className="btn-primary"
+              className="btn-secondary"
             >
               GitHub
             </a>

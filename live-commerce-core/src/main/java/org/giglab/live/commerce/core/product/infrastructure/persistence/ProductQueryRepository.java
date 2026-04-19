@@ -6,10 +6,12 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
+import org.giglab.live.commerce.core.product.domain.entity.Product;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -47,5 +49,13 @@ public class ProductQueryRepository {
         .orderBy(product.id.asc())
         .limit(query.fetchSize())
         .fetch();
+  }
+
+  public Optional<Product> findById(Long id) {
+    return Optional.ofNullable(
+        queryFactory
+            .selectFrom(product)
+            .where(product.id.eq(id), product.deleteYn.eq(YnType.N))
+            .fetchOne());
   }
 }

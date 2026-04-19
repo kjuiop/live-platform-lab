@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
+import org.giglab.live.commerce.core.product.domain.entity.types.EmbeddingStatusType;
 import org.giglab.live.commerce.core.product.domain.entity.types.ProductStatusType;
 
 @Getter
@@ -53,6 +54,11 @@ public class Product extends AuditedEntity {
   @Column(nullable = false, length = 20)
   @Enumerated(EnumType.STRING)
   private ProductStatusType status = ProductStatusType.DRAFT;
+
+  @Builder.Default
+  @Column(nullable = false, length = 20)
+  @Enumerated(EnumType.STRING)
+  private EmbeddingStatusType embeddingStatus = EmbeddingStatusType.NONE;
 
   @Column(nullable = false)
   private String name;

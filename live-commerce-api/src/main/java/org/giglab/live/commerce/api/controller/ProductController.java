@@ -8,10 +8,12 @@ import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.facade.ProductFacade;
 import org.giglab.live.commerce.api.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,13 @@ public class ProductController {
   public ResponseEntity<ApiResponse<GetProductListResponse>> getList(
       @Valid GetProductListRequest request) {
     GetProductListResponse response = productFacade.getList(request);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 상세 조회", description = "상품 상세정보를 조회합니다.")
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<GetProductResponse>> getDetail(@PathVariable Long id) {
+    GetProductResponse response = productFacade.getDetail(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

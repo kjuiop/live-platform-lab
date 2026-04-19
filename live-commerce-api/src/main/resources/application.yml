@@ -1,0 +1,16 @@
+server:
+  port: 8090
+  servlet:
+    session:
+      timeout: 86400
+
+spring:
+  profiles:
+    default: local
+  servlet:
+    encoding:
+      charset: UTF-8
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui

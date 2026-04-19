@@ -3,7 +3,7 @@ package org.giglab.live.commerce.api;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "org.giglab.live.commerce.core")
 public class LiveCommerceApiApplication {
 
   public static void main(String[] args) {

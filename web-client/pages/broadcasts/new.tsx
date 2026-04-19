@@ -23,14 +23,15 @@ export default function BroadcastNew() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [showProductPicker, setShowProductPicker] = useState(false);
   const [errors, setErrors] = useState<{ title?: string; product?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const validate = () => {
     const errs: { title?: string; product?: string } = {};
     if (!title.trim()) errs.title = '방송 제목을 입력해주세요.';
-    if (!selectedProductId) errs.product = '상품을 선택해주세요.';
+    if (selectedProductIds.length === 0) errs.product = '상품을 1개 이상 선택해주세요.';
     return errs;
   };
 
@@ -43,7 +44,12 @@ export default function BroadcastNew() {
     router.push('/broadcasts');
   };
 
-  const selectedProduct = MOCK_PRODUCTS.find((p) => p.id === selectedProductId);
+  const toggleProduct = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setErrors((prev) => ({ ...prev, product: undefined }));
+  };
 
   return (
     <>
@@ -58,7 +64,7 @@ export default function BroadcastNew() {
         .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
         .page-title { font-size: 26px; font-weight: 800; color: #f1f5f9; }
         .header-actions { display: flex; gap: 10px; }
-        .btn-cancel { padding: 10px 22px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; }
+        .btn-cancel { padding: 10px 22px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; margin-top: 8px; }
         .btn-cancel:hover { background: rgba(255,255,255,0.1); }
         .btn-save { padding: 10px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
         .btn-save:hover:not(:disabled) { opacity: 0.88; }
@@ -81,31 +87,37 @@ export default function BroadcastNew() {
         .field-error { font-size: 12px; color: #f87171; }
 
         /* 상품 선택 */
-        .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .product-card { background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-        .product-card:hover { border-color: rgba(99,102,241,0.35); background: rgba(99,102,241,0.04); }
-        .product-card.selected { border-color: #6366f1; background: rgba(99,102,241,0.08); }
-        .product-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-        .product-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
-        .product-cat { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
-        .product-desc { font-size: 12px; color: #64748b; line-height: 1.55; margin-bottom: 10px; }
-        .product-bottom { display: flex; align-items: center; justify-content: space-between; }
-        .product-price { font-size: 13px; font-weight: 700; color: #e2e8f0; }
-        .embed-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
-        .embed-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
-        .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
-        .select-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #6366f1; background: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; flex-shrink: 0; margin-top: 2px; }
+        .product-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .product-section-label { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+        .product-count { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #6366f1; color: white; border-radius: 50%; font-size: 11px; font-weight: 700; margin-left: 6px; }
+        .btn-add-product { padding: 6px 14px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-add-product:hover { background: rgba(99,102,241,0.25); }
+
+        .product-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .product-list-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; }
+        .product-list-info { display: flex; align-items: center; gap: 10px; }
+        .product-list-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+        .product-list-cat { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .product-list-price { font-size: 13px; font-weight: 600; color: #94a3b8; }
+        .btn-remove-product { background: none; border: none; color: #475569; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+        .btn-remove-product:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+        .product-empty { font-size: 13px; color: #475569; margin-bottom: 12px; }
+
+        .product-picker { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; }
+        .picker-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+        .picker-item:hover { background: rgba(255,255,255,0.04); }
+        .picker-item.selected { background: rgba(99,102,241,0.1); }
+        .picker-item-left { display: flex; align-items: center; gap: 8px; }
+        .picker-item-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+        .picker-item-cat { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(99,102,241,0.12); color: #a5b4fc; }
+        .picker-item-right { display: flex; align-items: center; gap: 10px; }
+        .picker-item-price { font-size: 12px; color: #64748b; }
+        .picker-check { font-size: 12px; font-weight: 700; color: #475569; width: 16px; text-align: center; }
+        .picker-check.on { color: #6366f1; }
+
         .error-msg { font-size: 12px; color: #f87171; margin-top: 8px; }
 
-        /* 선택된 상품 미리보기 */
-        .selected-preview { margin-top: 16px; padding: 14px 16px; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; display: flex; align-items: center; gap: 10px; }
-        .selected-preview-label { font-size: 11px; font-weight: 700; color: #6366f1; flex-shrink: 0; }
-        .selected-preview-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
-        .selected-preview-link { margin-left: auto; font-size: 12px; color: #6366f1; font-weight: 600; flex-shrink: 0; }
-        .selected-preview-link:hover { color: #a5b4fc; }
-
         @media (max-width: 640px) {
-          .product-grid { grid-template-columns: 1fr; }
           .field-row { grid-template-columns: 1fr; }
         }
       `}</style>
@@ -169,39 +181,62 @@ export default function BroadcastNew() {
 
           {/* 상품 선택 */}
           <div className="card">
-            <div className="card-title">상품 선택 *</div>
-            <div className="product-grid">
-              {MOCK_PRODUCTS.map((p) => (
-                <div
-                  key={p.id}
-                  className={`product-card ${selectedProductId === p.id ? 'selected' : ''}`}
-                  onClick={() => { setSelectedProductId(p.id); setErrors((prev) => ({ ...prev, product: undefined })); }}
-                >
-                  <div className="product-card-top">
-                    <span className="product-name">{p.name}</span>
-                    {selectedProductId === p.id && <span className="select-check">✓</span>}
-                  </div>
-                  <p className="product-desc">{p.description}</p>
-                  <div className="product-bottom">
-                    <span className="product-price">{p.price.toLocaleString()}원</span>
-                    <span className={`embed-badge ${p.embeddingStatus === 'done' ? 'embed-done' : 'embed-none'}`}>
-                      {p.embeddingStatus === 'done' ? '임베딩 완료' : 'AI 미등록'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="product-section-header">
+              <span className="product-section-label">
+                상품 선택 *
+                {selectedProductIds.length > 0 && <span className="product-count">{selectedProductIds.length}</span>}
+              </span>
+              <button className="btn-add-product" onClick={() => setShowProductPicker((v) => !v)}>
+                {showProductPicker ? '닫기' : '+ 상품 추가'}
+              </button>
             </div>
-            {errors.product && <div className="error-msg">{errors.product}</div>}
 
-            {selectedProduct && (
-              <div className="selected-preview">
-                <span className="selected-preview-label">선택됨</span>
-                <span className="selected-preview-name">{selectedProduct.name}</span>
-                <Link href={`/products/${selectedProduct.id}`} className="selected-preview-link">
-                  상품 상세 →
-                </Link>
+            {selectedProductIds.length === 0 ? (
+              <div className="product-empty">선택된 상품이 없습니다.</div>
+            ) : (
+              <div className="product-list">
+                {selectedProductIds.map((pid) => {
+                  const p = MOCK_PRODUCTS.find((x) => x.id === pid);
+                  if (!p) return null;
+                  return (
+                    <div key={pid} className="product-list-card">
+                      <div className="product-list-info">
+                        <span className="product-list-name">{p.name}</span>
+                        <span className="product-list-cat">{p.category}</span>
+                        <span className="product-list-price">{p.price.toLocaleString()}원</span>
+                      </div>
+                      <button className="btn-remove-product" onClick={() => toggleProduct(pid)}>✕</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
+
+            {showProductPicker && (
+              <div className="product-picker">
+                {MOCK_PRODUCTS.map((p) => {
+                  const isSelected = selectedProductIds.includes(p.id);
+                  return (
+                    <div
+                      key={p.id}
+                      className={`picker-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => toggleProduct(p.id)}
+                    >
+                      <div className="picker-item-left">
+                        <span className="picker-item-name">{p.name}</span>
+                        <span className="picker-item-cat">{p.category}</span>
+                      </div>
+                      <div className="picker-item-right">
+                        <span className="picker-item-price">{p.price.toLocaleString()}원</span>
+                        <span className={`picker-check ${isSelected ? 'on' : ''}`}>{isSelected ? '✓' : '+'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {errors.product && <div className="error-msg">{errors.product}</div>}
           </div>
         </div>
       </div>

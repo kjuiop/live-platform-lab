@@ -112,6 +112,7 @@ export default function Home() {
           font-size: 15px;
           font-weight: 600;
           transition: opacity 0.2s, transform 0.2s;
+          margin-top: 8px;
         }
         .btn-primary:hover {
           opacity: 0.9;

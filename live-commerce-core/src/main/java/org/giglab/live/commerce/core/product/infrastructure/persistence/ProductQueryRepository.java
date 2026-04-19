@@ -4,6 +4,7 @@ import static org.giglab.live.commerce.core.product.domain.entity.QProduct.produ
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
+import org.giglab.live.commerce.core.product.domain.entity.QProductCategory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -35,6 +37,8 @@ public class ProductQueryRepository {
       builder.and(product.name.containsIgnoreCase(query.keyword()));
     }
 
+    QProductCategory pc = new QProductCategory("pc");
+
     return queryFactory
         .select(
             Projections.constructor(
@@ -43,10 +47,15 @@ public class ProductQueryRepository {
                 product.name,
                 product.status,
                 product.price,
-                product.stockQuantity))
+                product.stockQuantity,
+                JPAExpressions.select(pc.categoryName)
+                    .from(pc)
+                    .where(pc.product.id.eq(product.id))
+                    .orderBy(pc.sortOrder.asc())
+                    .limit(1)))
         .from(product)
         .where(builder)
-        .orderBy(product.id.asc())
+        .orderBy(product.id.desc())
         .limit(query.fetchSize())
         .fetch();
   }

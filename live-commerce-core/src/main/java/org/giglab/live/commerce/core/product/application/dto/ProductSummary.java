@@ -4,14 +4,25 @@ import java.math.BigDecimal;
 import org.giglab.live.commerce.core.product.domain.entity.types.ProductStatusType;
 
 public record ProductSummary(
-    Long id, String name, ProductStatusType status, BigDecimal price, int stockQuantity) {
+    Long id,
+    String name,
+    ProductStatusType status,
+    BigDecimal price,
+    int stockQuantity,
+    String categoryName) {
 
   public ProductSummary(
-      Long id, String name, ProductStatusType status, BigDecimal price, int stockQuantity) {
+      Long id,
+      String name,
+      ProductStatusType status,
+      BigDecimal price,
+      int stockQuantity,
+      String categoryName) {
     this.id = id;
     this.name = name;
     this.status = status;
     this.price = price;
     this.stockQuantity = stockQuantity;
+    this.categoryName = categoryName;
   }
 }

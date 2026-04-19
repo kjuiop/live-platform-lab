@@ -84,9 +84,27 @@ export default function ProductNew() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setIsSaving(true);
-    // TODO: POST /api/v1/products
-    await new Promise((r) => setTimeout(r, 800));
-    router.push('/products');
+    try {
+      const res = await fetch('http://localhost:8090/api/v1/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          price: Number(form.price),
+          categoryIds: [1],
+          stockQuantity: 0,
+          sortOrder: 0,
+          manufacturer: form.manufacturer || null,
+          ingredients: form.ingredients || null,
+          usageMethod: form.usage || null,
+        }),
+      });
+      if (!res.ok) throw new Error('등록 실패');
+      router.push('/products');
+    } catch {
+      setIsSaving(false);
+    }
   };
 
   return (

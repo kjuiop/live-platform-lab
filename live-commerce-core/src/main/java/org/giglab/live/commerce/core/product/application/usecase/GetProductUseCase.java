@@ -25,6 +25,7 @@ public class GetProductUseCase {
         product.getId(),
         product.getName(),
         product.getStatus(),
+        product.getDescription(),
         product.getPrice(),
         product.getStockQuantity(),
         product.getSortOrder(),

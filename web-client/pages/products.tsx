@@ -1,27 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
+const API_BASE = 'http://localhost:8090/api/v1';
+
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  category: string;
+  status: string;
   price: number;
-  description: string;
-  embeddingStatus: 'none' | 'pending' | 'done';
+  stockQuantity: number;
+  categoryName?: string;
 }
-
-const MOCK_PRODUCTS: Product[] = [
-  { id: 'P001', name: '워터프루프 립스틱', category: '뷰티', price: 25000, description: '24시간 지속되는 방수 립스틱. 선명한 발색과 촉촉한 보습력을 동시에.', embeddingStatus: 'done' },
-  { id: 'P002', name: '비타민C 세럼', category: '스킨케어', price: 48000, description: '고농도 비타민C 15% 함유. 미백과 탄력 개선에 효과적입니다.', embeddingStatus: 'done' },
-  { id: 'P003', name: '쿠션 파운데이션', category: '뷰티', price: 35000, description: 'SPF50+ PA++++ 자외선 차단. 촉촉한 피부 표현에 최적화된 쿠션.', embeddingStatus: 'none' },
-];
-
 
 export default function Products() {
   const router = useRouter();
-  const [products] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+
+  const fetchProducts = async (cursor?: number) => {
+    const params = new URLSearchParams({ size: '20' });
+    if (cursor) params.set('cursor', String(cursor));
+    const res = await fetch(`${API_BASE}/products?${params}`);
+    const json = await res.json();
+    const { items, nextCursor: nc, hasNext: hn } = json.data;
+    setProducts((prev) => cursor ? [...prev, ...items] : items);
+    setNextCursor(nc ?? null);
+    setHasNext(hn);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchProducts(); }, []);
 
   return (
     <>
@@ -50,6 +62,9 @@ export default function Products() {
         .embed-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
         .embed-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
         .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+        .loading { text-align: center; color: #475569; padding: 60px 0; font-size: 14px; }
+        .btn-more { display: block; margin: 28px auto 0; padding: 10px 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-more:hover { background: rgba(255,255,255,0.1); }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -65,30 +80,34 @@ export default function Products() {
           <button className="btn-add" onClick={() => router.push('/products/new')}>+ 상품 등록</button>
         </div>
 
-        <div className="grid">
-          {products.map((p) => (
-            <div key={p.id} className="card" onClick={() => router.push(`/products/${p.id}`)}>
-              <div className="card-top">
-                <span className="card-name">{p.name}</span>
-                <span className="badge-category">{p.category}</span>
-              </div>
-              <p className="card-desc">{p.description}</p>
-              <div className="card-divider" />
-              <div className="card-bottom">
-                <span className="price">{p.price.toLocaleString()}원</span>
-                <span className={`badge-embed ${
-                  p.embeddingStatus === 'done' ? 'embed-done'
-                  : p.embeddingStatus === 'pending' ? 'embed-pending'
-                  : 'embed-none'
-                }`}>
-                  {p.embeddingStatus === 'done' ? '임베딩 완료'
-                    : p.embeddingStatus === 'pending' ? '임베딩 중...'
-                    : 'AI 미등록'}
-                </span>
-              </div>
+        {loading ? (
+          <div className="loading">불러오는 중...</div>
+        ) : (
+          <>
+            <div className="grid">
+              {products.map((p) => (
+                <div key={p.id} className="card" onClick={() => router.push(`/products/${p.id}`)}>
+                  <div className="card-top">
+                    <span className="card-name">{p.name}</span>
+                    {p.categoryName && <span className="badge-category">{p.categoryName}</span>}
+                  </div>
+                  <div className="card-divider" />
+                  <div className="card-bottom">
+                    <span className="price">{Number(p.price).toLocaleString()}원</span>
+                    <span className="embed-none" style={{ fontSize: '11px', fontWeight: 700, padding: '4px 11px', borderRadius: '999px' }}>
+                      재고 {p.stockQuantity}개
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+            {hasNext && (
+              <button className="btn-more" onClick={() => fetchProducts(nextCursor!)}>
+                더 보기
+              </button>
+            )}
+          </>
+        )}
       </div>
 
     </>

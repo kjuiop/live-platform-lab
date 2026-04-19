@@ -8,6 +8,7 @@ public record GetProductResponse(
     Long id,
     String name,
     ProductStatusType status,
+    String description,
     BigDecimal price,
     int stockQuantity,
     int sortOrder,

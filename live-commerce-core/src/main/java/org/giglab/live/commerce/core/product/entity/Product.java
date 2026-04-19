@@ -68,8 +68,22 @@ public class Product extends AuditedEntity {
 
   private int sortOrder;
 
+  @Column(length = 200)
+  private String manufacturer;
+
+  @Lob private String ingredients;
+
+  @Lob private String usageMethod;
+
   public static Product create(
-      String name, String description, BigDecimal price, int stockQuantity, int sortOrder) {
+      String name,
+      String description,
+      BigDecimal price,
+      int stockQuantity,
+      int sortOrder,
+      String manufacturer,
+      String ingredients,
+      String usageMethod) {
     return Product.builder()
         .name(name)
         .description(description)
@@ -77,6 +91,9 @@ public class Product extends AuditedEntity {
         .stockQuantity(stockQuantity)
         .sortOrder(sortOrder)
         .status(ProductStatusType.ON_SALE)
+        .manufacturer(manufacturer)
+        .ingredients(ingredients)
+        .usageMethod(usageMethod)
         .build();
   }
 

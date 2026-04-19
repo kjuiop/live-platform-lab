@@ -6,9 +6,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
+import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.facade.ProductFacade;
 import org.giglab.live.commerce.api.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +25,15 @@ public class ProductController {
 
   private final ProductFacade productFacade;
 
-  @Operation(summary = "상품 등록", description = "판매자 권한으로 상품을 등록합니다.")
+  @Operation(summary = "상품 목록 조회", description = "커서 기반 페이지네이션으로 상품 목록을 조회합니다.")
+  @GetMapping
+  public ResponseEntity<ApiResponse<GetProductListResponse>> getList(
+      @Valid GetProductListRequest request) {
+    GetProductListResponse response = productFacade.getList(request);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 등록", description = "상품을 등록합니다.")
   @PostMapping
   public ResponseEntity<ApiResponse<CreateProductResponse>> create(
       @RequestBody @Valid CreateProductRequest createProductRequest) {

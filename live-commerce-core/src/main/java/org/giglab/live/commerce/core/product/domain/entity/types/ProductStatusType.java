@@ -1,4 +1,4 @@
-package org.giglab.live.commerce.core.product.entity.types;
+package org.giglab.live.commerce.core.product.domain.entity.types;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

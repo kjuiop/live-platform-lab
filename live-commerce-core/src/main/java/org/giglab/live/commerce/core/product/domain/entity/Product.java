@@ -1,4 +1,4 @@
-package org.giglab.live.commerce.core.product.entity;
+package org.giglab.live.commerce.core.product.domain.entity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
-import org.giglab.live.commerce.core.product.entity.types.ProductStatusType;
+import org.giglab.live.commerce.core.product.domain.entity.types.ProductStatusType;
 
 @Getter
 @Builder

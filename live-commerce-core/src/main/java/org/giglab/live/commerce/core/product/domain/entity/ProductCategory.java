@@ -1,4 +1,4 @@
-package org.giglab.live.commerce.core.product.entity;
+package org.giglab.live.commerce.core.product.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

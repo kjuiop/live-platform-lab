@@ -57,13 +57,6 @@ export default function ProductNew() {
     // AI 추출 시뮬레이션
     setTimeout(() => {
       const extracted = MOCK_PDF_EXTRACTED.default;
-      setForm((prev) => ({
-        ...prev,
-        ...Object.fromEntries(
-          Object.entries(extracted).filter(([, v]) => v && !prev[_ as keyof ProductForm] || prev[_ as keyof ProductForm] === '')
-            .map(([k, v]) => [k, v])
-        ),
-      }));
       // 빈 필드만 채우기
       setForm((prev) => ({
         name: prev.name || extracted.name || '',

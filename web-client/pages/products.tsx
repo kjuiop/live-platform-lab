@@ -18,19 +18,26 @@ export default function Products() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
 
   const fetchProducts = async (cursor?: number) => {
-    const params = new URLSearchParams({ size: '20' });
-    if (cursor != null) params.set('cursor', String(cursor));
-    const res = await fetch(`${API_BASE}/products?${params}`);
-    const json = await res.json();
-    const { items, nextCursor: nc, hasNext: hn } = json.data;
-    setProducts((prev) => cursor != null ? [...prev, ...items] : items);
-    setNextCursor(nc ?? null);
-    setHasNext(hn);
-    setLoading(false);
+    try {
+      const params = new URLSearchParams({ size: '20' });
+      if (cursor != null) params.set('cursor', String(cursor));
+      const res = await fetch(`${API_BASE}/products?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const { items, nextCursor: nc, hasNext: hn } = json.data;
+      setProducts((prev) => cursor != null ? [...prev, ...items] : items);
+      setNextCursor(nc ?? null);
+      setHasNext(hn);
+    } catch {
+      setError('상품을 불러오는 데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchProducts(); }, []);
@@ -65,6 +72,7 @@ export default function Products() {
         .loading { text-align: center; color: #475569; padding: 60px 0; font-size: 14px; }
         .btn-more { display: block; margin: 28px auto 0; padding: 10px 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .btn-more:hover { background: rgba(255,255,255,0.1); }
+        .error-msg { text-align: center; color: #f87171; padding: 60px 0; font-size: 14px; }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -82,6 +90,8 @@ export default function Products() {
 
         {loading ? (
           <div className="loading">불러오는 중...</div>
+        ) : error ? (
+          <div className="error-msg">{error}</div>
         ) : (
           <>
             <div className="grid">

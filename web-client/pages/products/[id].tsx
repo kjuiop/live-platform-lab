@@ -115,6 +115,10 @@ export default function ProductDetail() {
       .then((json) => {
         if (json) setProduct(json.data);
         setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        router.push('/products');
       });
   }, [id]);
 

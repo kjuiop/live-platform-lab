@@ -23,11 +23,11 @@ export default function Products() {
 
   const fetchProducts = async (cursor?: number) => {
     const params = new URLSearchParams({ size: '20' });
-    if (cursor) params.set('cursor', String(cursor));
+    if (cursor != null) params.set('cursor', String(cursor));
     const res = await fetch(`${API_BASE}/products?${params}`);
     const json = await res.json();
     const { items, nextCursor: nc, hasNext: hn } = json.data;
-    setProducts((prev) => cursor ? [...prev, ...items] : items);
+    setProducts((prev) => cursor != null ? [...prev, ...items] : items);
     setNextCursor(nc ?? null);
     setHasNext(hn);
     setLoading(false);

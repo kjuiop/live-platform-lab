@@ -41,7 +41,7 @@ const MOCK_PDF_EXTRACTED: Partial<ProductForm> = {
 export default function ProductNew() {
   const router = useRouter();
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<ProductForm> & { category?: string }>({});
+  const [errors, setErrors] = useState<Partial<ProductForm> & { category?: string; submit?: string }>({});
   const [pdfFile, setPdfFile] = useState<{ name: string; size: string } | null>(null);
   const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done'>('idle');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -121,6 +121,7 @@ export default function ProductNew() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setIsSaving(true);
+    setErrors((prev) => ({ ...prev, submit: undefined }));
     try {
       const res = await fetch(`${API_BASE}/products`, {
         method: 'POST',
@@ -137,9 +138,13 @@ export default function ProductNew() {
           usageMethod: form.usage || null,
         }),
       });
-      if (!res.ok) throw new Error('등록 실패');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `등록 실패 (${res.status})`);
+      }
       router.push('/products');
-    } catch {
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err instanceof Error ? err.message : '등록 중 오류가 발생했습니다.' }));
       setIsSaving(false);
     }
   };
@@ -313,6 +318,7 @@ export default function ProductNew() {
         <div className="page-header">
           <h1 className="page-title">상품 등록</h1>
           <div className="header-actions">
+            {errors.submit && <span className="field-error" style={{ alignSelf: 'center' }}>{errors.submit}</span>}
             <Link href="/products" className="btn-cancel" style={{ marginTop: '8px' }}>취소</Link>
             <button className="btn-save" onClick={handleSave} disabled={isSaving}>
               {isSaving ? '저장 중...' : '저장'}

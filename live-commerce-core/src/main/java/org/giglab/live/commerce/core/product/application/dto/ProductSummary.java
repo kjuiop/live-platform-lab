@@ -9,20 +9,4 @@ public record ProductSummary(
     ProductStatusType status,
     BigDecimal price,
     int stockQuantity,
-    String categoryName) {
-
-  public ProductSummary(
-      Long id,
-      String name,
-      ProductStatusType status,
-      BigDecimal price,
-      int stockQuantity,
-      String categoryName) {
-    this.id = id;
-    this.name = name;
-    this.status = status;
-    this.price = price;
-    this.stockQuantity = stockQuantity;
-    this.categoryName = categoryName;
-  }
-}
+    String categoryName) {}

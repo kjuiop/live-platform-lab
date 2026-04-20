@@ -3,18 +3,23 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+
 type EmbeddingStatus = 'none' | 'pending' | 'done';
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  category: string;
+  status: string;
   price: number;
-  description: string;
-  embeddingStatus: EmbeddingStatus;
+  stockQuantity: number;
+  sortOrder: number;
+  description?: string;
   ingredients?: string;
-  usage?: string;
+  usageMethod?: string;
   manufacturer?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Document {
@@ -40,41 +45,6 @@ interface RelatedBroadcast {
   viewerCount?: number;
 }
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 'P001',
-    name: '워터프루프 립스틱',
-    category: '뷰티',
-    price: 25000,
-    description: '24시간 지속되는 방수 립스틱. 선명한 발색과 촉촉한 보습력을 동시에.',
-    embeddingStatus: 'done',
-    ingredients: '정제수, 디메치콘, 이소도데케인, 트리메틸실록시실리케이트, 폴리에틸렌, 세레신, 카르나우바왁스, 향료',
-    usage: '입술에 직접 바르거나 브러시를 이용하여 원하는 만큼 발라주세요. 리터치 시 티슈로 가볍게 정리 후 재도포합니다.',
-    manufacturer: '뷰티코리아',
-  },
-  {
-    id: 'P002',
-    name: '비타민C 세럼',
-    category: '스킨케어',
-    price: 48000,
-    description: '고농도 비타민C 15% 함유. 미백과 탄력 개선에 효과적입니다.',
-    embeddingStatus: 'done',
-    ingredients: '아스코르빅애씨드 15%, 정제수, 글리세린, 판테놀, 나이아신아마이드, 히알루론산',
-    usage: '세안 후 토너 사용 후, 세럼 2~3방울을 얼굴 전체에 고르게 펴 바르세요. 아침·저녁 사용을 권장합니다.',
-    manufacturer: '스킨랩',
-  },
-  {
-    id: 'P003',
-    name: '쿠션 파운데이션',
-    category: '뷰티',
-    price: 35000,
-    description: 'SPF50+ PA++++ 자외선 차단. 촉촉한 피부 표현에 최적화된 쿠션.',
-    embeddingStatus: 'none',
-    ingredients: '정제수, 사이클로펜타실록세인, 부틸렌글라이콜, 글리세린, 나이아신아마이드',
-    usage: '퍼프에 제품을 적당량 묻혀 피부 안쪽에서 바깥쪽으로 톡톡 두드리듯 발라주세요.',
-    manufacturer: '뷰티코리아',
-  },
-];
 
 const MOCK_DOCUMENTS: Record<string, Document[]> = {
   P001: [
@@ -122,7 +92,8 @@ export default function ProductDetail() {
   const router = useRouter();
   const { id } = router.query;
 
-  const product = MOCK_PRODUCTS.find((p) => p.id === id) ?? null;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const documents = MOCK_DOCUMENTS[id as string] ?? [];
   const relatedBroadcasts = MOCK_BROADCASTS[id as string] ?? [];
 
@@ -132,6 +103,24 @@ export default function ProductDetail() {
   const [mockDocs, setMockDocs] = useState<Document[]>(documents);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const qnaBottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    fetch(`${API_BASE}/products/${id}`)
+      .then((res) => {
+        if (!res.ok) { router.push('/products'); return null; }
+        return res.json();
+      })
+      .then((json) => {
+        if (json) setProduct(json.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        router.push('/products');
+      });
+  }, [id]);
 
   useEffect(() => {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -175,7 +164,7 @@ export default function ProductDetail() {
     });
   };
 
-  if (!id) return null;
+  if (!id || loading) return null;
 
   if (!product) {
     return (
@@ -194,7 +183,6 @@ export default function ProductDetail() {
     );
   }
 
-  const catColor = categoryColors[product.category] ?? '#a5b4fc';
   const totalChunks = mockDocs.filter((d) => d.status === 'done').reduce((sum, d) => sum + (d.chunkCount ?? 0), 0);
 
   return (
@@ -314,26 +302,13 @@ export default function ProductDetail() {
             <div className="info-card">
               <div className="info-top">
                 <h1 className="info-name">{product.name}</h1>
-                <span className={`embed-badge ${
-                  product.embeddingStatus === 'done' ? 'embed-done'
-                  : product.embeddingStatus === 'pending' ? 'embed-pending'
-                  : 'embed-none'
-                }`}>
-                  {product.embeddingStatus === 'done' ? '임베딩 완료'
-                    : product.embeddingStatus === 'pending' ? '임베딩 중...'
-                    : 'AI 미등록'}
-                </span>
+                <span className="embed-badge embed-none">{product.status}</span>
               </div>
               <div className="info-meta">
-                <span
-                  className="cat-badge"
-                  style={{ background: `${catColor}18`, color: catColor, border: `1px solid ${catColor}40` }}
-                >
-                  {product.category}
-                </span>
-                <span className="info-price">{product.price.toLocaleString()}원</span>
+                <span className="info-price">{Number(product.price).toLocaleString()}원</span>
+                <span style={{ fontSize: 13, color: '#64748b' }}>재고 {product.stockQuantity}개</span>
               </div>
-              <p className="info-desc">{product.description}</p>
+              {product.description && <p className="info-desc">{product.description}</p>}
               <div className="info-details">
                 {product.ingredients && (
                   <div className="detail-row">
@@ -341,10 +316,10 @@ export default function ProductDetail() {
                     <span className="detail-val">{product.ingredients}</span>
                   </div>
                 )}
-                {product.usage && (
+                {product.usageMethod && (
                   <div className="detail-row">
                     <span className="detail-label">사용법</span>
-                    <span className="detail-val">{product.usage}</span>
+                    <span className="detail-val">{product.usageMethod}</span>
                   </div>
                 )}
                 {product.manufacturer && (

@@ -1,0 +1,18 @@
+server:
+  port: 8090
+  servlet:
+    session:
+      timeout: 1d
+
+spring:
+  profiles:
+    default: local
+  servlet:
+    encoding:
+      charset: UTF-8
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+  packages-to-scan: org.giglab.live.commerce.api.controller

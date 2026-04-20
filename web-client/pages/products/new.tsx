@@ -1,11 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 interface ProductForm {
   name: string;
-  category: string;
   price: string;
   description: string;
   ingredients: string;
@@ -13,35 +12,63 @@ interface ProductForm {
   manufacturer: string;
 }
 
+interface CategoryNode {
+  id: number;
+  code: string;
+  name: string;
+  level: number;
+  sortOrder: number;
+  children: CategoryNode[];
+}
+
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+
 const EMPTY_FORM: ProductForm = {
-  name: '', category: '', price: '', description: '',
+  name: '', price: '', description: '',
   ingredients: '', usage: '', manufacturer: '',
 };
 
 // PDF 업로드 시 AI 추출 시뮬레이션 데이터
-const MOCK_PDF_EXTRACTED: Record<string, Partial<ProductForm>> = {
-  default: {
-    name: '모이스처라이징 선크림',
-    category: '스킨케어',
-    price: '32000',
-    description: 'SPF50+ PA++++ 자외선 차단과 동시에 피부 보습을 케어하는 멀티 기능성 선크림입니다.',
-    ingredients: '정제수, 이산화티탄, 징크옥사이드, 글리세린, 나이아신아마이드, 히알루론산나트륨, 판테놀',
-    usage: '외출 30분 전 피부 마지막 단계에 적당량을 얼굴 전체에 고르게 펴 바르세요. 2~3시간마다 덧바르는 것을 권장합니다.',
-    manufacturer: '스킨랩',
-  },
+const MOCK_PDF_EXTRACTED: Partial<ProductForm> = {
+  name: '모이스처라이징 선크림',
+  price: '32000',
+  description: 'SPF50+ PA++++ 자외선 차단과 동시에 피부 보습을 케어하는 멀티 기능성 선크림입니다.',
+  ingredients: '정제수, 이산화티탄, 징크옥사이드, 글리세린, 나이아신아마이드, 히알루론산나트륨, 판테놀',
+  usage: '외출 30분 전 피부 마지막 단계에 적당량을 얼굴 전체에 고르게 펴 바르세요. 2~3시간마다 덧바르는 것을 권장합니다.',
+  manufacturer: '스킨랩',
 };
 
 export default function ProductNew() {
   const router = useRouter();
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<ProductForm>>({});
+  const [errors, setErrors] = useState<Partial<ProductForm> & { category?: string; submit?: string }>({});
   const [pdfFile, setPdfFile] = useState<{ name: string; size: string } | null>(null);
   const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done'>('idle');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const set = (key: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // 카테고리
+  const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/categories`)
+      .then((r) => r.json())
+      .then((json) => {
+        setCategoryTree(json.data.categories);
+        setCategoryLoading(false);
+      });
+  }, []);
+
+  // 카테고리 모달
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryLabel, setSelectedCategoryLabel] = useState('');
+  const [depth1, setDepth1] = useState<CategoryNode | null>(null);
+  const [depth2, setDepth2] = useState<CategoryNode | null>(null);
+
+  const set = (key: keyof ProductForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
@@ -54,13 +81,10 @@ export default function ProductNew() {
     setPdfFile({ name: file.name, size: `${(file.size / 1024 / 1024).toFixed(1)} MB` });
     setPdfState('extracting');
 
-    // AI 추출 시뮬레이션
     setTimeout(() => {
-      const extracted = MOCK_PDF_EXTRACTED.default;
-      // 빈 필드만 채우기
+      const extracted = MOCK_PDF_EXTRACTED;
       setForm((prev) => ({
         name: prev.name || extracted.name || '',
-        category: prev.category || extracted.category || '',
         price: prev.price || extracted.price || '',
         description: prev.description || extracted.description || '',
         ingredients: prev.ingredients || extracted.ingredients || '',
@@ -71,10 +95,23 @@ export default function ProductNew() {
     }, 1800);
   };
 
+  const openCategoryModal = () => {
+    setDepth1(null);
+    setDepth2(null);
+    setShowCategoryModal(true);
+  };
+
+  const selectDepth3 = (d1: CategoryNode, d2: CategoryNode, d3: CategoryNode) => {
+    setSelectedCategoryId(d3.id);
+    setSelectedCategoryLabel(`${d1.name} > ${d2.name} > ${d3.name}`);
+    setErrors((prev) => ({ ...prev, category: undefined }));
+    setShowCategoryModal(false);
+  };
+
   const validate = () => {
-    const errs: Partial<ProductForm> = {};
+    const errs: Partial<ProductForm> & { category?: string } = {};
     if (!form.name.trim()) errs.name = '상품명을 입력해주세요.';
-    if (!form.category.trim()) errs.category = '카테고리를 입력해주세요.';
+    if (!selectedCategoryId) errs.category = '카테고리를 선택해주세요.';
     if (!form.price || isNaN(Number(form.price))) errs.price = '올바른 가격을 입력해주세요.';
     if (!form.description.trim()) errs.description = '상품 설명을 입력해주세요.';
     return errs;
@@ -84,10 +121,36 @@ export default function ProductNew() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setIsSaving(true);
-    // TODO: POST /api/v1/products
-    await new Promise((r) => setTimeout(r, 800));
-    router.push('/products');
+    setErrors((prev) => ({ ...prev, submit: undefined }));
+    try {
+      const res = await fetch(`${API_BASE}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          price: Number(form.price),
+          categoryIds: [selectedCategoryId],
+          stockQuantity: 0,
+          sortOrder: 0,
+          manufacturer: form.manufacturer || null,
+          ingredients: form.ingredients || null,
+          usageMethod: form.usage || null,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `등록 실패 (${res.status})`);
+      }
+      router.push('/products');
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err instanceof Error ? err.message : '등록 중 오류가 발생했습니다.' }));
+      setIsSaving(false);
+    }
   };
+
+  const depth2List = depth1?.children ?? [];
+  const depth3List = depth2?.children ?? [];
 
   return (
     <>
@@ -102,7 +165,7 @@ export default function ProductNew() {
         .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
         .page-title { font-size: 26px; font-weight: 800; color: #f1f5f9; }
         .header-actions { display: flex; gap: 10px; }
-        .btn-cancel { padding: 10px 22px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-cancel { padding: 10px 22px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-flex; align-items: center; margin-top: 8px; }
         .btn-cancel:hover { background: rgba(255,255,255,0.1); }
         .btn-save { padding: 10px 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
         .btn-save:hover:not(:disabled) { opacity: 0.88; }
@@ -122,6 +185,32 @@ export default function ProductNew() {
         textarea.input { resize: vertical; min-height: 80px; line-height: 1.6; }
         .field-error { font-size: 12px; color: #f87171; }
         .section-divider { height: 1px; background: rgba(255,255,255,0.07); }
+
+        /* 카테고리 선택 버튼 */
+        .cat-btn { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; color: #f1f5f9; outline: none; cursor: pointer; text-align: left; font-family: inherit; transition: border-color 0.2s, background 0.2s; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .cat-btn:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.04); }
+        .cat-btn.error { border-color: rgba(239,68,68,0.5); }
+        .cat-btn-placeholder { color: #334155; }
+        .cat-btn-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cat-btn-arrow { color: #475569; font-size: 12px; flex-shrink: 0; }
+
+        /* 카테고리 모달 */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; display: flex; align-items: center; justify-content: center; }
+        .modal { background: #1e293b; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; width: 560px; max-width: 95vw; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
+        .modal-header { padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+        .modal-close { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+        .modal-close:hover { color: #94a3b8; background: rgba(255,255,255,0.06); }
+        .modal-body { display: grid; grid-template-columns: 1fr 1fr 1fr; height: 300px; }
+        .cat-col { border-right: 1px solid rgba(255,255,255,0.07); overflow-y: auto; }
+        .cat-col:last-child { border-right: none; }
+        .cat-col-head { font-size: 10px; font-weight: 700; color: #475569; padding: 10px 14px 6px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .cat-item { padding: 10px 14px; font-size: 13px; color: #94a3b8; cursor: pointer; transition: background 0.12s, color 0.12s; }
+        .cat-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+        .cat-item.active { background: rgba(99,102,241,0.12); color: #a5b4fc; font-weight: 600; }
+        .cat-item.leaf { color: #6ee7b7; }
+        .cat-item.leaf:hover { background: rgba(16,185,129,0.08); color: #34d399; }
+        .cat-empty { padding: 24px 14px; font-size: 12px; color: #334155; text-align: center; }
 
         /* 우측 PDF */
         .right { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 24px; }
@@ -158,6 +247,65 @@ export default function ProductNew() {
         }
       `}</style>
 
+      {/* 카테고리 선택 모달 */}
+      {showCategoryModal && (
+        <div className="modal-backdrop" onClick={() => setShowCategoryModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">카테고리 선택</span>
+              <button className="modal-close" onClick={() => setShowCategoryModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {/* 1depth */}
+              <div className="cat-col">
+                <div className="cat-col-head">대분류</div>
+                {categoryTree.map((d1) => (
+                  <div
+                    key={d1.id}
+                    className={`cat-item${depth1?.id === d1.id ? ' active' : ''}`}
+                    onClick={() => { setDepth1(d1); setDepth2(null); }}
+                  >
+                    {d1.name}
+                  </div>
+                ))}
+              </div>
+
+              {/* 2depth */}
+              <div className="cat-col">
+                <div className="cat-col-head">중분류</div>
+                {depth1 ? (
+                  depth2List.length > 0 ? depth2List.map((d2) => (
+                    <div
+                      key={d2.id}
+                      className={`cat-item${depth2?.id === d2.id ? ' active' : ''}`}
+                      onClick={() => setDepth2(d2)}
+                    >
+                      {d2.name}
+                    </div>
+                  )) : <div className="cat-empty">하위 카테고리 없음</div>
+                ) : <div className="cat-empty">대분류를 선택하세요</div>}
+              </div>
+
+              {/* 3depth */}
+              <div className="cat-col">
+                <div className="cat-col-head">소분류</div>
+                {depth2 ? (
+                  depth3List.length > 0 ? depth3List.map((d3) => (
+                    <div
+                      key={d3.id}
+                      className="cat-item leaf"
+                      onClick={() => selectDepth3(depth1!, depth2!, d3)}
+                    >
+                      {d3.name}
+                    </div>
+                  )) : <div className="cat-empty">하위 카테고리 없음</div>
+                ) : <div className="cat-empty">중분류를 선택하세요</div>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container">
         <nav className="nav">
           <Link href="/">홈</Link>
@@ -170,7 +318,8 @@ export default function ProductNew() {
         <div className="page-header">
           <h1 className="page-title">상품 등록</h1>
           <div className="header-actions">
-            <Link href="/products" className="btn-cancel">취소</Link>
+            {errors.submit && <span className="field-error" style={{ alignSelf: 'center' }}>{errors.submit}</span>}
+            <Link href="/products" className="btn-cancel" style={{ marginTop: '8px' }}>취소</Link>
             <button className="btn-save" onClick={handleSave} disabled={isSaving}>
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -193,12 +342,19 @@ export default function ProductNew() {
               </div>
               <div className="field">
                 <label className="label">카테고리 *</label>
-                <input
-                  className={`input ${errors.category ? 'error' : ''}`}
-                  placeholder="예) 뷰티, 스킨케어"
-                  value={form.category}
-                  onChange={set('category')}
-                />
+                <button
+                  type="button"
+                  className={`cat-btn${errors.category ? ' error' : ''}`}
+                  onClick={openCategoryModal}
+                  disabled={categoryLoading}
+                >
+                  {selectedCategoryLabel ? (
+                    <span className="cat-btn-label">{selectedCategoryLabel}</span>
+                  ) : (
+                    <span className="cat-btn-placeholder">{categoryLoading ? '카테고리 로딩 중...' : '카테고리 선택'}</span>
+                  )}
+                  <span className="cat-btn-arrow">▼</span>
+                </button>
                 {errors.category && <span className="field-error">{errors.category}</span>}
               </div>
             </div>

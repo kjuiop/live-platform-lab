@@ -87,7 +87,34 @@ services:
     networks:
       - live-platform-network
 
+  mysql:
+    image: mysql:8.0
+    container_name: live-mysql
+    command: >
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --binlog-row-image=FULL
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=live
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-1234}
+    networks:
+      - live-platform-network
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/master/init-master.sh:/docker-entrypoint-initdb.d/init-master.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
+  mysql_data:
   grafana_data:
   redis_data:
 

@@ -278,7 +278,7 @@ export default function Home() {
             라이브 커머스를 위한 AI 플랫폼 실험실입니다.
           </p>
           <div className="hero-actions">
-            <Link href="/broadcasts" className="btn-primary">
+            <Link href="/broadcasts" className="btn-primary" style={{ marginTop: '8px' }}>
               📡 방송 목록 보기
             </Link>
             <a

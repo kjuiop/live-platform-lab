@@ -2,7 +2,7 @@ server:
   port: 8090
   servlet:
     session:
-      timeout: 86400
+      timeout: 1d
 
 spring:
   profiles:

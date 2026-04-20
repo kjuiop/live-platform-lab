@@ -21,6 +21,8 @@ interface CategoryNode {
   children: CategoryNode[];
 }
 
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+
 const EMPTY_FORM: ProductForm = {
   name: '', price: '', description: '',
   ingredients: '', usage: '', manufacturer: '',
@@ -51,7 +53,7 @@ export default function ProductNew() {
   const [categoryLoading, setCategoryLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8090/api/v1/categories')
+    fetch(`${API_BASE}/categories`)
       .then((r) => r.json())
       .then((json) => {
         setCategoryTree(json.data.categories);
@@ -120,7 +122,7 @@ export default function ProductNew() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setIsSaving(true);
     try {
-      const res = await fetch('http://localhost:8090/api/v1/products', {
+      const res = await fetch(`${API_BASE}/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

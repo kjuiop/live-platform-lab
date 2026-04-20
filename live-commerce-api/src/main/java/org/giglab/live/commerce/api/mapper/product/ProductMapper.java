@@ -13,6 +13,7 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
@@ -21,11 +22,13 @@ public interface ProductMapper {
 
   CreateProductResponse toCreateProductResponse(CreateProductResult createProductResult);
 
+  @Mapping(target = "status", expression = "java(productSummary.status().name())")
   ProductSummaryItem toProductSummaryItem(ProductSummary productSummary);
 
   GetProductListResponse toGetProductListResponse(GetProductListResult result);
 
   ProductListQuery toProductListQuery(GetProductListRequest request);
 
+  @Mapping(target = "status", expression = "java(result.status().name())")
   GetProductResponse toGetProductResponse(GetProductResult result);
 }

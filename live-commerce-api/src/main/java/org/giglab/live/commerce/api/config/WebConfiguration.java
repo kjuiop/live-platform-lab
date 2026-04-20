@@ -18,7 +18,7 @@ public class WebConfiguration implements WebMvcConfigurer {
   private static final String API_CONTROLLER_PACKAGE = "org.giglab.live.commerce.api.controller";
 
   @Value("${cors.allowed-origins}")
-  private String allowedOrigin;
+  private List<String> allowedOrigins;
 
   @Override
   public void configurePathMatch(PathMatchConfigurer configurer) {
@@ -32,7 +32,7 @@ public class WebConfiguration implements WebMvcConfigurer {
   @Bean
   public CorsFilter corsFilter() {
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of(allowedOrigin));
+    config.setAllowedOrigins(allowedOrigins);
     config.setAllowedMethods(
         List.of(
             HttpMethod.GET.name(),

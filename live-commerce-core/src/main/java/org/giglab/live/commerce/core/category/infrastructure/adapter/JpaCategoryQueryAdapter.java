@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.category.application.dto.CategoryDto;
 import org.giglab.live.commerce.core.category.application.port.CategoryQueryPort;
+import org.giglab.live.commerce.core.category.domain.entity.Category;
 import org.giglab.live.commerce.core.category.infrastructure.persistence.CategoryQueryRepository;
 import org.springframework.stereotype.Component;
 
@@ -16,5 +17,10 @@ public class JpaCategoryQueryAdapter implements CategoryQueryPort {
   @Override
   public List<CategoryDto> findAllActive() {
     return queryRepository.findAllActive();
+  }
+
+  @Override
+  public List<Category> findByIds(List<Long> distinctIds) {
+    return queryRepository.findAllByIdsIn(distinctIds);
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -14,78 +14,12 @@ interface ProductForm {
 
 interface CategoryNode {
   id: number;
+  code: string;
   name: string;
-  children?: CategoryNode[];
+  level: number;
+  sortOrder: number;
+  children: CategoryNode[];
 }
-
-const CATEGORY_TREE: CategoryNode[] = [
-  {
-    id: 1, name: '의류',
-    children: [
-      {
-        id: 5, name: '남성의류',
-        children: [
-          { id: 13, name: '셔츠' },
-          { id: 14, name: '바지' },
-        ],
-      },
-      {
-        id: 6, name: '여성의류',
-        children: [
-          { id: 15, name: '원피스' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 2, name: '가전디지털',
-    children: [
-      {
-        id: 7, name: '대형가전',
-        children: [
-          { id: 16, name: '냉장고' },
-          { id: 17, name: 'TV' },
-        ],
-      },
-      {
-        id: 8, name: '소형가전',
-        children: [
-          { id: 18, name: '전자레인지' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 3, name: '식품',
-    children: [
-      {
-        id: 9, name: '신선식품',
-        children: [
-          { id: 19, name: '육류' },
-        ],
-      },
-      {
-        id: 10, name: '가공식품',
-        children: [],
-      },
-    ],
-  },
-  {
-    id: 4, name: '생활건강',
-    children: [
-      {
-        id: 11, name: '생활용품',
-        children: [
-          { id: 20, name: '세제/청소' },
-        ],
-      },
-      {
-        id: 12, name: '헬스/건강',
-        children: [],
-      },
-    ],
-  },
-];
 
 const EMPTY_FORM: ProductForm = {
   name: '', price: '', description: '',
@@ -111,6 +45,19 @@ export default function ProductNew() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 카테고리
+  const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:8090/api/v1/categories')
+      .then((r) => r.json())
+      .then((json) => {
+        setCategoryTree(json.data.categories);
+        setCategoryLoading(false);
+      });
+  }, []);
 
   // 카테고리 모달
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -305,7 +252,7 @@ export default function ProductNew() {
               {/* 1depth */}
               <div className="cat-col">
                 <div className="cat-col-head">대분류</div>
-                {CATEGORY_TREE.map((d1) => (
+                {categoryTree.map((d1) => (
                   <div
                     key={d1.id}
                     className={`cat-item${depth1?.id === d1.id ? ' active' : ''}`}
@@ -364,7 +311,7 @@ export default function ProductNew() {
         <div className="page-header">
           <h1 className="page-title">상품 등록</h1>
           <div className="header-actions">
-            <Link href="/products" className="btn-cancel">취소</Link>
+            <Link href="/products" className="btn-cancel" style={{ marginTop: '8px' }}>취소</Link>
             <button className="btn-save" onClick={handleSave} disabled={isSaving}>
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -391,11 +338,12 @@ export default function ProductNew() {
                   type="button"
                   className={`cat-btn${errors.category ? ' error' : ''}`}
                   onClick={openCategoryModal}
+                  disabled={categoryLoading}
                 >
                   {selectedCategoryLabel ? (
                     <span className="cat-btn-label">{selectedCategoryLabel}</span>
                   ) : (
-                    <span className="cat-btn-placeholder">카테고리 선택</span>
+                    <span className="cat-btn-placeholder">{categoryLoading ? '카테고리 로딩 중...' : '카테고리 선택'}</span>
                   )}
                   <span className="cat-btn-arrow">▼</span>
                 </button>

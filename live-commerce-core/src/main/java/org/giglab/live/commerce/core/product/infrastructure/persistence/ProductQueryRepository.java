@@ -28,7 +28,7 @@ public class ProductQueryRepository {
     builder.and(product.deleteYn.eq(YnType.N));
 
     if (query.cursor() != null) {
-      builder.and(product.id.gt(query.cursor()));
+      builder.and(product.id.lt(query.cursor()));
     }
     if (query.status() != null) {
       builder.and(product.status.eq(query.status()));

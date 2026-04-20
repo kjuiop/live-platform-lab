@@ -30,7 +30,7 @@ public class CategorySupport {
     Map<Long, Category> categoryMap =
         categories.stream().collect(Collectors.toMap(Category::getId, category -> category));
 
-    return categoryIds.stream()
+    return distinctIds.stream()
         .map(
             id -> {
               Category category = categoryMap.get(id);

@@ -5,6 +5,7 @@ import static org.giglab.live.commerce.core.product.domain.entity.QProductCatego
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -25,7 +26,7 @@ public class ProductQueryRepository {
 
   public List<ProductSummary> findList(ProductListQuery query) {
     BooleanBuilder builder = new BooleanBuilder();
-    builder.and(product.deleteYn.eq(YnType.N));
+    builder.and(defaultCondition());
 
     if (query.cursor() != null) {
       builder.and(product.id.lt(query.cursor()));
@@ -60,9 +61,10 @@ public class ProductQueryRepository {
 
   public Optional<Product> findById(Long id) {
     return Optional.ofNullable(
-        queryFactory
-            .selectFrom(product)
-            .where(product.id.eq(id), product.deleteYn.eq(YnType.N))
-            .fetchOne());
+        queryFactory.selectFrom(product).where(defaultCondition(), product.id.eq(id)).fetchOne());
+  }
+
+  private BooleanExpression defaultCondition() {
+    return product.deleteYn.eq(YnType.N);
   }
 }

@@ -30,6 +30,10 @@ public class DomainHttpStatusResolver {
       // 인증 관련 오류 (UNAUTHORIZED_USER 등)
       return HttpStatus.UNAUTHORIZED;
     }
+    if (numeric >= 4200 && numeric < 4300) {
+      // 리소스 상태 충돌 (상태 전이 오류 등)
+      return HttpStatus.CONFLICT;
+    }
     if (numeric >= 4300 && numeric < 4400) {
       // 권한 부족 (FORBIDDEN 등)
       return HttpStatus.FORBIDDEN;

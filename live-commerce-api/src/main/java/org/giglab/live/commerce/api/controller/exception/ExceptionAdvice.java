@@ -10,6 +10,7 @@ import org.giglab.live.commerce.api.response.ApiResponse;
 import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 import org.giglab.live.commerce.core.global.exception.DomainException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -101,6 +102,14 @@ public class ExceptionAdvice {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(
             ApiResponse.error(INVALID_REQUEST_ERROR.getCode(), INVALID_REQUEST_ERROR.getMessage()));
+  }
+
+  @ExceptionHandler(OptimisticLockingFailureException.class)
+  public ResponseEntity<ApiResponse<Void>> handleOptimisticLock(
+      OptimisticLockingFailureException ex) {
+    log.warn("OptimisticLockingFailure: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error("CONFLICT", "다른 요청과 충돌했습니다. 다시 시도해 주세요."));
   }
 
   @ExceptionHandler(Exception.class)

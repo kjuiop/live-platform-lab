@@ -87,3 +87,37 @@ Phase 2에서는 **멀티 인스턴스 환경에서 채팅이 정상 동작하�
 **Infra**
 - Docker
 - Docker Compose
+
+---
+
+## 실행 방법
+
+### 인프라만 실행 (Redis, MySQL, Prometheus, Grafana)
+```bash
+docker compose -f docker-compose.infra.yml up -d
+```
+
+### live-chat-server 실행 (인프라 포함)
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.chat.yml up -d
+```
+
+### live-platform-api 실행 (인프라 포함)
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.api.yml up -d
+```
+
+### 전체 스택 실행
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.chat.yml -f docker-compose.api.yml up -d
+```
+
+### 이미지 빌드
+
+```bash
+# live-chat-server 이미지 빌드
+docker build -f Dockerfile -t kjuiop/live-chat-server:latest .
+
+# live-platform-api 이미지 빌드
+docker build -f Dockerfile.api -t kjuiop/live-platform-api:latest .
+```

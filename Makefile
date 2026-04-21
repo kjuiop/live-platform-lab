@@ -23,6 +23,9 @@ build_num:
 docker_build:
 	docker build --platform linux/amd64 --tag $(DOCKER_REPOSITORY)/$(MODULE_NAME):$(VERSION_NUM).$(BUILD_NUM) .
 
+docker-mysql-up:
+	@docker-compose -f docker-compose.infra.yml up -d mysql
+
 git-setup: git-template git-hooks
 	@echo "✅ Done. (repo-local git template + hooks applied)"
 

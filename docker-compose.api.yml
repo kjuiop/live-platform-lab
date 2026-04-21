@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  live-platform-api:
+    image: kjuiop/live-platform-api:latest
+    build:
+      context: .
+      dockerfile: live-commerce-api/Dockerfile
+    container_name: live-platform-api
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-1234}
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  live-platform-network:
+    external: true

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  live-chat-server:
+    image: kjuiop/live-chat-server:latest
+    build:
+      context: .
+      dockerfile: live-chat-server/Dockerfile
+    container_name: live-chat-server
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  live-platform-network:
+    external: true

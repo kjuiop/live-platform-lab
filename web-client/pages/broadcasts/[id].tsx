@@ -482,6 +482,9 @@ export default function BroadcastDetail() {
   const [viewerCount, setViewerCount] = useState(0);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const toggleProduct = (pid: number) => {
     setLinkedProductIds((prev) =>
@@ -521,6 +524,58 @@ export default function BroadcastDetail() {
     }, 3000);
     return () => clearInterval(interval);
   }, [campaign?.status]);
+
+  useEffect(() => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    if (!campaign || toUiStatus(campaign.status) !== 'live') return;
+    const base = campaign.startedAt ? new Date(campaign.startedAt).getTime() : Date.now();
+    setElapsedSeconds(Math.floor((Date.now() - base) / 1000));
+    timerIntervalRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - base) / 1000));
+    }, 1000);
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [campaign?.status, campaign?.startedAt]);
+
+  const formatElapsed = (secs: number) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return h > 0
+      ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+      : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleStart = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/campaigns/${id}/start`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setCampaign((prev) => prev ? { ...prev, status: 'ON_AIR', startedAt: new Date().toISOString() } : prev);
+    } catch {
+      alert('방송 시작에 실패했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEnd = async () => {
+    if (!confirm('방송을 종료하시겠습니까?')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/campaigns/${id}/end`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setCampaign((prev) => prev ? { ...prev, status: 'ENDED', endedAt: new Date().toISOString() } : prev);
+    } catch {
+      alert('방송 종료에 실패했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const markScriptsReady = () => {
     if (typeof window === 'undefined') return;
@@ -694,6 +749,15 @@ export default function BroadcastDetail() {
         .picker-check { font-size:12px; font-weight:700; color:#475569; width:16px; text-align:center; }
         .picker-check.on { color:#6366f1; }
 
+        .timer-badge { position:absolute; bottom:16px; left:16px; background:rgba(0,0,0,0.75); border-radius:999px; padding:5px 14px; font-size:13px; font-weight:700; color:#fca5a5; backdrop-filter:blur(8px); font-variant-numeric:tabular-nums; letter-spacing:0.04em; }
+
+        .broadcast-actions { margin-top:18px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:10px; }
+        .btn-start { flex:1; padding:12px; background:linear-gradient(135deg,#10b981,#059669); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+        .btn-start:hover:not(:disabled) { opacity:0.85; }
+        .btn-end { flex:1; padding:12px; background:linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+        .btn-end:hover:not(:disabled) { opacity:0.85; }
+        .btn-start:disabled, .btn-end:disabled { opacity:0.5; cursor:not-allowed; }
+
         .side-col { width:360px; flex-shrink:0; height:calc(100vh - 104px); position:sticky; top:80px; }
 
         @media (max-width:900px) {
@@ -730,6 +794,7 @@ export default function BroadcastDetail() {
                     <span className="live-txt">LIVE</span>
                   </div>
                   <div className="viewer-badge">👥 {viewerCount.toLocaleString()}명 시청 중</div>
+                  <div className="timer-badge">🔴 {formatElapsed(elapsedSeconds)}</div>
                 </>
               )}
               {isScheduled && <div className="status-overlay scheduled">🕐 방송 예정</div>}
@@ -750,6 +815,22 @@ export default function BroadcastDetail() {
                 {startedAtLabel && <span className="info-started">시작 {startedAtLabel}</span>}
               </div>
               {campaign.description && <p className="info-desc">{campaign.description}</p>}
+
+              {/* 방송 시작 / 종료 버튼 */}
+              {isScheduled && (
+                <div className="broadcast-actions">
+                  <button className="btn-start" onClick={handleStart} disabled={actionLoading}>
+                    {actionLoading ? '처리 중...' : '▶ 방송 시작'}
+                  </button>
+                </div>
+              )}
+              {isLive && (
+                <div className="broadcast-actions">
+                  <button className="btn-end" onClick={handleEnd} disabled={actionLoading}>
+                    {actionLoading ? '처리 중...' : '■ 방송 종료'}
+                  </button>
+                </div>
+              )}
 
               {/* 상품 매칭 */}
               <div className="product-match-section">

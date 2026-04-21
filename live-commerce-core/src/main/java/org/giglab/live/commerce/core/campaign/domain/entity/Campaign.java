@@ -20,6 +20,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.giglab.live.commerce.core.campaign.domain.entity.types.BroadcastStatusType;
+import org.giglab.live.commerce.core.campaign.domain.exception.CampaignDomainException;
+import org.giglab.live.commerce.core.campaign.domain.exception.CampaignErrorCode;
 import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 
@@ -74,5 +76,21 @@ public class Campaign extends AuditedEntity {
 
   public void addProduct(Long productId, String name, int displayOrder) {
     this.campaignProducts.add(CampaignProduct.of(this, productId, name, displayOrder));
+  }
+
+  public void start() {
+    if (this.status != BroadcastStatusType.SCHEDULED) {
+      throw new CampaignDomainException(CampaignErrorCode.INVALID_STATUS_CHANGE);
+    }
+    this.status = BroadcastStatusType.ON_AIR;
+    this.startedAt = LocalDateTime.now();
+  }
+
+  public void end() {
+    if (this.status != BroadcastStatusType.ON_AIR) {
+      throw new CampaignDomainException(CampaignErrorCode.INVALID_STATUS_CHANGE);
+    }
+    this.status = BroadcastStatusType.ENDED;
+    this.endedAt = LocalDateTime.now();
   }
 }

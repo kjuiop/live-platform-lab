@@ -14,6 +14,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignProductDto;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
+import org.giglab.live.commerce.core.campaign.domain.entity.Campaign;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -72,7 +73,7 @@ public class CampaignQueryRepository {
                 campaign.startedAt,
                 campaign.endedAt)
             .from(campaign)
-            .where(defaultCondition(), campaign.id.eq(campaignId))
+            .where(defaultCondition(), eqCampaignId(campaignId))
             .fetchOne();
 
     if (row == null) {
@@ -104,7 +105,19 @@ public class CampaignQueryRepository {
             products));
   }
 
+  public Optional<Campaign> findEntityById(Long campaignId) {
+    return Optional.ofNullable(
+        this.queryFactory
+            .selectFrom(campaign)
+            .where(defaultCondition(), eqCampaignId(campaignId))
+            .fetchOne());
+  }
+
   private BooleanExpression defaultCondition() {
     return campaign.deleteYn.eq(YnType.N);
+  }
+
+  private BooleanExpression eqCampaignId(Long campaignId) {
+    return campaign.id.eq(campaignId);
   }
 }

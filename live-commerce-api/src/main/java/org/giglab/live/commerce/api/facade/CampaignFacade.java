@@ -37,4 +37,12 @@ public class CampaignFacade {
     CreateCampaignResult result = campaignService.create(command);
     return campaignMapper.toCreateCampaignResponse(result);
   }
+
+  public void start(Long campaignId) {
+    campaignService.start(campaignId);
+  }
+
+  public void end(Long campaignId) {
+    campaignService.end(campaignId);
+  }
 }

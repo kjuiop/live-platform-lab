@@ -44,4 +44,18 @@ public class CampaignController {
       @RequestBody @Valid CreateCampaignRequest request) {
     return ApiResponse.success(campaignFacade.create(request));
   }
+
+  @Operation(summary = "방송 시작", description = "방송을 시작합니다.")
+  @PostMapping("/{campaignId}/start")
+  public ApiResponse<Void> start(@PathVariable Long campaignId) {
+    campaignFacade.start(campaignId);
+    return ApiResponse.success();
+  }
+
+  @Operation(summary = "방송 종료", description = "방송을 종료합니다.")
+  @PostMapping("/{campaignId}/end")
+  public ApiResponse<Void> end(@PathVariable Long campaignId) {
+    campaignFacade.end(campaignId);
+    return ApiResponse.success();
+  }
 }

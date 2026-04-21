@@ -65,7 +65,11 @@ public class Campaign extends AuditedEntity {
   private LocalDateTime endedAt;
 
   public static Campaign create(String title, String description, LocalDateTime scheduledAt) {
-    return Campaign.builder().title(title).scheduledAt(scheduledAt).build();
+    return Campaign.builder()
+        .title(title)
+        .description(description)
+        .scheduledAt(scheduledAt)
+        .build();
   }
 
   public void addProduct(Long productId, int displayOrder) {

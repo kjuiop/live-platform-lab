@@ -1,32 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  embeddingStatus: 'none' | 'pending' | 'done';
-}
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: 'P001', name: '워터프루프 립스틱', category: '뷰티', price: 25000, description: '24시간 지속되는 방수 립스틱. 선명한 발색과 촉촉한 보습력을 동시에.', embeddingStatus: 'done' },
-  { id: 'P002', name: '비타민C 세럼', category: '스킨케어', price: 48000, description: '고농도 비타민C 15% 함유. 미백과 탄력 개선에 효과적입니다.', embeddingStatus: 'done' },
-  { id: 'P003', name: '쿠션 파운데이션', category: '뷰티', price: 35000, description: 'SPF50+ PA++++ 자외선 차단. 촉촉한 피부 표현에 최적화된 쿠션.', embeddingStatus: 'none' },
-];
+interface Product {
+  id: number;
+  name: string;
+  status: string;
+  price: number;
+  categoryName?: string;
+}
 
 export default function BroadcastNew() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
-  const [errors, setErrors] = useState<{ title?: string; product?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; product?: string; submit?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productKeyword, setProductKeyword] = useState('');
+
+  const fetchProducts = (keyword: string) => {
+    setProductsLoading(true);
+    const params = new URLSearchParams({ size: '20' });
+    if (keyword.trim()) params.set('keyword', keyword.trim());
+    fetch(`${API_BASE}/products?${params}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((json) => setProducts(json.data?.items ?? []))
+      .catch((err) => console.error('[상품 조회 실패]', err))
+      .finally(() => setProductsLoading(false));
+  };
+
+  useEffect(() => {
+    if (!showProductPicker) return;
+    fetchProducts(productKeyword);
+  }, [showProductPicker]);
+
+  useEffect(() => {
+    if (!showProductPicker) return;
+    const timer = setTimeout(() => fetchProducts(productKeyword), 300);
+    return () => clearTimeout(timer);
+  }, [productKeyword]);
 
   const validate = () => {
     const errs: { title?: string; product?: string } = {};
@@ -39,12 +63,30 @@ export default function BroadcastNew() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setIsSaving(true);
-    // TODO: POST /api/v1/broadcasts
-    await new Promise((r) => setTimeout(r, 700));
-    router.push('/broadcasts');
+    setErrors((prev) => ({ ...prev, submit: undefined }));
+    try {
+      const res = await fetch(`${API_BASE}/campaigns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString().slice(0, 19) : new Date().toISOString().slice(0, 19),
+          campaignProducts: selectedProductIds.map((id, idx) => ({ productId: id, displayOrder: idx + 1 })),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `등록 실패 (${res.status})`);
+      }
+      router.push('/broadcasts');
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err instanceof Error ? err.message : '등록 중 오류가 발생했습니다.' }));
+      setIsSaving(false);
+    }
   };
 
-  const toggleProduct = (id: string) => {
+  const toggleProduct = (id: number) => {
     setSelectedProductIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
@@ -103,6 +145,9 @@ export default function BroadcastNew() {
         .btn-remove-product:hover { color: #f87171; background: rgba(239,68,68,0.1); }
         .product-empty { font-size: 13px; color: #475569; margin-bottom: 12px; }
 
+        .product-search { width: 100%; padding: 9px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; color: #f1f5f9; outline: none; font-family: inherit; margin-bottom: 6px; }
+        .product-search:focus { border-color: #6366f1; }
+        .product-search::placeholder { color: #334155; }
         .product-picker { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; }
         .picker-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
         .picker-item:hover { background: rgba(255,255,255,0.04); }
@@ -134,7 +179,8 @@ export default function BroadcastNew() {
         <div className="page-header">
           <h1 className="page-title">방송 등록</h1>
           <div className="header-actions">
-            <Link href="/broadcasts" className="btn-cancel">취소</Link>
+            {errors.submit && <span style={{ fontSize: '12px', color: '#f87171', alignSelf: 'center' }}>{errors.submit}</span>}
+            <Link href="/broadcasts" className="btn-cancel" style={{ marginTop: '8px'}}>취소</Link>
             <button className="btn-save" onClick={handleSave} disabled={isSaving}>
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -196,13 +242,13 @@ export default function BroadcastNew() {
             ) : (
               <div className="product-list">
                 {selectedProductIds.map((pid) => {
-                  const p = MOCK_PRODUCTS.find((x) => x.id === pid);
+                  const p = products.find((x) => x.id === pid);
                   if (!p) return null;
                   return (
                     <div key={pid} className="product-list-card">
                       <div className="product-list-info">
                         <span className="product-list-name">{p.name}</span>
-                        <span className="product-list-cat">{p.category}</span>
+                        {p.categoryName && <span className="product-list-cat">{p.categoryName}</span>}
                         <span className="product-list-price">{p.price.toLocaleString()}원</span>
                       </div>
                       <button className="btn-remove-product" onClick={() => toggleProduct(pid)}>✕</button>
@@ -213,8 +259,19 @@ export default function BroadcastNew() {
             )}
 
             {showProductPicker && (
+              <>
+                <input
+                  className="product-search"
+                  placeholder="상품명으로 검색..."
+                  value={productKeyword}
+                  onChange={(e) => setProductKeyword(e.target.value)}
+                />
               <div className="product-picker">
-                {MOCK_PRODUCTS.map((p) => {
+                {productsLoading ? (
+                  <div style={{ padding: '16px', fontSize: '13px', color: '#475569', textAlign: 'center' }}>검색 중...</div>
+                ) : products.length === 0 ? (
+                  <div style={{ padding: '16px', fontSize: '13px', color: '#475569', textAlign: 'center' }}>검색 결과가 없습니다.</div>
+                ) : products.map((p) => {
                   const isSelected = selectedProductIds.includes(p.id);
                   return (
                     <div
@@ -224,7 +281,7 @@ export default function BroadcastNew() {
                     >
                       <div className="picker-item-left">
                         <span className="picker-item-name">{p.name}</span>
-                        <span className="picker-item-cat">{p.category}</span>
+                        {p.categoryName && <span className="picker-item-cat">{p.categoryName}</span>}
                       </div>
                       <div className="picker-item-right">
                         <span className="picker-item-price">{p.price.toLocaleString()}원</span>
@@ -234,6 +291,7 @@ export default function BroadcastNew() {
                   );
                 })}
               </div>
+              </>
             )}
 
             {errors.product && <div className="error-msg">{errors.product}</div>}

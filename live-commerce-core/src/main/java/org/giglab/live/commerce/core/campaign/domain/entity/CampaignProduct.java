@@ -32,7 +32,7 @@ public class CampaignProduct extends AuditedEntity {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id", nullable = false)
+  @JoinColumn(name = "campaign_id", nullable = false)
   private Campaign campaign;
 
   @Column(name = "product_id", nullable = false)

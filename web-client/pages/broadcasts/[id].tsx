@@ -6,15 +6,27 @@ import { useRouter } from 'next/router';
 
 type BroadcastStatus = 'scheduled' | 'live' | 'ended';
 
-interface Broadcast {
-  id: string;
+interface CampaignProduct {
+  productId: number;
+  name: string;
+  displayOrder: number;
+}
+
+interface Campaign {
+  id: number;
   title: string;
-  productName: string;
-  productId: string;
-  status: BroadcastStatus;
-  startedAt?: string;
-  viewerCount?: number;
-  description?: string;
+  description: string;
+  status: string;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  campaignProducts: CampaignProduct[];
+}
+
+function toUiStatus(apiStatus: string): BroadcastStatus {
+  if (apiStatus === 'ON_AIR') return 'live';
+  if (apiStatus === 'ENDED') return 'ended';
+  return 'scheduled';
 }
 
 interface Message {
@@ -32,43 +44,6 @@ interface QnAItem {
   timestamp: Date;
   isLoading?: boolean;
 }
-
-const MOCK_BROADCASTS: Broadcast[] = [
-  {
-    id: 'B001',
-    title: '봄맞이 뷰티 라이브',
-    productName: '워터프루프 립스틱',
-    productId: 'P001',
-    status: 'live',
-    startedAt: '14:00',
-    viewerCount: 1243,
-    description: '봄 시즌 신상 립스틱을 직접 발색해보는 라이브입니다. 다양한 컬러와 지속력을 확인해보세요!',
-  },
-  {
-    id: 'B002',
-    title: '스킨케어 집중 케어',
-    productName: '비타민C 세럼',
-    productId: 'P002',
-    status: 'scheduled',
-    description: '피부 고민을 한 번에 해결해줄 비타민C 세럼 소개 라이브입니다.',
-  },
-  {
-    id: 'B003',
-    title: '파운데이션 비교 테스트',
-    productName: '쿠션 파운데이션',
-    productId: 'P003',
-    status: 'ended',
-    startedAt: '10:00',
-    viewerCount: 3892,
-    description: '인기 쿠션 파운데이션 5종을 직접 비교해보는 방송입니다.',
-  },
-];
-
-const MOCK_PRODUCTS = [
-  { id: 'P001', name: '워터프루프 립스틱', category: '뷰티', price: 25000, embeddingStatus: 'done' },
-  { id: 'P002', name: '비타민C 세럼', category: '스킨케어', price: 48000, embeddingStatus: 'done' },
-  { id: 'P003', name: '쿠션 파운데이션', category: '뷰티', price: 35000, embeddingStatus: 'none' },
-];
 
 // Mock AI 응답
 const MOCK_AI_ANSWERS: Record<string, string> = {
@@ -489,26 +464,28 @@ function EndedAnalysisPanel() {
 }
 
 // ─── 메인 페이지 ─────────────────────────────────────────────────────
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+
 export default function BroadcastDetail() {
   const router = useRouter();
   const { id } = router.query;
 
-  const broadcast = MOCK_BROADCASTS.find((b) => b.id === id) ?? null;
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [nickname, setNickname] = useState('시청자');
   const [wsConnected, setWsConnected] = useState(false);
   const [areScriptsReady, setAreScriptsReady] = useState(false);
-  const [viewerCount, setViewerCount] = useState(broadcast?.viewerCount ?? 0);
-  const [linkedProductIds, setLinkedProductIds] = useState<string[]>(
-    broadcast?.productId ? [broadcast.productId] : []
-  );
+  const [viewerCount, setViewerCount] = useState(0);
+  const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
 
-  const toggleProduct = (id: string) => {
+  const toggleProduct = (pid: number) => {
     setLinkedProductIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(pid) ? prev.filter((x) => x !== pid) : [...prev, pid]
     );
   };
 
@@ -520,12 +497,30 @@ export default function BroadcastDetail() {
   const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL;
 
   useEffect(() => {
-    if (broadcast?.status !== 'live') return;
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE}/campaigns/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        const data: Campaign = json.data;
+        setCampaign(data);
+        setLinkedProductIds(data.campaignProducts.map((p) => p.productId));
+      })
+      .catch(() => setError('캠페인 정보를 불러오는 데 실패했습니다.'))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (!campaign || toUiStatus(campaign.status) !== 'live') return;
     const interval = setInterval(() => {
       setViewerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 20) - 8));
     }, 3000);
     return () => clearInterval(interval);
-  }, [broadcast?.status]);
+  }, [campaign?.status]);
 
   const markScriptsReady = () => {
     if (typeof window === 'undefined') return;
@@ -594,7 +589,20 @@ export default function BroadcastDetail() {
 
   if (!id) return null;
 
-  if (!broadcast) {
+  if (loading) {
+    return (
+      <>
+        <Head><title>로딩 중...</title></Head>
+        <style jsx global>{`* { margin:0;padding:0;box-sizing:border-box; } body { font-family: -apple-system,sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; } a { text-decoration:none;color:inherit; }`}</style>
+        <div style={{ maxWidth: 600, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+          <p style={{ color: '#64748b' }}>방송 정보를 불러오는 중...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (error || !campaign) {
     return (
       <>
         <Head><title>방송을 찾을 수 없음</title></Head>
@@ -602,7 +610,7 @@ export default function BroadcastDetail() {
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 20 }}>📡</div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#f1f5f9', marginBottom: 12 }}>방송을 찾을 수 없습니다</h1>
-          <p style={{ color: '#64748b', marginBottom: 32 }}>요청하신 방송이 존재하지 않거나 삭제되었습니다.</p>
+          <p style={{ color: '#64748b', marginBottom: 32 }}>{error ?? '요청하신 방송이 존재하지 않거나 삭제되었습니다.'}</p>
           <Link href="/broadcasts" style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 600 }}>
             목록으로 돌아가기
           </Link>
@@ -611,12 +619,17 @@ export default function BroadcastDetail() {
     );
   }
 
-  const isLive = broadcast.status === 'live';
-  const isScheduled = broadcast.status === 'scheduled';
+  const uiStatus = toUiStatus(campaign.status);
+  const isLive = uiStatus === 'live';
+  const isScheduled = uiStatus === 'scheduled';
+  const productName = campaign.campaignProducts[0]?.name ?? '상품 없음';
+  const startedAtLabel = campaign.startedAt
+    ? new Date(campaign.startedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <>
-      <Head><title>{broadcast.title} — Live Platform Lab</title></Head>
+      <Head><title>{campaign.title} — Live Platform Lab</title></Head>
       <Script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js" strategy="afterInteractive" onLoad={markScriptsReady} />
       <Script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js" strategy="afterInteractive" onLoad={markScriptsReady} />
 
@@ -650,7 +663,6 @@ export default function BroadcastDetail() {
         .info-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:24px; }
         .info-title { font-size:22px; font-weight:700; color:#f1f5f9; margin-bottom:12px; }
         .info-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:14px; }
-        .product-tag { background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.2); color:#a5b4fc; padding:4px 12px; border-radius:999px; font-size:13px; font-weight:600; }
         .s-badge { font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px; }
         .s-live { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
         .s-scheduled { background:rgba(251,191,36,0.12); color:#fcd34d; border:1px solid rgba(251,191,36,0.25); }
@@ -668,8 +680,7 @@ export default function BroadcastDetail() {
         .product-match-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; }
         .product-match-info { display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:1; min-width:0; }
         .product-match-name { font-size:13px; font-weight:700; color:#f1f5f9; }
-        .product-match-cat { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:rgba(99,102,241,0.12); color:#a5b4fc; border:1px solid rgba(99,102,241,0.2); }
-        .product-match-price { font-size:12px; color:#64748b; }
+        .product-match-order { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:rgba(99,102,241,0.12); color:#a5b4fc; border:1px solid rgba(99,102,241,0.2); }
         .btn-remove-product { background:none; border:none; color:#475569; font-size:13px; cursor:pointer; padding:2px 4px; flex-shrink:0; line-height:1; }
         .btn-remove-product:hover { color:#f87171; }
         .product-match-empty { font-size:13px; color:#475569; padding:6px 0; }
@@ -679,9 +690,7 @@ export default function BroadcastDetail() {
         .picker-item.selected { background:rgba(99,102,241,0.1); }
         .picker-item-left { display:flex; align-items:center; gap:8px; }
         .picker-item-name { font-size:13px; font-weight:600; color:#e2e8f0; }
-        .picker-item-cat { font-size:11px; color:#64748b; }
-        .picker-item-right { display:flex; align-items:center; gap:8px; }
-        .picker-item-price { font-size:12px; color:#64748b; }
+        .picker-item-order { font-size:11px; color:#64748b; }
         .picker-check { font-size:12px; font-weight:700; color:#475569; width:16px; text-align:center; }
         .picker-check.on { color:#6366f1; }
 
@@ -700,7 +709,7 @@ export default function BroadcastDetail() {
             <span className="nav-sep">/</span>
             <Link href="/broadcasts">방송 목록</Link>
             <span className="nav-sep">/</span>
-            <span className="nav-cur">{broadcast.title}</span>
+            <span className="nav-cur">{campaign.title}</span>
           </nav>
         </div>
 
@@ -724,24 +733,23 @@ export default function BroadcastDetail() {
                 </>
               )}
               {isScheduled && <div className="status-overlay scheduled">🕐 방송 예정</div>}
-              {broadcast.status === 'ended' && (
+              {uiStatus === 'ended' && (
                 <div className="status-overlay ended">
-                  종료{broadcast.startedAt && ` · ${broadcast.startedAt} 시작`}
-                  {broadcast.viewerCount && ` · ${broadcast.viewerCount.toLocaleString()}명 시청`}
+                  종료{startedAtLabel && ` · ${startedAtLabel} 시작`}
                 </div>
               )}
             </div>
 
             {/* 방송 정보 */}
             <div className="info-card">
-              <h1 className="info-title">{broadcast.title}</h1>
+              <h1 className="info-title">{campaign.title}</h1>
               <div className="info-meta">
-                <span className={`s-badge s-${broadcast.status}`}>
-                  {isLive && '● '}{statusLabel[broadcast.status]}
+                <span className={`s-badge s-${uiStatus}`}>
+                  {isLive && '● '}{statusLabel[uiStatus]}
                 </span>
-                {broadcast.startedAt && <span className="info-started">시작 {broadcast.startedAt}</span>}
+                {startedAtLabel && <span className="info-started">시작 {startedAtLabel}</span>}
               </div>
-              {broadcast.description && <p className="info-desc">{broadcast.description}</p>}
+              {campaign.description && <p className="info-desc">{campaign.description}</p>}
 
               {/* 상품 매칭 */}
               <div className="product-match-section">
@@ -749,7 +757,7 @@ export default function BroadcastDetail() {
                   <span className="product-match-label">
                     연결된 상품 {linkedProductIds.length > 0 && <span className="product-count">{linkedProductIds.length}</span>}
                   </span>
-                  {broadcast.status !== 'ended' && (
+                  {uiStatus !== 'ended' && (
                     <button className="btn-change-product" onClick={() => setShowProductPicker((v) => !v)}>
                       {showProductPicker ? '닫기' : '+ 상품 추가'}
                     </button>
@@ -761,16 +769,15 @@ export default function BroadcastDetail() {
                 ) : (
                   <div className="product-match-list">
                     {linkedProductIds.map((pid) => {
-                      const p = MOCK_PRODUCTS.find((x) => x.id === pid);
+                      const p = campaign.campaignProducts.find((x) => x.productId === pid);
                       if (!p) return null;
                       return (
                         <div key={pid} className="product-match-card">
                           <div className="product-match-info">
                             <span className="product-match-name">{p.name}</span>
-                            <span className="product-match-cat">{p.category}</span>
-                            <span className="product-match-price">{p.price.toLocaleString()}원</span>
+                            <span className="product-match-order">#{p.displayOrder}</span>
                           </div>
-                          {broadcast.status !== 'ended' && (
+                          {uiStatus !== 'ended' && (
                             <button className="btn-remove-product" onClick={() => toggleProduct(pid)}>✕</button>
                           )}
                         </div>
@@ -779,22 +786,21 @@ export default function BroadcastDetail() {
                   </div>
                 )}
 
-                {broadcast.status !== 'ended' && showProductPicker && (
+                {uiStatus !== 'ended' && showProductPicker && (
                   <div className="product-picker">
-                    {MOCK_PRODUCTS.map((p) => {
-                      const isLinked = linkedProductIds.includes(p.id);
+                    {campaign.campaignProducts.map((p) => {
+                      const isLinked = linkedProductIds.includes(p.productId);
                       return (
                         <div
-                          key={p.id}
+                          key={p.productId}
                           className={`picker-item ${isLinked ? 'selected' : ''}`}
-                          onClick={() => toggleProduct(p.id)}
+                          onClick={() => toggleProduct(p.productId)}
                         >
                           <div className="picker-item-left">
                             <span className="picker-item-name">{p.name}</span>
-                            <span className="picker-item-cat">{p.category}</span>
+                            <span className="picker-item-order">순서 {p.displayOrder}</span>
                           </div>
                           <div className="picker-item-right">
-                            <span className="picker-item-price">{p.price.toLocaleString()}원</span>
                             <span className={`picker-check ${isLinked ? 'on' : ''}`}>{isLinked ? '✓' : '+'}</span>
                           </div>
                         </div>
@@ -810,8 +816,8 @@ export default function BroadcastDetail() {
           <div className="side-col">
             {(isScheduled || isLive) && (
               <ChatQnAPanel
-                status={broadcast.status}
-                productName={broadcast.productName}
+                status={uiStatus}
+                productName={productName}
                 messages={messages}
                 inputValue={inputValue}
                 setInputValue={setInputValue}
@@ -823,7 +829,7 @@ export default function BroadcastDetail() {
                 areScriptsReady={areScriptsReady}
               />
             )}
-            {broadcast.status === 'ended' && <EndedAnalysisPanel />}
+            {uiStatus === 'ended' && <EndedAnalysisPanel />}
           </div>
         </div>
       </div>

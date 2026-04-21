@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductQueryPort;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
+import org.giglab.live.commerce.core.product.domain.exception.ProductDomainException;
+import org.giglab.live.commerce.core.product.domain.exception.ProductErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,7 @@ public class GetProductUseCase {
   public GetProductResult execute(Long productId) {
     Optional<Product> fetched = productQueryPort.findById(productId);
     if (fetched.isEmpty()) {
-      throw new IllegalArgumentException("상품이 존재하지 않습니다. productId: " + productId);
+      throw new ProductDomainException(ProductErrorCode.NOTFOUND_PRODUCT);
     }
     Product product = fetched.get();
     return GetProductResult.from(

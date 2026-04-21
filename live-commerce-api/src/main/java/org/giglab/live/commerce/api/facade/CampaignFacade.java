@@ -3,10 +3,13 @@ package org.giglab.live.commerce.api.facade;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
 import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
 import org.giglab.live.commerce.core.campaign.application.CampaignService;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +18,12 @@ public class CampaignFacade {
 
   private final CampaignMapper campaignMapper;
   private final CampaignService campaignService;
+
+  public GetCampaignListResponse getList(GetCampaignListRequest request) {
+    GetCampaignListResult result =
+        campaignService.getList(campaignMapper.toCampaignListQuery(request));
+    return campaignMapper.toGetCampaignListResponse(result);
+  }
 
   public CreateCampaignResponse create(CreateCampaignRequest request) {
     CreateCampaignCommand command = campaignMapper.toCreateCampaignCommand(request);

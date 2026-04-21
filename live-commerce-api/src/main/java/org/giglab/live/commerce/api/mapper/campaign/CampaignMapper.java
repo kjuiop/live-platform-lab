@@ -1,12 +1,19 @@
 package org.giglab.live.commerce.api.mapper.campaign;
 
 import org.giglab.live.commerce.api.dto.campaign.CampaignProductRequest;
+import org.giglab.live.commerce.api.dto.campaign.CampaignSummaryItem;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignProductDto;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface CampaignMapper {
@@ -16,4 +23,12 @@ public interface CampaignMapper {
   CampaignProductDto toCampaignProductDto(CampaignProductRequest request);
 
   CreateCampaignResponse toCreateCampaignResponse(CreateCampaignResult result);
+
+  @Mapping(target = "size", expression = "java(request.size() != null ? request.size() : 20)")
+  CampaignListQuery toCampaignListQuery(GetCampaignListRequest request);
+
+  @Mapping(target = "status", expression = "java(summary.status().name())")
+  CampaignSummaryItem toCampaignSummaryItem(CampaignSummary summary);
+
+  GetCampaignListResponse toGetCampaignListResponse(GetCampaignListResult result);
 }

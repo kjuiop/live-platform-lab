@@ -1,4 +1,4 @@
-package org.giglab.live.commerce.api.controller;
+package org.giglab.live.commerce.api.controller.product;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

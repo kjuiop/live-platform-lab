@@ -6,6 +6,12 @@ import { useRouter } from 'next/router';
 
 type BroadcastStatus = 'scheduled' | 'live' | 'ended';
 
+interface BroadcastStatusData {
+  status: string;
+  startedAt: string | null;
+  endedAt: string | null;
+}
+
 interface CampaignProduct {
   productId: number;
   name: string;
@@ -555,7 +561,9 @@ export default function BroadcastDetail() {
     try {
       const res = await fetch(`${API_BASE}/campaigns/${id}/start`, { method: 'POST' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setCampaign((prev) => prev ? { ...prev, status: 'ON_AIR', startedAt: new Date().toISOString() } : prev);
+      const json = await res.json();
+      const data: BroadcastStatusData = json.data;
+      setCampaign((prev) => prev ? { ...prev, status: data.status, startedAt: data.startedAt } : prev);
     } catch {
       alert('방송 시작에 실패했습니다.');
     } finally {
@@ -569,7 +577,9 @@ export default function BroadcastDetail() {
     try {
       const res = await fetch(`${API_BASE}/campaigns/${id}/end`, { method: 'POST' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setCampaign((prev) => prev ? { ...prev, status: 'ENDED', endedAt: new Date().toISOString() } : prev);
+      const json = await res.json();
+      const data: BroadcastStatusData = json.data;
+      setCampaign((prev) => prev ? { ...prev, status: data.status, endedAt: data.endedAt } : prev);
     } catch {
       alert('방송 종료에 실패했습니다.');
     } finally {

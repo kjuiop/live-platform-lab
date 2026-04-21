@@ -50,6 +50,8 @@ public class ExceptionAdvice {
             .map(DefaultMessageSourceResolvable::getDefaultMessage)
             .orElse(INVALID_REQUEST_ERROR.getMessage());
 
+    log.warn("MethodArgumentNotValid: {}", ex.getMessage());
+
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.error(INVALID_REQUEST_ERROR.getCode(), message));
   }
@@ -62,6 +64,8 @@ public class ExceptionAdvice {
             .findFirst()
             .map(ConstraintViolation::getMessage)
             .orElse(INVALID_REQUEST_ERROR.getMessage());
+
+    log.warn("ConstraintViolation: {}", message);
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.error(INVALID_REQUEST_ERROR.getCode(), message));

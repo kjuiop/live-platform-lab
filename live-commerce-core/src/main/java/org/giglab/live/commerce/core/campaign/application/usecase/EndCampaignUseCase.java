@@ -2,6 +2,7 @@ package org.giglab.live.commerce.core.campaign.application.usecase;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignStorePort;
 import org.giglab.live.commerce.core.campaign.domain.entity.Campaign;
 import org.giglab.live.commerce.core.campaign.domain.exception.CampaignDomainException;
@@ -16,7 +17,7 @@ public class EndCampaignUseCase {
 
   private final CampaignStorePort campaignStorePort;
 
-  public void execute(Long campaignId) {
+  public BroadcastStatusResult execute(Long campaignId) {
     Optional<Campaign> findCampaign = campaignStorePort.findEntityById(campaignId);
     if (findCampaign.isEmpty()) {
       throw new CampaignDomainException(
@@ -24,5 +25,6 @@ public class EndCampaignUseCase {
     }
     Campaign campaign = findCampaign.get();
     campaign.end();
+    return new BroadcastStatusResult(campaign.getStatus(), null, campaign.getEndedAt());
   }
 }

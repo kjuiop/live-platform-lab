@@ -1,5 +1,6 @@
 package org.giglab.live.commerce.api.mapper.campaign;
 
+import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
 import org.giglab.live.commerce.api.dto.campaign.CampaignProductItem;
 import org.giglab.live.commerce.api.dto.campaign.CampaignProductRequest;
 import org.giglab.live.commerce.api.dto.campaign.CampaignSummaryItem;
@@ -8,6 +9,7 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
+import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignProductDto;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
@@ -39,4 +41,7 @@ public interface CampaignMapper {
 
   @Mapping(target = "status", expression = "java(result.status().name())")
   GetCampaignResponse toGetCampaignResponse(GetCampaignResult result);
+
+  @Mapping(target = "status", expression = "java(result.status().name())")
+  BroadcastStatusResponse toBroadcastStatusResponse(BroadcastStatusResult result);
 }

@@ -1,6 +1,7 @@
 package org.giglab.live.commerce.core.campaign.application;
 
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
@@ -31,12 +32,12 @@ public class CampaignService {
     return getCampaignUseCase.execute(campaignId);
   }
 
-  public void start(Long campaignId) {
-    startCampaignUseCase.execute(campaignId);
+  public BroadcastStatusResult start(Long campaignId) {
+    return startCampaignUseCase.execute(campaignId);
   }
 
-  public void end(Long campaignId) {
-    endCampaignUseCase.execute(campaignId);
+  public BroadcastStatusResult end(Long campaignId) {
+    return endCampaignUseCase.execute(campaignId);
   }
 
   public CreateCampaignResult create(CreateCampaignCommand request) {

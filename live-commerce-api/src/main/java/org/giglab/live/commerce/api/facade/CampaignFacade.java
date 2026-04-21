@@ -1,6 +1,7 @@
 package org.giglab.live.commerce.api.facade;
 
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
@@ -8,6 +9,7 @@ import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
 import org.giglab.live.commerce.core.campaign.application.CampaignService;
+import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
@@ -36,5 +38,15 @@ public class CampaignFacade {
     CreateCampaignCommand command = campaignMapper.toCreateCampaignCommand(request);
     CreateCampaignResult result = campaignService.create(command);
     return campaignMapper.toCreateCampaignResponse(result);
+  }
+
+  public BroadcastStatusResponse start(Long campaignId) {
+    BroadcastStatusResult result = campaignService.start(campaignId);
+    return campaignMapper.toBroadcastStatusResponse(result);
+  }
+
+  public BroadcastStatusResponse end(Long campaignId) {
+    BroadcastStatusResult result = campaignService.end(campaignId);
+    return campaignMapper.toBroadcastStatusResponse(result);
   }
 }

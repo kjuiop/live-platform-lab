@@ -72,7 +72,7 @@ public class CampaignQueryRepository {
                 campaign.startedAt,
                 campaign.endedAt)
             .from(campaign)
-            .where(defaultCondition(), campaign.id.eq(campaignId))
+            .where(defaultCondition(), eqCampaignId(campaignId))
             .fetchOne();
 
     if (row == null) {
@@ -106,5 +106,9 @@ public class CampaignQueryRepository {
 
   private BooleanExpression defaultCondition() {
     return campaign.deleteYn.eq(YnType.N);
+  }
+
+  private BooleanExpression eqCampaignId(Long campaignId) {
+    return campaign.id.eq(campaignId);
   }
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
@@ -43,5 +44,17 @@ public class CampaignController {
   public ApiResponse<CreateCampaignResponse> create(
       @RequestBody @Valid CreateCampaignRequest request) {
     return ApiResponse.success(campaignFacade.create(request));
+  }
+
+  @Operation(summary = "방송 시작", description = "방송을 시작합니다.")
+  @PostMapping("/{campaignId}/start")
+  public ApiResponse<BroadcastStatusResponse> start(@PathVariable Long campaignId) {
+    return ApiResponse.success(campaignFacade.start(campaignId));
+  }
+
+  @Operation(summary = "방송 종료", description = "방송을 종료합니다.")
+  @PostMapping("/{campaignId}/end")
+  public ApiResponse<BroadcastStatusResponse> end(@PathVariable Long campaignId) {
+    return ApiResponse.success(campaignFacade.end(campaignId));
   }
 }

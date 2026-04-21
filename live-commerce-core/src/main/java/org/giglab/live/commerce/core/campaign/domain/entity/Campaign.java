@@ -72,7 +72,7 @@ public class Campaign extends AuditedEntity {
         .build();
   }
 
-  public void addProduct(Long productId, int displayOrder) {
-    this.campaignProducts.add(CampaignProduct.of(this, productId, displayOrder));
+  public void addProduct(Long productId, String name, int displayOrder) {
+    this.campaignProducts.add(CampaignProduct.of(this, productId, name, displayOrder));
   }
 }

@@ -39,12 +39,17 @@ public class CampaignProduct extends AuditedEntity {
   private Long productId;
 
   @Column(nullable = false)
+  private String name;
+
+  @Column(nullable = false)
   private int displayOrder;
 
-  protected static CampaignProduct of(Campaign campaign, Long productId, int displayOrder) {
+  protected static CampaignProduct of(
+      Campaign campaign, Long productId, String name, int displayOrder) {
     return CampaignProduct.builder()
         .campaign(campaign)
         .productId(productId)
+        .name(name)
         .displayOrder(displayOrder)
         .build();
   }

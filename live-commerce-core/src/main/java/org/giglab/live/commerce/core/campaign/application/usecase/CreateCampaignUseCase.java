@@ -22,7 +22,7 @@ public class CreateCampaignUseCase {
         Campaign.create(command.title(), command.description(), command.scheduledAt());
 
     for (CampaignProductDto product : command.campaignProducts()) {
-      campaign.addProduct(product.productId(), product.displayOrder());
+      campaign.addProduct(product.productId(), product.name(), product.displayOrder());
     }
 
     Campaign savedCampaign = campaignStorePort.store(campaign);

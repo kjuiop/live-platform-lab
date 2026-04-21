@@ -72,7 +72,10 @@ export default function BroadcastNew() {
           title,
           description,
           scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString().slice(0, 19) : new Date().toISOString().slice(0, 19),
-          campaignProducts: selectedProductIds.map((id, idx) => ({ productId: id, displayOrder: idx + 1 })),
+          campaignProducts: selectedProductIds.map((id, idx) => {
+            const product = products.find((p) => p.id === id);
+            return { productId: id, name: product?.name ?? '', displayOrder: idx + 1 };
+          }),
         }),
       });
       if (!res.ok) {

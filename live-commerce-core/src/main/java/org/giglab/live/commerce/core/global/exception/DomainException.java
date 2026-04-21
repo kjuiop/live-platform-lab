@@ -3,7 +3,7 @@ package org.giglab.live.commerce.core.global.exception;
 import lombok.Getter;
 
 @Getter
-public class DomainException extends RuntimeException {
+public abstract class DomainException extends RuntimeException {
 
   private final DomainErrorCode errorCode;
 

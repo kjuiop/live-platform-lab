@@ -16,7 +16,7 @@ public class CategorySupport {
 
   public List<CategoryInfo> requireExistsAndGetCategory(List<Long> categoryIds) {
     if (categoryIds == null || categoryIds.isEmpty()) {
-      throw new CategoryDomainException(CategoryErrorCode.NOT_FOUND);
+      throw new CategoryDomainException(CategoryErrorCode.INVALID_CATEGORY);
     }
 
     List<Long> distinctIds = categoryIds.stream().distinct().toList();

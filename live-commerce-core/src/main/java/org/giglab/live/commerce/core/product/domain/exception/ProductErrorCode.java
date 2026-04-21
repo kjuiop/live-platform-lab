@@ -7,7 +7,7 @@ import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum ProductErrorCode implements DomainErrorCode {
-  NOTFOUND_PRODUCT("PRODUCT-4401", "존재하지 않는 상품입니다.");
+  PRODUCT_NOT_FOUND("PRODUCT-4401", "존재하지 않는 상품입니다.");
 
   private final String code;
   private final String message;

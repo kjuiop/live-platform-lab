@@ -20,7 +20,8 @@ public class GetProductUseCase {
   public GetProductResult execute(Long productId) {
     Optional<Product> fetched = productQueryPort.findById(productId);
     if (fetched.isEmpty()) {
-      throw new ProductDomainException(ProductErrorCode.NOTFOUND_PRODUCT);
+      throw new ProductDomainException(
+          ProductErrorCode.PRODUCT_NOT_FOUND, String.format("존재하지 않는 상품 %d 입니다.", productId));
     }
     Product product = fetched.get();
     return GetProductResult.from(

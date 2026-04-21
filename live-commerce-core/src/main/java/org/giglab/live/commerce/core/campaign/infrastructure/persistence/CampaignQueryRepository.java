@@ -6,7 +6,6 @@ import static org.giglab.live.commerce.core.campaign.domain.entity.QCampaignProd
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -50,11 +49,12 @@ public class CampaignQueryRepository {
                 campaign.description,
                 campaign.status,
                 campaign.scheduledAt,
-                JPAExpressions.select(campaignProduct.count().intValue())
-                    .from(campaignProduct)
-                    .where(campaignProduct.campaign.id.eq(campaign.id))))
+                campaignProduct.count().intValue()))
         .from(campaign)
+        .leftJoin(campaignProduct)
+        .on(campaignProduct.campaign.id.eq(campaign.id))
         .where(builder)
+        .groupBy(campaign.id)
         .orderBy(campaign.id.desc())
         .limit(query.fetchSize())
         .fetch();

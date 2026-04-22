@@ -3,7 +3,7 @@ package org.giglab.live.commerce.core.product.application.usecase.ai;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
-import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsContext;
 import org.giglab.live.commerce.core.product.application.dto.ai.PdfDocumentMetadata;
 import org.giglab.live.commerce.core.product.application.port.ai.EmbedDocumentPort;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
@@ -11,10 +11,8 @@ import org.giglab.live.commerce.core.product.domain.entity.ProductDocument;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class EmbedAllDocumentsUseCase {
 
@@ -26,17 +24,17 @@ public class EmbedAllDocumentsUseCase {
   private final ProductDocumentStorePort productDocumentStorePort;
   private final EmbedDocumentPort embedDocumentPort;
 
-  public EmbedAllDocumentsResult execute(Long productId) {
+  public EmbedAllDocumentsContext execute(Long productId) {
     List<ProductDocument> all = productDocumentStorePort.findAllByProductId(productId);
     List<ProductDocument> pending = all.stream().filter(d -> d.getEmbedYn() == YnType.N).toList();
 
-    for (ProductDocument doc : pending) {
-      List<Document> chunks = splitIntoChunks(doc);
-      embedDocumentPort.embed(chunks);
-      doc.markAsEmbedded();
-    }
+    List<Long> embeddedDocIds =
+        pending.stream()
+            .peek(doc -> embedDocumentPort.embed(splitIntoChunks(doc)))
+            .map(ProductDocument::getId)
+            .toList();
 
-    return new EmbedAllDocumentsResult(all.size(), pending.size());
+    return new EmbedAllDocumentsContext(all.size(), embeddedDocIds);
   }
 
   private List<Document> splitIntoChunks(ProductDocument document) {

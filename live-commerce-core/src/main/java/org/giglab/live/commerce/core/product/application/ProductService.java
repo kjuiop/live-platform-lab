@@ -8,6 +8,7 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductListResul
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsContext;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
@@ -23,6 +24,7 @@ import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocu
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GetDocumentListUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.MarkAllDocumentsEmbeddedUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.ParseProductPdfUseCase;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +42,7 @@ public class ProductService {
   private final AskProductQuestionUseCase askProductQuestionUseCase;
   private final EmbedProductInfoUseCase embedProductInfoUseCase;
   private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
+  private final MarkAllDocumentsEmbeddedUseCase markAllDocumentsEmbeddedUseCase;
 
   public GetProductListResult getList(ProductListQuery query) {
     return getProductListUseCase.execute(query);
@@ -76,6 +79,7 @@ public class ProductService {
   }
 
   public EmbedAllDocumentsResult embedAllDocuments(Long productId) {
-    return embedAllDocumentsUseCase.execute(productId);
+    EmbedAllDocumentsContext context = embedAllDocumentsUseCase.execute(productId);
+    return markAllDocumentsEmbeddedUseCase.execute(context);
   }
 }

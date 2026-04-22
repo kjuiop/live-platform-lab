@@ -7,4 +7,15 @@ public record ParsedProductResult(
     String description,
     String manufacturer,
     String ingredients,
-    String usageMethod) {}
+    String usageMethod) {
+  public static ParsedProductResult from(Long documentId, ParsedPdfData data) {
+    return new ParsedProductResult(
+        documentId,
+        data.fields().name(),
+        data.fields().price(),
+        data.fields().description(),
+        data.fields().manufacturer(),
+        data.fields().ingredients(),
+        data.fields().usageMethod());
+  }
+}

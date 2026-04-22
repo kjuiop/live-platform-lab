@@ -6,9 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Collectors;
 import org.giglab.live.commerce.core.product.application.dto.pdf.LlmParsedFields;
-import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
-import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
-import org.giglab.live.commerce.core.product.domain.entity.ProductDocument;
+import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
 import org.giglab.live.commerce.core.product.domain.exception.ProductDomainException;
 import org.giglab.live.commerce.core.product.domain.exception.ProductErrorCode;
 import org.springframework.ai.chat.client.ChatClient;
@@ -19,10 +17,8 @@ import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class ParseProductPdfUseCase {
 
   /**
@@ -44,20 +40,16 @@ public class ParseProductPdfUseCase {
       }
       """;
 
-  private final ProductDocumentStorePort productDocumentStorePort;
   private final ChatClient chatClient;
   private final String uploadBasePath;
 
   public ParseProductPdfUseCase(
-      ProductDocumentStorePort productDocumentStorePort,
-      ChatModel chatModel,
-      @Value("${app.upload.base-path:uploads}") String uploadBasePath) {
-    this.productDocumentStorePort = productDocumentStorePort;
+      ChatModel chatModel, @Value("${app.upload.base-path:uploads}") String uploadBasePath) {
     this.chatClient = ChatClient.create(chatModel);
     this.uploadBasePath = uploadBasePath;
   }
 
-  public ParsedProductResult execute(String filename, byte[] fileBytes) {
+  public ParsedPdfData execute(String filename, byte[] fileBytes) {
     try {
       saveFile(filename, fileBytes);
     } catch (IOException e) {
@@ -66,20 +58,9 @@ public class ParseProductPdfUseCase {
     }
 
     String extractedText = extractText(fileBytes);
-
-    ProductDocument saved =
-        productDocumentStorePort.store(ProductDocument.pending(filename, extractedText));
-
     LlmParsedFields fields = parseWithLlm(extractedText);
 
-    return new ParsedProductResult(
-        saved.getId(),
-        fields.name(),
-        fields.price(),
-        fields.description(),
-        fields.manufacturer(),
-        fields.ingredients(),
-        fields.usageMethod());
+    return new ParsedPdfData(filename, extractedText, fields);
   }
 
   private void saveFile(String filename, byte[] fileBytes) throws IOException {

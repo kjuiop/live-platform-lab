@@ -12,11 +12,13 @@ import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocument
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
+import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
 import org.giglab.live.commerce.core.product.application.usecase.CreateProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocumentsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
@@ -32,6 +34,7 @@ public class ProductService {
   private final GetProductListUseCase getProductListUseCase;
   private final CreateProductUseCase createProductUseCase;
   private final ParseProductPdfUseCase parseProductPdfUseCase;
+  private final CreateProductDocumentUseCase createProductDocumentUseCase;
   private final GetDocumentListUseCase getDocumentListUseCase;
   private final EmbedDocumentUseCase embedDocumentUseCase;
   private final AskProductQuestionUseCase askProductQuestionUseCase;
@@ -51,7 +54,9 @@ public class ProductService {
   }
 
   public ParsedProductResult parsedProductResult(String filename, byte[] fileBytes) {
-    return parseProductPdfUseCase.execute(filename, fileBytes);
+    ParsedPdfData data = parseProductPdfUseCase.execute(filename, fileBytes);
+    Long documentId = createProductDocumentUseCase.execute(data.filename(), data.extractedText());
+    return ParsedProductResult.from(documentId, data);
   }
 
   public GetDocumentListResult getDocumentList(Long productId) {

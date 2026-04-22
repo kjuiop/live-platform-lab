@@ -1,7 +1,6 @@
-package org.giglab.live.commerce.api.dto.product;
+package org.giglab.live.commerce.core.product.application.dto.pdf;
 
-public record ParsedProductResponse(
-    Long documentId,
+public record LlmParsedFields(
     String name,
     Integer price,
     String description,

@@ -5,7 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Collectors;
+import org.giglab.live.commerce.core.product.application.dto.pdf.LlmParsedFields;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
+import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
+import org.giglab.live.commerce.core.product.domain.entity.ProductDocument;
 import org.giglab.live.commerce.core.product.domain.exception.ProductDomainException;
 import org.giglab.live.commerce.core.product.domain.exception.ProductErrorCode;
 import org.springframework.ai.chat.client.ChatClient;
@@ -16,13 +19,15 @@ import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class ParseProductPdfUseCase {
 
   /**
-   * extractedText는 LLM에게 맡기지 않는다. LLM이 멀티라인 텍스트를 JSON 문자열로 이스케이프하지 않아 파싱 오류가 발생하기 때문. 대신 추출한 텍스트를
-   * execute()에서 직접 result에 주입한다.
+   * extractedText는 LLM에게 맡기지 않는다. LLM이 멀티라인 텍스트를 JSON 문자열로 이스케이프하지 않아 파싱 오류가 발생하기 때문.
+   * extractedText는 DB에 저장 후 documentId로 관리한다.
    */
   private static final String SYSTEM_PROMPT =
       """
@@ -39,11 +44,15 @@ public class ParseProductPdfUseCase {
       }
       """;
 
+  private final ProductDocumentStorePort productDocumentStorePort;
   private final ChatClient chatClient;
   private final String uploadBasePath;
 
   public ParseProductPdfUseCase(
-      ChatModel chatModel, @Value("${app.upload.base-path:uploads}") String uploadBasePath) {
+      ProductDocumentStorePort productDocumentStorePort,
+      ChatModel chatModel,
+      @Value("${app.upload.base-path:uploads}") String uploadBasePath) {
+    this.productDocumentStorePort = productDocumentStorePort;
     this.chatClient = ChatClient.create(chatModel);
     this.uploadBasePath = uploadBasePath;
   }
@@ -57,17 +66,20 @@ public class ParseProductPdfUseCase {
     }
 
     String extractedText = extractText(fileBytes);
+
+    ProductDocument saved =
+        productDocumentStorePort.store(ProductDocument.pending(filename, extractedText));
+
     LlmParsedFields fields = parseWithLlm(extractedText);
 
-    // extractedText는 LLM 응답이 아닌 실제 추출 텍스트를 직접 사용
     return new ParsedProductResult(
+        saved.getId(),
         fields.name(),
         fields.price(),
         fields.description(),
         fields.manufacturer(),
         fields.ingredients(),
-        fields.usageMethod(),
-        extractedText);
+        fields.usageMethod());
   }
 
   private void saveFile(String filename, byte[] fileBytes) throws IOException {
@@ -100,13 +112,4 @@ public class ParseProductPdfUseCase {
         .call()
         .entity(LlmParsedFields.class);
   }
-
-  /** LLM 파싱 전용 내부 record — extractedText 제외 */
-  private record LlmParsedFields(
-      String name,
-      Integer price,
-      String description,
-      String manufacturer,
-      String ingredients,
-      String usageMethod) {}
 }

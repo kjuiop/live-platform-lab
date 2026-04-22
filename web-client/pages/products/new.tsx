@@ -13,13 +13,13 @@ interface ProductForm {
 }
 
 interface ParsedProductApiResponse {
+  documentId: number | null;
   name: string | null;
   price: number | null;
   description: string | null;
   manufacturer: string | null;
   ingredients: string | null;
   usageMethod: string | null;
-  extractedText: string | null;
 }
 
 interface CategoryNode {
@@ -46,8 +46,7 @@ export default function ProductNew() {
   const [pdfFile, setPdfFile] = useState<{ name: string; size: string } | null>(null);
   const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done' | 'error'>('idle');
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
-  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
+  const [pdfDocumentId, setPdfDocumentId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,8 +110,7 @@ export default function ProductNew() {
         usage: prev.usage || parsed.usageMethod || '',
         manufacturer: prev.manufacturer || parsed.manufacturer || '',
       }));
-      setExtractedText(parsed.extractedText ?? null);
-      setPdfFileName(file.name);
+      setPdfDocumentId(parsed.documentId ?? null);
       setPdfState('done');
     } catch (err) {
       setPdfError(err instanceof Error ? err.message : 'PDF 분석 중 오류가 발생했습니다.');
@@ -161,8 +159,7 @@ export default function ProductNew() {
           manufacturer: form.manufacturer || null,
           ingredients: form.ingredients || null,
           usageMethod: form.usage || null,
-          extractedText: extractedText ?? null,
-          pdfFileName: pdfFileName ?? null,
+          pdfDocumentId: pdfDocumentId ?? null,
         }),
       });
       if (!res.ok) {

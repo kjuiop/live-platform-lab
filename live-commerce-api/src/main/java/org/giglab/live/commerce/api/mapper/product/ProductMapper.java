@@ -1,5 +1,6 @@
 package org.giglab.live.commerce.api.mapper.product;
 
+import org.giglab.live.commerce.api.dto.product.AskProductQuestionResponse;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.DocumentItem;
@@ -16,6 +17,7 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductListResul
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
+import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.DocumentSummary;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
@@ -50,4 +52,6 @@ public interface ProductMapper {
 
   @Mapping(target = "embedYn", expression = "java(result.embedYn().name())")
   EmbedDocumentResponse toEmbedDocumentResponse(EmbedDocumentResult result);
+
+  AskProductQuestionResponse toAskProductQuestionResponse(AskProductQuestionResult result);
 }

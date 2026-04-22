@@ -52,14 +52,6 @@ const MOCK_BROADCASTS: Record<string, RelatedBroadcast[]> = {
   ],
 };
 
-const MOCK_AI_ANSWERS: Record<string, string> = {
-  '성분': '이 제품의 주요 성분으로는 보습 효과가 뛰어난 글리세린과 히알루론산이 포함되어 있으며, 피부과 테스트를 완료한 저자극 포뮬러입니다.',
-  '지속력': '워터프루프 포뮬러 적용으로 최대 12시간 지속됩니다. 물이나 땀에도 번짐 없이 유지됩니다.',
-  '사용법': '세안 후 스킨케어 마지막 단계에 사용해주세요. 소량을 덜어 얼굴 전체에 고르게 펴 바르면 됩니다.',
-  '가격': `정상가 기준이며, 방송 라이브 중 특가 혜택이 적용될 수 있습니다. 상세 가격은 방송을 참고해주세요.`,
-  '부작용': '민감성 피부의 경우 사용 전 팔 안쪽에 패치 테스트를 권장합니다. 이상이 있을 경우 즉시 사용을 중단하고 전문가와 상담하세요.',
-  default: '해당 상품의 등록된 정보를 기반으로 답변드립니다. 더 구체적인 질문을 입력해주시면 더 정확한 답변을 제공할 수 있습니다.',
-};
 
 const broadcastStatusLabel = { scheduled: '예정', live: '라이브 중', ended: '종료' };
 const broadcastStatusClass = { scheduled: 'bs-scheduled', live: 'bs-live', ended: 'bs-ended' };
@@ -134,17 +126,31 @@ export default function ProductDetail() {
     }
   };
 
-  const askAI = () => {
+  const askAI = async () => {
     const q = aiInput.trim();
     if (!q) return;
     setAiInput('');
     const newItem: QnAItem = { id: Date.now(), question: q, answer: '', isLoading: true };
     setQnaList((prev) => [...prev, newItem]);
-    const keyword = Object.keys(MOCK_AI_ANSWERS).find((k) => k !== 'default' && q.includes(k));
-    const answer = MOCK_AI_ANSWERS[keyword ?? 'default'];
-    setTimeout(() => {
-      setQnaList((prev) => prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item));
-    }, 1200);
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q }),
+      });
+      const json = await res.json();
+      const answer = res.ok ? json.data.answer : '답변을 가져오지 못했습니다.';
+      setQnaList((prev) =>
+        prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item)
+      );
+    } catch {
+      setQnaList((prev) =>
+        prev.map((item) =>
+          item.id === newItem.id ? { ...item, answer: '오류가 발생했습니다.', isLoading: false } : item
+        )
+      );
+    }
   };
 
   if (!id || loading) return null;

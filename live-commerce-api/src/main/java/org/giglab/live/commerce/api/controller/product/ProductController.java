@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.api.dto.product.AskProductQuestionRequest;
+import org.giglab.live.commerce.api.dto.product.AskProductQuestionResponse;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
@@ -69,6 +71,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ParsedProductResponse>> parsePdf(
       @RequestParam("file") MultipartFile file) {
     ParsedProductResponse response = productFacade.parsePdf(file);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 AI Q&A", description = "임베딩된 PDF 문서를 기반으로 AI가 질문에 답변합니다.")
+  @PostMapping("/{id}/ai/ask")
+  public ResponseEntity<ApiResponse<AskProductQuestionResponse>> askQuestion(
+      @PathVariable Long id, @RequestBody @Valid AskProductQuestionRequest request) {
+    AskProductQuestionResponse response = productFacade.askProductQuestion(id, request);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

@@ -20,6 +20,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class ParseProductPdfUseCase {
 
+  /**
+   * extractedText는 LLM에게 맡기지 않는다. LLM이 멀티라인 텍스트를 JSON 문자열로 이스케이프하지 않아 파싱 오류가 발생하기 때문. 대신 추출한 텍스트를
+   * execute()에서 직접 result에 주입한다.
+   */
   private static final String SYSTEM_PROMPT =
       """
       당신은 상품 정보 추출 전문가입니다.
@@ -31,8 +35,7 @@ public class ParseProductPdfUseCase {
         "description": "상품 설명",
         "manufacturer": "제조사",
         "ingredients": "성분",
-        "usageMethod": "사용 방법",
-        "extractedText": "원본 추출 텍스트 전체"
+        "usageMethod": "사용 방법"
       }
       """;
 
@@ -54,7 +57,17 @@ public class ParseProductPdfUseCase {
     }
 
     String extractedText = extractText(fileBytes);
-    return parseWithLlm(extractedText);
+    LlmParsedFields fields = parseWithLlm(extractedText);
+
+    // extractedText는 LLM 응답이 아닌 실제 추출 텍스트를 직접 사용
+    return new ParsedProductResult(
+        fields.name(),
+        fields.price(),
+        fields.description(),
+        fields.manufacturer(),
+        fields.ingredients(),
+        fields.usageMethod(),
+        extractedText);
   }
 
   private void saveFile(String filename, byte[] fileBytes) throws IOException {
@@ -79,12 +92,21 @@ public class ParseProductPdfUseCase {
         .collect(Collectors.joining("\n"));
   }
 
-  private ParsedProductResult parseWithLlm(String text) {
+  private LlmParsedFields parseWithLlm(String text) {
     return chatClient
         .prompt()
         .system(SYSTEM_PROMPT)
         .user("다음 텍스트에서 상품 정보를 추출해주세요:\n\n" + text)
         .call()
-        .entity(ParsedProductResult.class);
+        .entity(LlmParsedFields.class);
   }
+
+  /** LLM 파싱 전용 내부 record — extractedText 제외 */
+  private record LlmParsedFields(
+      String name,
+      Integer price,
+      String description,
+      String manufacturer,
+      String ingredients,
+      String usageMethod) {}
 }

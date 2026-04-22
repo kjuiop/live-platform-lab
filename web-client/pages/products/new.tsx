@@ -12,6 +12,16 @@ interface ProductForm {
   manufacturer: string;
 }
 
+interface ParsedProductApiResponse {
+  name: string | null;
+  price: number | null;
+  description: string | null;
+  manufacturer: string | null;
+  ingredients: string | null;
+  usageMethod: string | null;
+  extractedText: string | null;
+}
+
 interface CategoryNode {
   id: number;
   code: string;
@@ -36,6 +46,8 @@ export default function ProductNew() {
   const [pdfFile, setPdfFile] = useState<{ name: string; size: string } | null>(null);
   const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done' | 'error'>('idle');
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,16 +101,18 @@ export default function ProductNew() {
       }
 
       const json = await res.json();
-      const extracted: Partial<ProductForm> = json.data ?? {};
+      const parsed: ParsedProductApiResponse = json.data ?? {};
 
       setForm((prev) => ({
-        name: prev.name || extracted.name || '',
-        price: prev.price || extracted.price || '',
-        description: prev.description || extracted.description || '',
-        ingredients: prev.ingredients || extracted.ingredients || '',
-        usage: prev.usage || extracted.usage || '',
-        manufacturer: prev.manufacturer || extracted.manufacturer || '',
+        name: prev.name || parsed.name || '',
+        price: prev.price || (parsed.price != null ? String(parsed.price) : ''),
+        description: prev.description || parsed.description || '',
+        ingredients: prev.ingredients || parsed.ingredients || '',
+        usage: prev.usage || parsed.usageMethod || '',
+        manufacturer: prev.manufacturer || parsed.manufacturer || '',
       }));
+      setExtractedText(parsed.extractedText ?? null);
+      setPdfFileName(file.name);
       setPdfState('done');
     } catch (err) {
       setPdfError(err instanceof Error ? err.message : 'PDF 분석 중 오류가 발생했습니다.');
@@ -147,6 +161,8 @@ export default function ProductNew() {
           manufacturer: form.manufacturer || null,
           ingredients: form.ingredients || null,
           usageMethod: form.usage || null,
+          extractedText: extractedText ?? null,
+          pdfFileName: pdfFileName ?? null,
         }),
       });
       if (!res.ok) {

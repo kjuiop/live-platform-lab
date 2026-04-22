@@ -43,6 +43,7 @@ public interface ProductMapper {
 
   GetProductListResponse toGetProductListResponse(GetProductListResult result);
 
+  @Mapping(target = "status", ignore = true)
   ProductListQuery toProductListQuery(GetProductListRequest request);
 
   @Mapping(target = "status", expression = "java(result.status().name())")

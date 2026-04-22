@@ -44,6 +44,12 @@ public class EmbedDocumentUseCase {
           String.format("이미 임베딩된 문서입니다. documentId=%d", documentId));
     }
 
+    if (document.getProductId() == null) {
+      throw new ProductDomainException(
+          ProductErrorCode.PDF_NOT_LINKED_TO_PRODUCT,
+          String.format("상품에 연결되지 않은 문서입니다. documentId=%d", documentId));
+    }
+
     List<Document> chunks = splitIntoChunks(document);
     embedDocumentPort.embed(chunks);
     document.markAsEmbedded();
@@ -54,10 +60,7 @@ public class EmbedDocumentUseCase {
   private List<Document> splitIntoChunks(ProductDocument document) {
     // 원문 Document 생성 (메타데이터 포함)
     PdfDocumentMetadata metadata =
-        new PdfDocumentMetadata(
-            document.getProductId() != null ? document.getProductId() : 0L,
-            document.getId(),
-            document.getFilename());
+        new PdfDocumentMetadata(document.getProductId(), document.getId(), document.getFilename());
     Document source = new Document(document.getExtractedText(), metadata.toMap());
 
     // TokenTextSplitter로 청킹

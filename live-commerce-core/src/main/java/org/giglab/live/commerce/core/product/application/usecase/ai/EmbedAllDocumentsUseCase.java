@@ -41,10 +41,7 @@ public class EmbedAllDocumentsUseCase {
 
   private List<Document> splitIntoChunks(ProductDocument document) {
     PdfDocumentMetadata metadata =
-        new PdfDocumentMetadata(
-            document.getProductId() != null ? document.getProductId() : 0L,
-            document.getId(),
-            document.getFilename());
+        new PdfDocumentMetadata(document.getProductId(), document.getId(), document.getFilename());
     Document source = new Document(document.getExtractedText(), metadata.toMap());
 
     TokenTextSplitter splitter =

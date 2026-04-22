@@ -38,6 +38,7 @@ public interface ProductMapper {
   CreateProductResponse toCreateProductResponse(CreateProductResult createProductResult);
 
   @Mapping(target = "status", expression = "java(productSummary.status().name())")
+  @Mapping(target = "embeddingStatus", expression = "java(productSummary.embeddingStatus().name())")
   ProductSummaryItem toProductSummaryItem(ProductSummary productSummary);
 
   GetProductListResponse toGetProductListResponse(GetProductListResult result);

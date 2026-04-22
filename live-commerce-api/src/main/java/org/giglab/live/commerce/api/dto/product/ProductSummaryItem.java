@@ -8,4 +8,5 @@ public record ProductSummaryItem(
     String status,
     BigDecimal price,
     int stockQuantity,
-    String categoryName) {}
+    String categoryName,
+    String embeddingStatus) {}

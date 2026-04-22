@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 interface ProductForm {
   name: string;
   price: string;
+  stockQuantity: string;
   description: string;
   ingredients: string;
   usage: string;
@@ -34,7 +35,7 @@ interface CategoryNode {
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
 
 const EMPTY_FORM: ProductForm = {
-  name: '', price: '', description: '',
+  name: '', price: '', stockQuantity: '', description: '',
   ingredients: '', usage: '', manufacturer: '',
 };
 
@@ -154,7 +155,7 @@ export default function ProductNew() {
           description: form.description,
           price: Number(form.price),
           categoryIds: [selectedCategoryId],
-          stockQuantity: 0,
+          stockQuantity: Number(form.stockQuantity) || 0,
           sortOrder: 0,
           manufacturer: form.manufacturer || null,
           ingredients: form.ingredients || null,
@@ -397,6 +398,20 @@ export default function ProductNew() {
                 {errors.price && <span className="field-error">{errors.price}</span>}
               </div>
               <div className="field">
+                <label className="label">재고 수량</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  placeholder="예) 100"
+                  value={form.stockQuantity}
+                  onChange={set('stockQuantity')}
+                />
+              </div>
+            </div>
+
+            <div className="field-row">
+              <div className="field">
                 <label className="label">제조사</label>
                 <input
                   className="input"
@@ -405,6 +420,7 @@ export default function ProductNew() {
                   onChange={set('manufacturer')}
                 />
               </div>
+              <div className="field" />
             </div>
 
             <div className="section-divider" />

@@ -51,7 +51,8 @@ public class ProductQueryRepository {
                     .from(productCategory)
                     .where(productCategory.product.id.eq(product.id))
                     .orderBy(productCategory.sortOrder.asc())
-                    .limit(1)))
+                    .limit(1),
+                product.embeddingStatus))
         .from(product)
         .where(builder)
         .orderBy(product.id.desc())

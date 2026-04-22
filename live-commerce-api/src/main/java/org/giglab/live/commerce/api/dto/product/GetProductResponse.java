@@ -7,6 +7,7 @@ public record GetProductResponse(
     Long id,
     String name,
     String status,
+    String embeddingStatus,
     String description,
     BigDecimal price,
     int stockQuantity,

@@ -8,16 +8,20 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductListResul
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
-import org.giglab.live.commerce.core.product.application.usecase.AskProductQuestionUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.CreateProductUseCase;
-import org.giglab.live.commerce.core.product.application.usecase.EmbedDocumentUseCase;
-import org.giglab.live.commerce.core.product.application.usecase.GetDocumentListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
-import org.giglab.live.commerce.core.product.application.usecase.ParseProductPdfUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocumentsUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.GetDocumentListUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.ParseProductPdfUseCase;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,6 +35,8 @@ public class ProductService {
   private final GetDocumentListUseCase getDocumentListUseCase;
   private final EmbedDocumentUseCase embedDocumentUseCase;
   private final AskProductQuestionUseCase askProductQuestionUseCase;
+  private final EmbedProductInfoUseCase embedProductInfoUseCase;
+  private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
 
   public GetProductListResult getList(ProductListQuery query) {
     return getProductListUseCase.execute(query);
@@ -58,5 +64,13 @@ public class ProductService {
 
   public AskProductQuestionResult askProductQuestion(Long productId, String question) {
     return askProductQuestionUseCase.execute(productId, question);
+  }
+
+  public EmbedProductInfoResult embedProductInfo(Long productId) {
+    return embedProductInfoUseCase.execute(productId);
+  }
+
+  public EmbedAllDocumentsResult embedAllDocuments(Long productId) {
+    return embedAllDocumentsUseCase.execute(productId);
   }
 }

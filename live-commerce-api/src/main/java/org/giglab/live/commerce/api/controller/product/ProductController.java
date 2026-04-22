@@ -8,7 +8,9 @@ import org.giglab.live.commerce.api.dto.product.AskProductQuestionRequest;
 import org.giglab.live.commerce.api.dto.product.AskProductQuestionResponse;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
+import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
@@ -79,6 +81,22 @@ public class ProductController {
   public ResponseEntity<ApiResponse<AskProductQuestionResponse>> askQuestion(
       @PathVariable Long id, @RequestBody @Valid AskProductQuestionRequest request) {
     AskProductQuestionResponse response = productFacade.askProductQuestion(id, request);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 정보 임베딩", description = "상품 DB 정보(이름·설명·성분·사용법 등)를 벡터 DB에 임베딩합니다.")
+  @PostMapping("/{id}/embed-info")
+  public ResponseEntity<ApiResponse<EmbedProductInfoResponse>> embedProductInfo(
+      @PathVariable Long id) {
+    EmbedProductInfoResponse response = productFacade.embedProductInfo(id);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "문서 전체 임베딩", description = "상품의 미임베딩 PDF 문서를 모두 임베딩합니다.")
+  @PostMapping("/{id}/documents/embed-all")
+  public ResponseEntity<ApiResponse<EmbedAllDocumentsResponse>> embedAllDocuments(
+      @PathVariable Long id) {
+    EmbedAllDocumentsResponse response = productFacade.embedAllDocuments(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

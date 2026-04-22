@@ -4,7 +4,9 @@ import org.giglab.live.commerce.api.dto.product.AskProductQuestionResponse;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.DocumentItem;
+import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
+import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
@@ -18,6 +20,8 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.DocumentSummary;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
@@ -41,6 +45,7 @@ public interface ProductMapper {
   ProductListQuery toProductListQuery(GetProductListRequest request);
 
   @Mapping(target = "status", expression = "java(result.status().name())")
+  @Mapping(target = "embeddingStatus", expression = "java(result.embeddingStatus().name())")
   GetProductResponse toGetProductResponse(GetProductResult result);
 
   ParsedProductResponse toParsedProductResponse(ParsedProductResult result);
@@ -54,4 +59,9 @@ public interface ProductMapper {
   EmbedDocumentResponse toEmbedDocumentResponse(EmbedDocumentResult result);
 
   AskProductQuestionResponse toAskProductQuestionResponse(AskProductQuestionResult result);
+
+  @Mapping(target = "embeddingStatus", expression = "java(result.embeddingStatus().name())")
+  EmbedProductInfoResponse toEmbedProductInfoResponse(EmbedProductInfoResult result);
+
+  EmbedAllDocumentsResponse toEmbedAllDocumentsResponse(EmbedAllDocumentsResult result);
 }

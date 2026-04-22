@@ -1,5 +1,6 @@
 package org.giglab.live.commerce.core.product.infrastructure.adapter;
 
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
@@ -21,5 +22,10 @@ public class JpaProductDocumentStoreAdapter implements ProductDocumentStorePort 
   @Override
   public Optional<ProductDocument> findEntityById(Long documentId) {
     return productDocumentRepository.findById(documentId);
+  }
+
+  @Override
+  public List<ProductDocument> findAllByProductId(Long productId) {
+    return productDocumentRepository.findAllByProductId(productId);
   }
 }

@@ -1,4 +1,4 @@
-package org.giglab.live.commerce.core.product.application.usecase;
+package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -110,4 +110,8 @@ public class Product extends AuditedEntity {
   public void addCategory(Long categoryId, String categoryName, int sortOrder) {
     productCategories.add(ProductCategory.of(this, categoryId, categoryName, sortOrder));
   }
+
+  public void markInfoAsEmbedded() {
+    this.embeddingStatus = EmbeddingStatusType.DONE;
+  }
 }

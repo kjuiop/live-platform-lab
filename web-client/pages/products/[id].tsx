@@ -9,6 +9,7 @@ interface Product {
   id: number;
   name: string;
   status: string;
+  embeddingStatus: 'NONE' | 'PENDING' | 'WORKING' | 'DONE';
   price: number;
   stockQuantity: number;
   sortOrder: number;
@@ -66,6 +67,9 @@ export default function ProductDetail() {
   const [embeddingIds, setEmbeddingIds] = useState<Set<number>>(new Set());
   const relatedBroadcasts = MOCK_BROADCASTS[id as string] ?? [];
 
+  const [productEmbedding, setProductEmbedding] = useState(false);
+  const [bulkEmbedding, setBulkEmbedding] = useState(false);
+
   const [qnaList, setQnaList] = useState<QnAItem[]>([]);
   const [aiInput, setAiInput] = useState('');
   const qnaBottomRef = useRef<HTMLDivElement>(null);
@@ -101,6 +105,35 @@ export default function ProductDetail() {
   useEffect(() => {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [qnaList]);
+
+  const handleEmbedProductInfo = async () => {
+    setProductEmbedding(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}/embed-info`, { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        setProduct((prev) => prev ? { ...prev, embeddingStatus: json.data.embeddingStatus } : prev);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setProductEmbedding(false);
+    }
+  };
+
+  const handleEmbedAll = async () => {
+    setBulkEmbedding(true);
+    try {
+      await fetch(`${API_BASE}/products/${id}/documents/embed-all`, { method: 'POST' });
+      const docsRes = await fetch(`${API_BASE}/products/${id}/documents`);
+      const docsJson = await docsRes.json();
+      if (docsJson?.data?.items) setDocuments(docsJson.data.items);
+    } catch {
+      // ignore
+    } finally {
+      setBulkEmbedding(false);
+    }
+  };
 
   const handleEmbed = async (documentId: number) => {
     setEmbeddingIds((prev) => new Set(prev).add(documentId));
@@ -221,6 +254,14 @@ export default function ProductDetail() {
         .doc-embed-btn:hover { background: rgba(99,102,241,0.3); }
         .doc-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .doc-embedding { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.2); }
+        .bulk-embed-btn { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); cursor: pointer; transition: background 0.15s; }
+        .bulk-embed-btn:hover { background: rgba(99,102,241,0.3); }
+        .bulk-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .info-embed-btn { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+        .info-embed-btn:hover { background: rgba(16,185,129,0.25); }
+        .info-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .embed-status-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+        .embed-status-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
 
         .no-docs { font-size: 13px; color: #475569; text-align: center; padding: 16px 0; }
 
@@ -285,7 +326,17 @@ export default function ProductDetail() {
             <div className="info-card">
               <div className="info-top">
                 <h1 className="info-name">{product.name}</h1>
-                <span className="embed-badge embed-none">{product.status}</span>
+                <div style={{ flexShrink: 0 }}>
+                  {product.embeddingStatus === 'DONE' ? (
+                    <span className="embed-badge embed-status-done">정보 임베딩 완료</span>
+                  ) : productEmbedding ? (
+                    <span className="embed-badge embed-status-none">임베딩 중...</span>
+                  ) : (
+                    <button className="info-embed-btn" onClick={handleEmbedProductInfo}>
+                      정보 임베딩
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="info-meta">
                 <span className="info-price">{Number(product.price).toLocaleString()}원</span>
@@ -321,6 +372,11 @@ export default function ProductDetail() {
                   <div className="section-title">등록된 문서</div>
                   <div className="section-sub">업로드한 PDF가 AI Q&A의 근거 자료로 활용됩니다</div>
                 </div>
+                {documents.some((d) => d.embedYn === 'N') && (
+                  <button className="bulk-embed-btn" onClick={handleEmbedAll} disabled={bulkEmbedding}>
+                    {bulkEmbedding ? '처리 중...' : '전체 임베딩'}
+                  </button>
+                )}
               </div>
 
               {documents.length === 0 ? (

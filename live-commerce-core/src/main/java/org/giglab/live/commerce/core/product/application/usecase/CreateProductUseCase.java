@@ -56,7 +56,17 @@ public class CreateProductUseCase {
             String.format("PDF 문서를 찾을 수 없습니다. documentId=%d", command.documentId()));
       }
       ProductDocument document = findDocument.get();
-      document.linkToProduct(savedProduct.getId());
+      if (document.getProductId() != null
+          && !document.getProductId().equals(savedProduct.getId())) {
+        throw new ProductDomainException(
+            ProductErrorCode.PDF_ALREADY_LINKED_TO_PRODUCT,
+            String.format(
+                "이미 다른 상품에 연결된 문서입니다. documentId=%d, linkedProductId=%d",
+                command.documentId(), document.getProductId()));
+      }
+      if (document.getProductId() == null) {
+        document.linkToProduct(savedProduct.getId());
+      }
     }
 
     return new CreateProductResult(savedProduct.getId());

@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
@@ -51,6 +52,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<CreateProductResponse>> create(
       @RequestBody @Valid CreateProductRequest createProductRequest) {
     CreateProductResponse response = productFacade.create(createProductRequest);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 문서 목록 조회", description = "상품에 연결된 PDF 문서 목록을 조회합니다.")
+  @GetMapping("/{id}/documents")
+  public ResponseEntity<ApiResponse<GetDocumentListResponse>> getDocumentList(
+      @PathVariable Long id) {
+    GetDocumentListResponse response = productFacade.getDocumentList(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

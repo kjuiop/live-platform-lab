@@ -5,8 +5,6 @@ import { useRouter } from 'next/router';
 
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
 
-type EmbeddingStatus = 'none' | 'pending' | 'done';
-
 interface Product {
   id: number;
   name: string;
@@ -22,13 +20,10 @@ interface Product {
   updatedAt?: string;
 }
 
-interface Document {
-  id: string;
-  name: string;
-  size: string;
-  uploadedAt: string;
-  status: EmbeddingStatus;
-  chunkCount?: number;
+interface ApiDocument {
+  documentId: number;
+  filename: string;
+  embedYn: 'Y' | 'N';
 }
 
 interface QnAItem {
@@ -44,18 +39,6 @@ interface RelatedBroadcast {
   status: 'scheduled' | 'live' | 'ended';
   viewerCount?: number;
 }
-
-
-const MOCK_DOCUMENTS: Record<string, Document[]> = {
-  P001: [
-    { id: 'D001', name: '워터프루프_립스틱_성분표.pdf', size: '1.2 MB', uploadedAt: '2026-04-10', status: 'done', chunkCount: 24 },
-    { id: 'D002', name: '립스틱_사용설명서.pdf', size: '0.8 MB', uploadedAt: '2026-04-10', status: 'done', chunkCount: 15 },
-  ],
-  P002: [
-    { id: 'D003', name: '비타민C_세럼_성분분석.pdf', size: '2.1 MB', uploadedAt: '2026-04-08', status: 'done', chunkCount: 38 },
-  ],
-  P003: [],
-};
 
 const MOCK_BROADCASTS: Record<string, RelatedBroadcast[]> = {
   P001: [
@@ -78,13 +61,6 @@ const MOCK_AI_ANSWERS: Record<string, string> = {
   default: '해당 상품의 등록된 정보를 기반으로 답변드립니다. 더 구체적인 질문을 입력해주시면 더 정확한 답변을 제공할 수 있습니다.',
 };
 
-const categoryColors: Record<string, string> = {
-  '뷰티': '#f472b6',
-  '스킨케어': '#60a5fa',
-  '패션': '#34d399',
-  '식품': '#fbbf24',
-};
-
 const broadcastStatusLabel = { scheduled: '예정', live: '라이브 중', ended: '종료' };
 const broadcastStatusClass = { scheduled: 'bs-scheduled', live: 'bs-live', ended: 'bs-ended' };
 
@@ -94,14 +70,12 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const documents = MOCK_DOCUMENTS[id as string] ?? [];
+  const [documents, setDocuments] = useState<ApiDocument[]>([]);
+  const [embeddingIds, setEmbeddingIds] = useState<Set<number>>(new Set());
   const relatedBroadcasts = MOCK_BROADCASTS[id as string] ?? [];
 
   const [qnaList, setQnaList] = useState<QnAItem[]>([]);
   const [aiInput, setAiInput] = useState('');
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [mockDocs, setMockDocs] = useState<Document[]>(documents);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const qnaBottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -123,13 +97,23 @@ export default function ProductDetail() {
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/products/${id}/documents`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((json) => {
+        if (json?.data?.items) setDocuments(json.data.items);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [qnaList]);
 
-  // 문서 목록은 id가 바뀔 때 동기화
-  useEffect(() => {
-    setMockDocs(MOCK_DOCUMENTS[id as string] ?? []);
-  }, [id]);
+  const handleEmbed = (documentId: number) => {
+    // TODO: 임베딩 API 연동 (POST /products/documents/{documentId}/embed)
+    setEmbeddingIds((prev) => new Set(prev).add(documentId));
+  };
 
   const askAI = () => {
     const q = aiInput.trim();
@@ -142,26 +126,6 @@ export default function ProductDetail() {
     setTimeout(() => {
       setQnaList((prev) => prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item));
     }, 1200);
-  };
-
-  const handleFileDrop = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      const newDoc: Document = {
-        id: `D${Date.now()}`,
-        name: file.name,
-        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-        uploadedAt: new Date().toISOString().slice(0, 10),
-        status: 'pending',
-      };
-      setMockDocs((prev) => [...prev, newDoc]);
-      // 임베딩 완료 시뮬레이션
-      setTimeout(() => {
-        setMockDocs((prev) =>
-          prev.map((d) => d.id === newDoc.id ? { ...d, status: 'done', chunkCount: Math.floor(Math.random() * 30) + 10 } : d)
-        );
-      }, 2000);
-    });
   };
 
   if (!id || loading) return null;
@@ -182,8 +146,6 @@ export default function ProductDetail() {
       </>
     );
   }
-
-  const totalChunks = mockDocs.filter((d) => d.status === 'done').reduce((sum, d) => sum + (d.chunkCount ?? 0), 0);
 
   return (
     <>
@@ -208,7 +170,6 @@ export default function ProductDetail() {
         .embed-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
         .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
         .info-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .cat-badge { font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
         .info-price { font-size: 22px; font-weight: 800; color: #f1f5f9; }
         .info-desc { font-size: 14px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
         .info-details { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 20px; }
@@ -221,12 +182,6 @@ export default function ProductDetail() {
         .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .section-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
         .section-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
-        .chunk-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-
-        .drop-zone { border: 1.5px dashed rgba(99,102,241,0.3); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-bottom: 14px; }
-        .drop-zone:hover, .drop-zone.over { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.05); }
-        .drop-zone-text { font-size: 13px; color: #475569; }
-        .drop-zone-sub { font-size: 11px; color: #334155; margin-top: 4px; }
 
         .doc-list { display: flex; flex-direction: column; gap: 8px; }
         .doc-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }
@@ -237,7 +192,10 @@ export default function ProductDetail() {
         .doc-status { flex-shrink: 0; }
         .doc-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
         .doc-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-        .doc-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.2); }
+        .doc-embed-btn { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); cursor: pointer; transition: background 0.15s; }
+        .doc-embed-btn:hover { background: rgba(99,102,241,0.3); }
+        .doc-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .doc-embedding { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.2); }
 
         .no-docs { font-size: 13px; color: #475569; text-align: center; padding: 16px 0; }
 
@@ -338,52 +296,38 @@ export default function ProductDetail() {
                   <div className="section-title">등록된 문서</div>
                   <div className="section-sub">업로드한 PDF가 AI Q&A의 근거 자료로 활용됩니다</div>
                 </div>
-                {totalChunks > 0 && (
-                  <span className="chunk-badge">{totalChunks} chunks</span>
-                )}
               </div>
 
-              {/* 드래그 업로드 */}
-              <div
-                className={`drop-zone ${isDragOver ? 'over' : ''}`}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileDrop(e.dataTransfer.files); }}
-              >
-                <div className="drop-zone-text">PDF 파일을 드래그하거나 클릭하여 업로드</div>
-                <div className="drop-zone-sub">업로드 즉시 AI 임베딩이 시작됩니다</div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={(e) => handleFileDrop(e.target.files)}
-                />
-              </div>
-
-              {mockDocs.length === 0 ? (
+              {documents.length === 0 ? (
                 <div className="no-docs">등록된 문서가 없습니다.</div>
               ) : (
                 <div className="doc-list">
-                  {mockDocs.map((doc) => (
-                    <div key={doc.id} className="doc-item">
-                      <span className="doc-icon">📄</span>
-                      <div className="doc-info">
-                        <div className="doc-name">{doc.name}</div>
-                        <div className="doc-meta">
-                          {doc.size} · {doc.uploadedAt}
-                          {doc.chunkCount && ` · ${doc.chunkCount} chunks`}
+                  {documents.map((doc) => {
+                    const isEmbedding = embeddingIds.has(doc.documentId);
+                    return (
+                      <div key={doc.documentId} className="doc-item">
+                        <span className="doc-icon">📄</span>
+                        <div className="doc-info">
+                          <div className="doc-name">{doc.filename}</div>
+                          <div className="doc-meta">ID: {doc.documentId}</div>
+                        </div>
+                        <div className="doc-status">
+                          {doc.embedYn === 'Y' ? (
+                            <span className="doc-badge doc-done">임베딩 완료</span>
+                          ) : isEmbedding ? (
+                            <span className="doc-embedding">처리 중...</span>
+                          ) : (
+                            <button
+                              className="doc-embed-btn"
+                              onClick={() => handleEmbed(doc.documentId)}
+                            >
+                              임베딩 시작
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="doc-status">
-                        <span className={`doc-badge ${doc.status === 'done' ? 'doc-done' : 'doc-pending'}`}>
-                          {doc.status === 'done' ? '완료' : '처리 중...'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

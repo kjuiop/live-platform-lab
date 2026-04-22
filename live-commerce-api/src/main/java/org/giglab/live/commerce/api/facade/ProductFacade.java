@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.controller.exception.ApiException;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
@@ -16,6 +17,7 @@ import org.giglab.live.commerce.core.product.application.dto.CreateProductResult
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,11 @@ public class ProductFacade {
   public GetProductResponse getDetail(Long id) {
     GetProductResult result = productService.getDetail(id);
     return productMapper.toGetProductResponse(result);
+  }
+
+  public GetDocumentListResponse getDocumentList(Long productId) {
+    GetDocumentListResult result = productService.getDocumentList(productId);
+    return productMapper.toGetDocumentListResponse(result);
   }
 
   public ParsedProductResponse parsePdf(MultipartFile file) {

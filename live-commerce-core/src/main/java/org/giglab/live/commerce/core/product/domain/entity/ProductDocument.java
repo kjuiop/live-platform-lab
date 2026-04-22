@@ -2,6 +2,8 @@ package org.giglab.live.commerce.core.product.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -12,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
+import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 
 @Getter
 @Builder
@@ -33,6 +36,11 @@ public class ProductDocument extends AuditedEntity {
   @Lob
   @Column(nullable = false, columnDefinition = "LONGTEXT")
   private String extractedText;
+
+  @Builder.Default
+  @Column(columnDefinition = "varchar(2) default 'N'", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private YnType embedYn = YnType.N;
 
   public static ProductDocument pending(String filename, String extractedText) {
     return ProductDocument.builder()

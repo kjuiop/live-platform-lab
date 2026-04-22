@@ -2,6 +2,8 @@ package org.giglab.live.commerce.api.mapper.product;
 
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.DocumentItem;
+import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
@@ -13,6 +15,8 @@ import org.giglab.live.commerce.core.product.application.dto.GetProductListResul
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
+import org.giglab.live.commerce.core.product.application.dto.pdf.DocumentSummary;
+import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -36,4 +40,9 @@ public interface ProductMapper {
   GetProductResponse toGetProductResponse(GetProductResult result);
 
   ParsedProductResponse toParsedProductResponse(ParsedProductResult result);
+
+  @Mapping(target = "embedYn", expression = "java(documentSummary.embedYn().name())")
+  DocumentItem toDocumentItem(DocumentSummary documentSummary);
+
+  GetDocumentListResponse toGetDocumentListResponse(GetDocumentListResult result);
 }

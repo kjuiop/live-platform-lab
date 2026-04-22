@@ -27,7 +27,7 @@ docker-mysql-up:
 	@docker-compose -f docker-compose.infra.yml up -d mysql
 
 git-setup: git-template git-hooks
-	@echo "✅ Done. (repo-local git template + hooks applied)"
+	@echo "Done. (repo-local git template + hooks applied)"
 
 git-template:
 	@echo "Setting git commit template..."

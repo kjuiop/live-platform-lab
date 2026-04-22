@@ -10,6 +10,16 @@ spring:
   servlet:
     encoding:
       charset: UTF-8
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      embedding:
+        options:
+          model: text-embedding-3-small
+      chat:
+        options:
+          model: gpt-5.2
+
 springdoc:
   api-docs:
     path: /v3/api-docs

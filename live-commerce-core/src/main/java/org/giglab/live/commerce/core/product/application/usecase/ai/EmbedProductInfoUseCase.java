@@ -1,9 +1,9 @@
 package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.ProductInfoMetadata;
 import org.giglab.live.commerce.core.product.application.port.ai.EmbedDocumentPort;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductStorePort;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
@@ -33,13 +33,9 @@ public class EmbedProductInfoUseCase {
 
     String text = buildProductText(product);
 
-    Map<String, Object> metadata =
-        Map.of(
-            "productId", productId,
-            "type", "product_info",
-            "filename", "product_info");
+    ProductInfoMetadata metadata = new ProductInfoMetadata(productId);
 
-    Document doc = new Document(text, metadata);
+    Document doc = new Document(text, metadata.toMap());
     embedDocumentPort.embed(List.of(doc)); // 상품 정보는 청킹 없이 1개 문서로
 
     product.markInfoAsEmbedded();

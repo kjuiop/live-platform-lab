@@ -1,10 +1,10 @@
 package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.PdfDocumentMetadata;
 import org.giglab.live.commerce.core.product.application.port.ai.EmbedDocumentPort;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
 import org.giglab.live.commerce.core.product.domain.entity.ProductDocument;
@@ -40,12 +40,12 @@ public class EmbedAllDocumentsUseCase {
   }
 
   private List<Document> splitIntoChunks(ProductDocument document) {
-    Map<String, Object> metadata =
-        Map.of(
-            "productId", document.getProductId() != null ? document.getProductId() : 0L,
-            "documentId", document.getId(),
-            "filename", document.getFilename());
-    Document source = new Document(document.getExtractedText(), metadata);
+    PdfDocumentMetadata metadata =
+        new PdfDocumentMetadata(
+            document.getProductId() != null ? document.getProductId() : 0L,
+            document.getId(),
+            document.getFilename());
+    Document source = new Document(document.getExtractedText(), metadata.toMap());
 
     TokenTextSplitter splitter =
         TokenTextSplitter.builder()

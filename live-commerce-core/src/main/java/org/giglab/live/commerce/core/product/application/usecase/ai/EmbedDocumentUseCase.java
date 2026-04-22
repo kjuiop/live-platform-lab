@@ -1,9 +1,9 @@
 package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
+import org.giglab.live.commerce.core.product.application.dto.ai.PdfDocumentMetadata;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.port.ai.EmbedDocumentPort;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductDocumentStorePort;
@@ -53,12 +53,12 @@ public class EmbedDocumentUseCase {
 
   private List<Document> splitIntoChunks(ProductDocument document) {
     // 원문 Document 생성 (메타데이터 포함)
-    Map<String, Object> metadata =
-        Map.of(
-            "productId", document.getProductId() != null ? document.getProductId() : 0L,
-            "documentId", document.getId(),
-            "filename", document.getFilename());
-    Document source = new Document(document.getExtractedText(), metadata);
+    PdfDocumentMetadata metadata =
+        new PdfDocumentMetadata(
+            document.getProductId() != null ? document.getProductId() : 0L,
+            document.getId(),
+            document.getFilename());
+    Document source = new Document(document.getExtractedText(), metadata.toMap());
 
     // TokenTextSplitter로 청킹
     TokenTextSplitter splitter =

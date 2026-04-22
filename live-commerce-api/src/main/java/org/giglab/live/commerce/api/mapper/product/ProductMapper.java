@@ -20,6 +20,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
+  @Mapping(target = "documentId", source = "pdfDocumentId")
   CreateProductCommand toCreateProductCommand(CreateProductRequest createProductRequest);
 
   CreateProductResponse toCreateProductResponse(CreateProductResult createProductResult);

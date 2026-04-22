@@ -15,4 +15,5 @@ public record CreateProductCommand(
     int sortOrder,
     String manufacturer,
     String ingredients,
-    String usageMethod) {}
+    String usageMethod,
+    Long documentId) {}

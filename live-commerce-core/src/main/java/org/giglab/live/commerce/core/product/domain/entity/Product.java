@@ -63,8 +63,8 @@ public class Product extends AuditedEntity {
   @Column(nullable = false)
   private String name;
 
-  @Column(nullable = false)
   @Lob
+  @Column(columnDefinition = "LONGTEXT")
   private String description;
 
   @Column(nullable = false)
@@ -77,9 +77,13 @@ public class Product extends AuditedEntity {
   @Column(length = 200)
   private String manufacturer;
 
-  @Lob private String ingredients;
+  @Lob
+  @Column(columnDefinition = "LONGTEXT")
+  private String ingredients;
 
-  @Lob private String usageMethod;
+  @Lob
+  @Column(columnDefinition = "LONGTEXT")
+  private String usageMethod;
 
   public static Product create(
       String name,

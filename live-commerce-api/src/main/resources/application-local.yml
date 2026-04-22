@@ -6,6 +6,8 @@ app:
     base-path: uploads
 
 spring:
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}

@@ -7,9 +7,11 @@ import org.giglab.live.commerce.core.product.application.dto.CreateProductResult
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
 import org.giglab.live.commerce.core.product.application.usecase.CreateProductUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetDocumentListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
@@ -25,6 +27,7 @@ public class ProductService {
   private final CreateProductUseCase createProductUseCase;
   private final ParseProductPdfUseCase parseProductPdfUseCase;
   private final GetDocumentListUseCase getDocumentListUseCase;
+  private final EmbedDocumentUseCase embedDocumentUseCase;
 
   public GetProductListResult getList(ProductListQuery query) {
     return getProductListUseCase.execute(query);
@@ -44,5 +47,9 @@ public class ProductService {
 
   public GetDocumentListResult getDocumentList(Long productId) {
     return getDocumentListUseCase.execute(productId);
+  }
+
+  public EmbedDocumentResult embedDocument(Long documentId) {
+    return embedDocumentUseCase.execute(documentId);
   }
 }

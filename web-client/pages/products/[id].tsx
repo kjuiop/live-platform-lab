@@ -110,9 +110,28 @@ export default function ProductDetail() {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [qnaList]);
 
-  const handleEmbed = (documentId: number) => {
-    // TODO: 임베딩 API 연동 (POST /products/documents/{documentId}/embed)
+  const handleEmbed = async (documentId: number) => {
     setEmbeddingIds((prev) => new Set(prev).add(documentId));
+    try {
+      const res = await fetch(`${API_BASE}/products/documents/${documentId}/embed`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        setDocuments((prev) =>
+          prev.map((doc) =>
+            doc.documentId === documentId ? { ...doc, embedYn: 'Y' } : doc
+          )
+        );
+      }
+    } catch {
+      // ignore
+    } finally {
+      setEmbeddingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
   };
 
   const askAI = () => {

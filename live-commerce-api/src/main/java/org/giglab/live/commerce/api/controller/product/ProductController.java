@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
+import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
@@ -68,6 +69,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ParsedProductResponse>> parsePdf(
       @RequestParam("file") MultipartFile file) {
     ParsedProductResponse response = productFacade.parsePdf(file);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "문서 임베딩", description = "PDF 문서를 벡터 DB에 임베딩합니다.")
+  @PostMapping("/documents/{documentId}/embed")
+  public ResponseEntity<ApiResponse<EmbedDocumentResponse>> embedDocument(
+      @PathVariable Long documentId) {
+    EmbedDocumentResponse response = productFacade.embedDocument(documentId);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 }

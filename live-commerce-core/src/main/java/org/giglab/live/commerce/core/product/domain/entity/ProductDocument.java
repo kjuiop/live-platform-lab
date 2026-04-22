@@ -49,6 +49,14 @@ public class ProductDocument extends AuditedEntity {
         .build();
   }
 
+  public void linkToProduct(Long productId) {
+    this.productId = productId;
+  }
+
+  public void markAsEmbedded() {
+    this.embedYn = YnType.Y;
+  }
+
   private static String normalize(String text) {
     if (text == null) {
       return null;
@@ -56,9 +64,5 @@ public class ProductDocument extends AuditedEntity {
     return text.trim()
         .replaceAll("\r\n", "\n") // CRLF → LF
         .replaceAll("\n{3,}", "\n\n"); // 3줄 이상 연속 빈 줄 → 최대 1줄 공백
-  }
-
-  public void linkToProduct(Long productId) {
-    this.productId = productId;
   }
 }

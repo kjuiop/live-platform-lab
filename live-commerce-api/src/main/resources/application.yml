@@ -19,6 +19,11 @@ spring:
       chat:
         options:
           model: gpt-5.2
+    vectorstore:
+      elasticsearch:
+        index-name: product-documents
+        dimensions: 1536
+        initialize-schema: true  # 인덱스 없으면 자동 생성
 
 springdoc:
   api-docs:

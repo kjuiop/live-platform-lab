@@ -1,6 +1,10 @@
 cors:
   allowed-origins: http://localhost:3000
 
+chat:
+  server:
+    url: ${CHAT_SERVER_URL:http://localhost:8080}
+
 app:
   upload:
     base-path: uploads

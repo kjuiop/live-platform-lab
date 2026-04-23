@@ -25,6 +25,7 @@ public class EndCampaignUseCase {
     }
     Campaign campaign = findCampaign.get();
     campaign.end();
-    return new BroadcastStatusResult(campaign.getStatus(), null, campaign.getEndedAt());
+    return new BroadcastStatusResult(
+        campaign.getStatus(), null, campaign.getEndedAt(), campaign.getChatRoomId());
   }
 }

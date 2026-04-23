@@ -71,7 +71,8 @@ public class CampaignQueryRepository {
                 campaign.status,
                 campaign.scheduledAt,
                 campaign.startedAt,
-                campaign.endedAt)
+                campaign.endedAt,
+                campaign.chatRoomId)
             .from(campaign)
             .where(defaultCondition(), eqCampaignId(campaignId))
             .fetchOne();
@@ -102,6 +103,7 @@ public class CampaignQueryRepository {
             row.get(campaign.scheduledAt),
             row.get(campaign.startedAt),
             row.get(campaign.endedAt),
+            row.get(campaign.chatRoomId),
             products));
   }
 

@@ -12,4 +12,5 @@ public record GetCampaignResult(
     LocalDateTime scheduledAt,
     LocalDateTime startedAt,
     LocalDateTime endedAt,
+    String chatRoomId,
     List<CampaignProductDto> campaignProducts) {}

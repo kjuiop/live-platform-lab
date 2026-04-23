@@ -1,0 +1,48 @@
+package org.giglab.live.commerce.core.campaign.infrastructure.client;
+
+import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class RestChatServerClient implements ChatRoomCreatePort {
+
+  private final RestTemplate restTemplate;
+
+  @Value("${chat.server.url}")
+  private String chatServerUrl;
+
+  @Override
+  public String createRoom(String title) {
+    String url = chatServerUrl + "/api/v1/rooms";
+    HttpEntity<CreateRoomRequest> request = new HttpEntity<>(new CreateRoomRequest(title));
+
+    ResponseEntity<ChatApiResponse<CreateRoomResponse>> response =
+        restTemplate.exchange(url, HttpMethod.POST, request, new ParameterizedTypeReference<>() {});
+
+    ChatApiResponse<CreateRoomResponse> body = response.getBody();
+    if (body == null || body.data() == null || body.data().roomId() == null) {
+      throw new IllegalStateException("채팅방 생성 응답이 없습니다.");
+    }
+
+    log.info("채팅방 생성 완료 - roomId={}, title={}", body.data().roomId(), title);
+    return body.data().roomId();
+  }
+
+  private record CreateRoomRequest(String title) {}
+
+  private record CreateRoomResponse(
+      String roomId, String title, Instant createdAt, Instant updatedAt) {}
+
+  private record ChatApiResponse<T>(T data) {}
+}

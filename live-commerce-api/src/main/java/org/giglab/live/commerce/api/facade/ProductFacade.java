@@ -11,6 +11,7 @@ import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
@@ -19,6 +20,7 @@ import org.giglab.live.commerce.api.mapper.product.ProductMapper;
 import org.giglab.live.commerce.core.product.application.ProductService;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
@@ -54,6 +56,11 @@ public class ProductFacade {
   public GetProductResponse getDetail(Long id) {
     GetProductResult result = productService.getDetail(id);
     return productMapper.toGetProductResponse(result);
+  }
+
+  public GetProductLinkedCampaignsResponse getLinkedCampaigns(Long productId) {
+    GetProductLinkedCampaignsResult result = productService.getLinkedCampaigns(productId);
+    return productMapper.toGetProductLinkedCampaignsResponse(result);
   }
 
   public GetDocumentListResponse getDocumentList(Long productId) {

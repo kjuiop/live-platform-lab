@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import org.giglab.live.commerce.core.campaign.domain.entity.types.BroadcastStatusType;
 
 public record BroadcastStatusResult(
+    String title,
     BroadcastStatusType status,
     LocalDateTime startedAt,
     LocalDateTime endedAt,

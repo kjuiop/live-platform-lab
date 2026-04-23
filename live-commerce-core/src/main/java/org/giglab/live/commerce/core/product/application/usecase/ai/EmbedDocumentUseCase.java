@@ -1,6 +1,7 @@
 package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.giglab.live.commerce.core.product.application.dto.ai.PdfDocumentMetadata;
@@ -29,14 +30,15 @@ public class EmbedDocumentUseCase {
   private final EmbedDocumentPort embedDocumentPort;
 
   public EmbedDocumentResult execute(Long documentId) {
-    ProductDocument document =
-        productDocumentStorePort
-            .findEntityById(documentId)
-            .orElseThrow(
-                () ->
-                    new ProductDomainException(
-                        ProductErrorCode.PDF_NOT_FOUND,
-                        String.format("PDF 문서를 찾을 수 없습니다. documentId=%d", documentId)));
+
+    Optional<ProductDocument> findDocument = productDocumentStorePort.findEntityById(documentId);
+    if (findDocument.isEmpty()) {
+      throw new ProductDomainException(
+          ProductErrorCode.PDF_NOT_FOUND,
+          String.format("PDF 문서를 찾을 수 없습니다. documentId=%d", documentId));
+    }
+
+    ProductDocument document = findDocument.get();
 
     if (document.getEmbedYn() == YnType.Y) {
       throw new ProductDomainException(

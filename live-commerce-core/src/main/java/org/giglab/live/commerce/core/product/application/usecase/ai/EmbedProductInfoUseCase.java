@@ -1,12 +1,14 @@
 package org.giglab.live.commerce.core.product.application.usecase.ai;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.ProductInfoMetadata;
 import org.giglab.live.commerce.core.product.application.port.ai.EmbedDocumentPort;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductStorePort;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
+import org.giglab.live.commerce.core.product.domain.entity.types.EmbeddingStatusType;
 import org.giglab.live.commerce.core.product.domain.exception.ProductDomainException;
 import org.giglab.live.commerce.core.product.domain.exception.ProductErrorCode;
 import org.springframework.ai.document.Document;
@@ -22,14 +24,20 @@ public class EmbedProductInfoUseCase {
   private final EmbedDocumentPort embedDocumentPort;
 
   public EmbedProductInfoResult execute(Long productId) {
-    Product product =
-        productStorePort
-            .findEntityById(productId)
-            .orElseThrow(
-                () ->
-                    new ProductDomainException(
-                        ProductErrorCode.PRODUCT_NOT_FOUND,
-                        String.format("상품을 찾을 수 없습니다. productId=%d", productId)));
+
+    Optional<Product> findProduct = productStorePort.findEntityById(productId);
+    if (findProduct.isEmpty()) {
+      throw new ProductDomainException(
+          ProductErrorCode.PRODUCT_NOT_FOUND,
+          String.format("상품을 찾을 수 없습니다. productId=%d", productId));
+    }
+
+    Product product = findProduct.get();
+    if (product.getEmbeddingStatus() == EmbeddingStatusType.DONE) {
+      throw new ProductDomainException(
+          ProductErrorCode.PRODUCT_ALREADY_EMBEDDED,
+          String.format("이미 임베딩된 상품입니다. productId=%d", productId));
+    }
 
     String text = buildProductText(product);
 

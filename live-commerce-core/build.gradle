@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 // CVE-2024-49203 (SQL/HQL Injection, CVSS 9.8) 패치 반영
 // 원본 com.querydsl은 5.1.0이 최신이므로, 패치된 OpenFeign 포크 사용
 ext {
-    ext.querydslVersion = '5.6.1'
+    querydslVersion = '5.6.1'
     springAiVersion = "2.0.0-M2"
 }
 

@@ -7,6 +7,7 @@ import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum ProductErrorCode implements DomainErrorCode {
+  PRODUCT_ALREADY_EMBEDDED("PRODUCT-4001", "이미 임베딩된 상품입니다."),
   PRODUCT_NOT_FOUND("PRODUCT-4401", "존재하지 않는 상품입니다."),
   PDF_NOT_FOUND("PRODUCT-4402", "PDF 파일이 존재하지 않습니다."),
   PDF_ALREADY_EMBEDDED("PRODUCT-4403", "이미 임베딩된 PDF 문서입니다."),

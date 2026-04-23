@@ -1,6 +1,5 @@
 package org.giglab.live.commerce.core.campaign.application.usecase;
 
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignStorePort;
@@ -18,13 +17,20 @@ public class StartCampaignUseCase {
   private final CampaignStorePort campaignStorePort;
 
   public BroadcastStatusResult execute(Long campaignId) {
-    Optional<Campaign> findCampaign = campaignStorePort.findEntityById(campaignId);
-    if (findCampaign.isEmpty()) {
-      throw new CampaignDomainException(
-          CampaignErrorCode.NOT_FOUND, String.format("캠페인 ID %d 를 찾을 수 없습니다.", campaignId));
-    }
-    Campaign campaign = findCampaign.get();
+    Campaign campaign =
+        campaignStorePort
+            .findEntityById(campaignId)
+            .orElseThrow(
+                () ->
+                    new CampaignDomainException(
+                        CampaignErrorCode.NOT_FOUND,
+                        String.format("캠페인 ID %d 를 찾을 수 없습니다.", campaignId)));
     campaign.start();
-    return new BroadcastStatusResult(campaign.getStatus(), campaign.getStartedAt(), null);
+    return new BroadcastStatusResult(
+        campaign.getTitle(),
+        campaign.getStatus(),
+        campaign.getStartedAt(),
+        null,
+        campaign.getChatRoomId());
   }
 }

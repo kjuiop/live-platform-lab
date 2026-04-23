@@ -1,6 +1,15 @@
 cors:
   allowed-origins: http://localhost:3000
 
+chat:
+  server:
+    url: ${CHAT_SERVER_URL:http://localhost:8080}
+
+http:
+  client:
+    connect-timeout: ${HTTP_CLIENT_CONNECT_TIMEOUT:3000}
+    read-timeout: ${HTTP_CLIENT_READ_TIMEOUT:5000}
+
 app:
   upload:
     base-path: uploads

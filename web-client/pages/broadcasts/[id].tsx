@@ -10,6 +10,7 @@ interface BroadcastStatusData {
   status: string;
   startedAt: string | null;
   endedAt: string | null;
+  chatRoomId: string | null;
 }
 
 interface CampaignProduct {
@@ -26,6 +27,7 @@ interface Campaign {
   scheduledAt: string | null;
   startedAt: string | null;
   endedAt: string | null;
+  chatRoomId: string | null;
   campaignProducts: CampaignProduct[];
 }
 
@@ -104,8 +106,6 @@ function ChatQnAPanel({
   setNickname,
   onSend,
   wsConnected,
-  onToggleWs,
-  areScriptsReady,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -116,10 +116,9 @@ function ChatQnAPanel({
   setNickname: (v: string) => void;
   onSend: () => void;
   wsConnected: boolean;
-  onToggleWs: () => void;
-  areScriptsReady: boolean;
 }) {
   const isScheduled = status === 'scheduled';
+  const isLive = status === 'live';
   const [tab, setTab] = useState<'chat' | 'faq'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
@@ -179,15 +178,6 @@ function ChatQnAPanel({
             {!isScheduled && <span className="faq-count">{liveFaqs.length}</span>}
           </button>
         </div>
-        {!isScheduled && (
-          <button
-            className={`ws-btn ${wsConnected ? 'connected' : 'disconnected'}`}
-            onClick={onToggleWs}
-            disabled={!areScriptsReady && !wsConnected}
-          >
-            {wsConnected ? '● 연결됨' : '연결'}
-          </button>
-        )}
       </div>
 
       {tab === 'chat' ? (
@@ -211,20 +201,27 @@ function ChatQnAPanel({
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className="lp-nick-row">
-            <span className="lp-nick-label">닉네임</span>
-            <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} />
-          </div>
-          <div className="lp-input-row">
-            <input
-              className="lp-input"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKey}
-              placeholder={isScheduled ? '리허설 메시지를 입력하세요...' : '메시지를 입력하세요...'}
-            />
-            <button className="lp-send" onClick={onSend} disabled={!inputValue.trim()}>전송</button>
-          </div>
+          {status === 'ended' ? (
+            <div className="lp-ended-notice">방송이 종료되었습니다.</div>
+          ) : (
+            <>
+              <div className="lp-nick-row">
+                <span className="lp-nick-label">닉네임</span>
+                <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} disabled={isScheduled || (isLive && !wsConnected)} />
+              </div>
+              <div className="lp-input-row">
+                <input
+                  className="lp-input"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKey}
+                  placeholder={isScheduled ? '방송 시작 전입니다.' : isLive && !wsConnected ? '채팅 연결 중...' : '메시지를 입력하세요...'}
+                  disabled={isScheduled || (isLive && !wsConnected)}
+                />
+                <button className="lp-send" onClick={onSend} disabled={isScheduled || (isLive && !wsConnected) || !inputValue.trim()}>전송</button>
+              </div>
+            </>
+          )}
         </>
       ) : isScheduled ? (
         /* 예정: AI Q&A 탭 */
@@ -294,6 +291,7 @@ function ChatQnAPanel({
         .lp-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .lp-empty { color: #475569; font-size: 13px; text-align: center; margin-top: 40px; }
         .lp-rehearsal-banner { padding: 7px 16px; background: rgba(251,191,36,0.08); border-bottom: 1px solid rgba(251,191,36,0.15); font-size: 11px; font-weight: 600; color: #fcd34d; text-align: center; letter-spacing: 0.02em; }
+        .lp-ended-notice { padding: 14px 16px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid rgba(255,255,255,0.07); }
         .msg { display: flex; flex-direction: column; gap: 2px; }
         .msg-header { display: flex; align-items: center; gap: 6px; }
         .msg-nick { font-size: 12px; font-weight: 700; color: #818cf8; }
@@ -501,9 +499,9 @@ export default function BroadcastDetail() {
   const clientRef = useRef<any>(null);
   const subRef = useRef<any>(null);
   const seenKeysRef = useRef<Set<string>>(new Set());
+  const isConnectingRef = useRef(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL;
+  const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080';
 
   useEffect(() => {
     if (!id) return;
@@ -563,7 +561,8 @@ export default function BroadcastDetail() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const data: BroadcastStatusData = json.data;
-      setCampaign((prev) => prev ? { ...prev, status: data.status, startedAt: data.startedAt } : prev);
+      setCampaign((prev) => prev ? { ...prev, status: data.status, startedAt: data.startedAt, chatRoomId: data.chatRoomId ?? prev.chatRoomId } : prev);
+      if (data.chatRoomId) connect(data.chatRoomId);
     } catch {
       alert('방송 시작에 실패했습니다.');
     } finally {
@@ -597,6 +596,7 @@ export default function BroadcastDetail() {
     seenKeysRef.current.add(rawBody);
     try {
       const p = JSON.parse(rawBody ?? '{}') as any;
+      if (p.action !== 'CHAT.MESSAGE') return;
       const text = p.payload?.message ?? rawBody;
       const nick = p.actor?.sender || p.actor?.username || '시청자';
       const ts = p.sentAt ? new Date(p.sentAt) : new Date();
@@ -606,51 +606,95 @@ export default function BroadcastDetail() {
     }
   };
 
+  const publishJoin = (client: any, roomId: string) => {
+    const nick = nickname.trim() || '시청자';
+    try {
+      client.send('/send/room.action', {}, JSON.stringify({
+        roomId,
+        action: 'CHAT.JOIN',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: {},
+      }));
+    } catch {
+      // join 실패는 무시
+    }
+  };
+
+  const publishLeave = () => {
+    if (!wsConnected || !clientRef.current || !campaign?.chatRoomId) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'CHAT.LEAVE',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: {},
+      }));
+    } catch {
+      // leave 실패는 무시
+    }
+  };
+
   const disconnect = () => {
+    isConnectingRef.current = false;
+    publishLeave();
     try { subRef.current?.unsubscribe?.(); clientRef.current?.disconnect?.(); } finally {
       clientRef.current = null; subRef.current = null; setWsConnected(false);
     }
   };
 
-  const connect = () => {
-    if (!areScriptsReady) return;
+  const connect = (roomId: string) => {
+    if (!areScriptsReady || !roomId) return;
+    if (isConnectingRef.current || clientRef.current) return;
     const SockJS = (window as any).SockJS;
     const StompJs = (window as any).StompJs;
     if (!SockJS || !StompJs) return;
-    disconnect();
+    isConnectingRef.current = true;
     const socket = new SockJS(`${WS_BASE_URL}/ws`);
     const client = StompJs.Stomp.over(socket);
     client.debug = () => {};
     client.connect({}, () => {
+      isConnectingRef.current = false;
       clientRef.current = client;
       setWsConnected(true);
-      subRef.current = client.subscribe(`/sub/room/${id}`, (msg: any) => appendMessage(msg?.body ?? ''));
-    }, () => setWsConnected(false));
+      subRef.current = client.subscribe(`/sub/room/${roomId}`, (msg: any) => appendMessage(msg?.body ?? ''));
+      publishJoin(client, roomId);
+    }, () => {
+      isConnectingRef.current = false;
+      setWsConnected(false);
+    });
   };
 
-  const handleToggleWs = () => wsConnected ? disconnect() : connect();
-
   const sendMessage = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !campaign?.chatRoomId) return;
     const nick = nickname.trim() || '시청자';
     const text = inputValue.trim();
     if (wsConnected && clientRef.current) {
       try {
         clientRef.current.send('/send/room.action', {}, JSON.stringify({
-          roomId: id, action: 'CHAT.MESSAGE',
+          roomId: campaign.chatRoomId, action: 'CHAT.MESSAGE',
           actor: { userId: nick, username: nick, sender: nick },
           payload: { message: text },
         }));
       } catch {
         setMessages((prev) => [...prev, { id: Date.now(), nickname: nick, text, timestamp: new Date() }]);
       }
-    } else {
-      setMessages((prev) => [...prev, { id: Date.now(), nickname: nick, text, timestamp: new Date() }]);
     }
     setInputValue('');
   };
 
-  useEffect(() => () => { disconnect(); }, []);
+  // 방송 상태에 따른 자동 WebSocket 연결/해제
+  useEffect(() => {
+    if (!campaign || !areScriptsReady) return;
+    const uiStatus = toUiStatus(campaign.status);
+    if (uiStatus === 'live' && campaign.chatRoomId && !wsConnected && !isConnectingRef.current) {
+      connect(campaign.chatRoomId);
+    }
+    if (uiStatus === 'ended' && wsConnected) {
+      disconnect();
+    }
+    return () => { disconnect(); };
+  }, [campaign?.status, campaign?.chatRoomId, areScriptsReady]);
 
   if (!id) return null;
 
@@ -687,6 +731,7 @@ export default function BroadcastDetail() {
   const uiStatus = toUiStatus(campaign.status);
   const isLive = uiStatus === 'live';
   const isScheduled = uiStatus === 'scheduled';
+  const isEnded = uiStatus === 'ended';
   const productName = campaign.campaignProducts[0]?.name ?? '상품 없음';
   const startedAtLabel = campaign.startedAt
     ? new Date(campaign.startedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -905,7 +950,7 @@ export default function BroadcastDetail() {
 
           {/* 우측 패널: 상태별 */}
           <div className="side-col">
-            {(isScheduled || isLive) && (
+            {(isScheduled || isLive || isEnded) && (
               <ChatQnAPanel
                 status={uiStatus}
                 productName={productName}
@@ -916,8 +961,6 @@ export default function BroadcastDetail() {
                 setNickname={setNickname}
                 onSend={sendMessage}
                 wsConnected={wsConnected}
-                onToggleWs={handleToggleWs}
-                areScriptsReady={areScriptsReady}
               />
             )}
             {uiStatus === 'ended' && <EndedAnalysisPanel />}

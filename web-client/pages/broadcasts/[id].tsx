@@ -578,7 +578,8 @@ export default function BroadcastDetail() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const data: BroadcastStatusData = json.data;
-      setCampaign((prev) => prev ? { ...prev, status: data.status, endedAt: data.endedAt } : prev);
+      setCampaign((prev) => prev ? { ...prev, status: data.status, endedAt: data.endedAt, chatRoomId: data.chatRoomId ?? null } : prev);
+      if (!data.chatRoomId) disconnect();
     } catch {
       alert('방송 종료에 실패했습니다.');
     } finally {

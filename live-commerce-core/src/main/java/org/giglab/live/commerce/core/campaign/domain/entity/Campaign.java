@@ -100,6 +100,10 @@ public class Campaign extends AuditedEntity {
     this.chatRoomId = chatRoomId;
   }
 
+  public void clearChatRoom() {
+    this.chatRoomId = null;
+  }
+
   public void end() {
     if (this.status != BroadcastStatusType.ON_AIR) {
       throw new CampaignDomainException(CampaignErrorCode.INVALID_STATUS_CHANGE);

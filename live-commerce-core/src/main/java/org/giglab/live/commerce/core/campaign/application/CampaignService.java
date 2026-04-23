@@ -70,14 +70,25 @@ public class CampaignService {
     if (result.chatRoomId() != null) {
       try {
         chatRoomDeletePort.deleteRoom(result.chatRoomId());
-
-        // TX 2: chatRoomId 초기화 커밋
-        clearChatRoomUseCase.execute(campaignId);
-        return new BroadcastStatusResult(
-            result.title(), result.status(), result.startedAt(), result.endedAt(), null);
       } catch (Exception e) {
-        log.warn("채팅방 삭제 실패 - campaignId={}", campaignId, e);
+        log.warn("채팅방 삭제 실패 (chat-server) - campaignId={}", campaignId, e);
+        return result;
       }
+
+      // TX 2: chatRoomId 초기화 커밋
+      try {
+        clearChatRoomUseCase.execute(campaignId);
+      } catch (Exception e) {
+        log.warn(
+            "chatRoomId 초기화 실패 (DB) - campaignId={}, chatRoomId={}",
+            campaignId,
+            result.chatRoomId(),
+            e);
+        return result;
+      }
+
+      return new BroadcastStatusResult(
+          result.title(), result.status(), result.startedAt(), result.endedAt(), null);
     }
 
     return result;

@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
-import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignQueryPort;
 import org.giglab.live.commerce.core.campaign.infrastructure.persistence.CampaignQueryRepository;
+import org.giglab.live.commerce.core.shared.ProductLinkedCampaignDto;
 import org.springframework.stereotype.Component;
 
 @Component

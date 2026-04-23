@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
-import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
+import org.giglab.live.commerce.core.shared.ProductLinkedCampaignDto;
 
 public interface CampaignQueryPort {
   List<CampaignSummary> findList(CampaignListQuery query);

@@ -15,7 +15,6 @@ import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.dto.product.LinkedCampaignItem;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
 import org.giglab.live.commerce.api.dto.product.ProductSummaryItem;
-import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
@@ -30,6 +29,7 @@ import org.giglab.live.commerce.core.product.application.dto.pdf.DocumentSummary
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
+import org.giglab.live.commerce.core.shared.ProductLinkedCampaignDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

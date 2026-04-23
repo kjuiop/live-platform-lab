@@ -25,10 +25,20 @@ public class FaqAnswerService {
 
   @Async
   public void generateAndBroadcast(ActionRequest req) {
-    String question = (String) req.payload().get("question");
-    Long productId = ((Number) req.payload().get("productId")).longValue();
-
+    String question = null;
     try {
+      Object rawQuestion = req.payload() == null ? null : req.payload().get("question");
+      if (!(rawQuestion instanceof String q) || q.isBlank()) {
+        throw new IllegalArgumentException("payload.question은 비어있을 수 없습니다.");
+      }
+      question = q;
+
+      Object rawProductId = req.payload().get("productId");
+      if (!(rawProductId instanceof Number)) {
+        throw new IllegalArgumentException("payload.productId가 올바르지 않습니다.");
+      }
+      Long productId = ((Number) rawProductId).longValue();
+
       String answer = faqAnswerPort.ask(productId, question);
       ActionResponse res =
           ActionResponse.of(
@@ -39,17 +49,13 @@ public class FaqAnswerService {
       operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), res);
       log.info("FAQ 답변 브로드캐스트 - roomId={}, productId={}", req.roomId(), productId);
     } catch (Exception e) {
-      log.warn(
-          "FAQ 답변 생성 실패 - roomId={}, productId={}, error={}",
-          req.roomId(),
-          productId,
-          e.getMessage());
+      log.warn("FAQ 답변 생성 실패 - roomId={}", req.roomId(), e);
+      Map<String, Object> errPayload =
+          question != null
+              ? Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", "question", question)
+              : Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
       ActionResponse errRes =
-          ActionResponse.of(
-              req.roomId(),
-              ActionType.FAQ_ERROR.getKey(),
-              AI_ACTOR,
-              Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", "question", question));
+          ActionResponse.of(req.roomId(), ActionType.FAQ_ERROR.getKey(), AI_ACTOR, errPayload);
       operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), errRes);
     }
   }

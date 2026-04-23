@@ -93,6 +93,10 @@ public class Campaign extends AuditedEntity {
   }
 
   public void assignChatRoom(String chatRoomId) {
+    if (this.chatRoomId != null) {
+      throw new CampaignDomainException(
+          CampaignErrorCode.INVALID_STATUS_CHANGE, "이미 채팅방이 할당된 캠페인입니다.");
+    }
     this.chatRoomId = chatRoomId;
   }
 

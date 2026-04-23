@@ -39,14 +39,23 @@ public class CampaignService {
   }
 
   public BroadcastStatusResult start(Long campaignId) {
+    // TX 1: 방송 시작 커밋 — DB 커넥션 즉시 반환
     BroadcastStatusResult result = startCampaignUseCase.execute(campaignId);
-    if (result.chatRoomId() != null) {
-      return result;
+
+    // HTTP: 채팅방 생성 — 트랜잭션 외부
+    if (result.chatRoomId() == null) {
+      try {
+        String roomId = chatRoomCreatePort.createRoom(result.title());
+
+        // TX 2: chatRoomId 저장 커밋
+        assignChatRoomUseCase.execute(campaignId, roomId);
+        return new BroadcastStatusResult(
+            result.title(), result.status(), result.startedAt(), null, roomId);
+      } catch (Exception e) {
+        log.warn("채팅방 생성 실패 - campaignId={}", campaignId, e);
+      }
     }
-    String roomId = chatRoomCreatePort.createRoom(result.title());
-    assignChatRoomUseCase.execute(campaignId, roomId);
-    return new BroadcastStatusResult(
-        result.title(), result.status(), result.startedAt(), null, roomId);
+    return result;
   }
 
   public BroadcastStatusResult end(Long campaignId) {

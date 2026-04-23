@@ -11,7 +11,9 @@ import org.giglab.live.application.service.RoomService;
 import org.giglab.live.presentation.api.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,12 @@ public class RoomController {
       @RequestParam(defaultValue = "10") @Positive int size) {
     List<GetRoomResponse> responses = roomService.getRooms(size);
     return new ResponseEntity<>(ApiResponse.success(responses), HttpStatus.OK);
+  }
+
+  @DeleteMapping("/{roomId}")
+  public ResponseEntity<Void> deleteRoom(@PathVariable String roomId) {
+    roomService.deleteRoom(roomId);
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping

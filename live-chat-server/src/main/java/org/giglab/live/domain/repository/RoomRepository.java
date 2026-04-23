@@ -14,4 +14,6 @@ public interface RoomRepository {
   Stream<Room> getRoomsByIds(List<String> roomIds);
 
   Optional<Room> findById(String roomId);
+
+  void deleteById(String roomId);
 }

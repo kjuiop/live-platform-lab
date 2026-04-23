@@ -4,6 +4,7 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
+import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -15,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RestChatServerClient implements ChatRoomCreatePort {
+public class RestChatServerClient implements ChatRoomCreatePort, ChatRoomDeletePort {
 
   private final RestTemplate restTemplate;
 
@@ -37,6 +38,14 @@ public class RestChatServerClient implements ChatRoomCreatePort {
 
     log.info("채팅방 생성 완료 - roomId={}, title={}", body.data().roomId(), title);
     return body.data().roomId();
+  }
+
+  @Override
+  public void deleteRoom(String roomId) {
+    String url = chatServerUrl + "/api/v1/rooms/" + roomId;
+    restTemplate.exchange(
+        url, HttpMethod.DELETE, HttpEntity.EMPTY, new ParameterizedTypeReference<Void>() {});
+    log.info("채팅방 삭제 완료 - roomId={}", roomId);
   }
 
   private record CreateRoomRequest(String title) {}

@@ -174,6 +174,43 @@ public class RedisRoomRepository implements RoomRepository {
     }
   }
 
+  @Override
+  public void deleteById(String roomId) {
+    String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, roomId);
+
+    try {
+      List<Object> results =
+          redisTemplate.execute(
+              new SessionCallback<List<Object>>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <K, V> List<Object> execute(RedisOperations<K, V> operations)
+                    throws DataAccessException {
+                  operations.multi();
+                  operations.delete((K) roomKey);
+                  operations.opsForZSet().remove((K) ROOM_INDEX_KEY, (V) roomId);
+                  return operations.exec();
+                }
+              });
+
+      if (results == null) {
+        throw new RedisOperationException("DELETE", roomKey, "Transaction returned null", null);
+      }
+      long deleted = results.getFirst() instanceof Long l ? l : 0L;
+      if (deleted > 0) {
+        log.info("채팅방 삭제 완료 - roomId={}, deleted={}", roomId, deleted);
+      } else {
+        log.debug("채팅방 삭제 요청 - 이미 존재하지 않는 roomId={}", roomId);
+      }
+
+    } catch (RedisOperationException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("Failed to delete room: roomId={}, error={}", roomId, e.getMessage(), e);
+      throw new RedisOperationException("DELETE", roomKey, e.getMessage(), e);
+    }
+  }
+
   private Room convertToRoom(Object obj) {
     if (obj == null) {
       return null;

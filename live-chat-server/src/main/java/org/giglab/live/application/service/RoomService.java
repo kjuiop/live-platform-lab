@@ -26,6 +26,10 @@ public class RoomService {
         saved.getRoomId(), saved.getTitle(), saved.getCreatedAt(), saved.getUpdatedAt());
   }
 
+  public void deleteRoom(String roomId) {
+    roomRepository.deleteById(roomId);
+  }
+
   public List<GetRoomResponse> getRooms(int size) {
     int validSize = Math.min(MAX_SIZE, size);
     List<String> roomIds = roomRepository.findLatestRoomIds(validSize);

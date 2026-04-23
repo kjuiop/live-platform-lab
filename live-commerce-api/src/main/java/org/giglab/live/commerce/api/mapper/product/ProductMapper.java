@@ -8,13 +8,17 @@ import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
+import org.giglab.live.commerce.api.dto.product.LinkedCampaignItem;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
 import org.giglab.live.commerce.api.dto.product.ProductSummaryItem;
+import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
@@ -66,4 +70,10 @@ public interface ProductMapper {
   EmbedProductInfoResponse toEmbedProductInfoResponse(EmbedProductInfoResult result);
 
   EmbedAllDocumentsResponse toEmbedAllDocumentsResponse(EmbedAllDocumentsResult result);
+
+  @Mapping(target = "status", expression = "java(dto.status().name())")
+  LinkedCampaignItem toLinkedCampaignItem(ProductLinkedCampaignDto dto);
+
+  GetProductLinkedCampaignsResponse toGetProductLinkedCampaignsResponse(
+      GetProductLinkedCampaignsResult result);
 }

@@ -12,6 +12,7 @@ import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
@@ -57,6 +58,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<CreateProductResponse>> create(
       @RequestBody @Valid CreateProductRequest createProductRequest) {
     CreateProductResponse response = productFacade.create(createProductRequest);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품에 편성된 방송 목록 조회", description = "상품이 편성된 방송(Campaign) 목록을 조회합니다.")
+  @GetMapping("/{id}/campaigns")
+  public ResponseEntity<ApiResponse<GetProductLinkedCampaignsResponse>> getLinkedCampaigns(
+      @PathVariable Long id) {
+    GetProductLinkedCampaignsResponse response = productFacade.getLinkedCampaigns(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
@@ -16,6 +17,7 @@ import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentList
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
 import org.giglab.live.commerce.core.product.application.usecase.CreateProductUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.GetProductLinkedCampaignsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
@@ -34,6 +36,7 @@ public class ProductService {
 
   private final GetProductUseCase getProductUseCase;
   private final GetProductListUseCase getProductListUseCase;
+  private final GetProductLinkedCampaignsUseCase getProductLinkedCampaignsUseCase;
   private final CreateProductUseCase createProductUseCase;
   private final ParseProductPdfUseCase parseProductPdfUseCase;
   private final CreateProductDocumentUseCase createProductDocumentUseCase;
@@ -50,6 +53,10 @@ public class ProductService {
 
   public GetProductResult getDetail(Long productId) {
     return getProductUseCase.execute(productId);
+  }
+
+  public GetProductLinkedCampaignsResult getLinkedCampaigns(Long productId) {
+    return getProductLinkedCampaignsUseCase.execute(productId);
   }
 
   public CreateProductResult create(@Valid CreateProductCommand command) {

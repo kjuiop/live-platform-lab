@@ -34,28 +34,17 @@ interface QnAItem {
   isLoading?: boolean;
 }
 
-interface RelatedBroadcast {
-  id: string;
+interface LinkedCampaign {
+  campaignId: number;
   title: string;
-  status: 'scheduled' | 'live' | 'ended';
-  viewerCount?: number;
+  status: 'SCHEDULED' | 'ON_AIR' | 'ENDED';
+  scheduledAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
 }
 
-const MOCK_BROADCASTS: Record<string, RelatedBroadcast[]> = {
-  P001: [
-    { id: 'B001', title: '봄맞이 뷰티 라이브', status: 'live', viewerCount: 1243 },
-  ],
-  P002: [
-    { id: 'B002', title: '스킨케어 집중 케어', status: 'scheduled' },
-  ],
-  P003: [
-    { id: 'B003', title: '파운데이션 비교 테스트', status: 'ended', viewerCount: 3892 },
-  ],
-};
-
-
-const broadcastStatusLabel = { scheduled: '예정', live: '라이브 중', ended: '종료' };
-const broadcastStatusClass = { scheduled: 'bs-scheduled', live: 'bs-live', ended: 'bs-ended' };
+const broadcastStatusLabel: Record<string, string> = { SCHEDULED: '예정', ON_AIR: '라이브 중', ENDED: '종료' };
+const broadcastStatusClass: Record<string, string> = { SCHEDULED: 'bs-scheduled', ON_AIR: 'bs-live', ENDED: 'bs-ended' };
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -64,8 +53,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<ApiDocument[]>([]);
+  const [campaigns, setCampaigns] = useState<LinkedCampaign[]>([]);
   const [embeddingIds, setEmbeddingIds] = useState<Set<number>>(new Set());
-  const relatedBroadcasts = MOCK_BROADCASTS[id as string] ?? [];
 
   const [productEmbedding, setProductEmbedding] = useState(false);
   const [bulkEmbedding, setBulkEmbedding] = useState(false);
@@ -98,6 +87,16 @@ export default function ProductDetail() {
       .then((res) => res.ok ? res.json() : null)
       .then((json) => {
         if (json?.data?.items) setDocuments(json.data.items);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/products/${id}/campaigns`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((json) => {
+        if (json?.data?.campaigns) setCampaigns(json.data.campaigns);
       })
       .catch(() => {});
   }, [id]);
@@ -295,13 +294,15 @@ export default function ProductDetail() {
 
         /* 연결된 방송 */
         .broadcast-list { display: flex; flex-direction: column; gap: 8px; }
-        .b-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; transition: border-color 0.2s; }
-        .b-item:hover { border-color: rgba(99,102,241,0.3); }
-        .b-title { flex: 1; font-size: 13px; font-weight: 600; color: #e2e8f0; }
-        .bs-live { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-        .bs-scheduled { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
-        .bs-ended { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
-        .b-arrow { font-size: 12px; color: #334155; }
+        .b-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; transition: border-color 0.2s; cursor: pointer; }
+        .b-item:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.05); }
+        .b-info { flex: 1; min-width: 0; }
+        .b-name { font-size: 13px; font-weight: 600; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .b-meta { font-size: 11px; color: #475569; margin-top: 2px; }
+        .b-status { flex-shrink: 0; }
+        .bs-live { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .bs-scheduled { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
+        .bs-ended { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
         .no-broadcast { font-size: 13px; color: #475569; text-align: center; padding: 12px 0; }
 
         @media (max-width: 800px) {
@@ -467,18 +468,30 @@ export default function ProductDetail() {
                   <div className="section-sub">이 상품이 사용된 방송 목록</div>
                 </div>
               </div>
-              {relatedBroadcasts.length === 0 ? (
+              {campaigns.length === 0 ? (
                 <div className="no-broadcast">연결된 방송이 없습니다.</div>
               ) : (
                 <div className="broadcast-list">
-                  {relatedBroadcasts.map((b) => (
-                    <Link key={b.id} href={`/broadcasts/${b.id}`} className="b-item">
-                      <span className="b-title">{b.title}</span>
-                      <span className={broadcastStatusClass[b.status]}>
-                        {b.status === 'live' && '● '}{broadcastStatusLabel[b.status]}
-                      </span>
-                      <span className="b-arrow">›</span>
-                    </Link>
+                  {campaigns.map((c) => (
+                    <div
+                      key={c.campaignId}
+                      className="b-item"
+                      onClick={() => router.push(`/broadcasts/${c.campaignId}`)}
+                    >
+                      <div className="b-info">
+                        <div className="b-name">{c.title}</div>
+                        <div className="b-meta">
+                          {c.status === 'SCHEDULED' && c.scheduledAt && `예정일: ${new Date(c.scheduledAt).toLocaleDateString('ko-KR')}`}
+                          {c.status === 'ON_AIR' && c.startedAt && `시작: ${new Date(c.startedAt).toLocaleDateString('ko-KR')}`}
+                          {c.status === 'ENDED' && c.endedAt && `종료: ${new Date(c.endedAt).toLocaleDateString('ko-KR')}`}
+                        </div>
+                      </div>
+                      <div className="b-status">
+                        <span className={broadcastStatusClass[c.status]}>
+                          {c.status === 'ON_AIR' && '● '}{broadcastStatusLabel[c.status]}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

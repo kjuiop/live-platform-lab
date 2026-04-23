@@ -14,6 +14,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignProductDto;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -102,6 +103,25 @@ public class CampaignQueryRepository {
             row.get(campaign.startedAt),
             row.get(campaign.endedAt),
             products));
+  }
+
+  public List<ProductLinkedCampaignDto> findByProductId(Long productId) {
+    return queryFactory
+        .select(
+            Projections.constructor(
+                ProductLinkedCampaignDto.class,
+                campaign.id,
+                campaign.title,
+                campaign.status,
+                campaign.scheduledAt,
+                campaign.startedAt,
+                campaign.endedAt))
+        .from(campaignProduct)
+        .join(campaign)
+        .on(campaign.id.eq(campaignProduct.campaign.id))
+        .where(campaignProduct.productId.eq(productId), defaultCondition())
+        .orderBy(campaign.scheduledAt.desc())
+        .fetch();
   }
 
   private BooleanExpression defaultCondition() {

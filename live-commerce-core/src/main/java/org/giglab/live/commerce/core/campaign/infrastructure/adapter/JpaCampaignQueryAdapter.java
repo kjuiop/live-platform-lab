@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.ProductLinkedCampaignDto;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignQueryPort;
 import org.giglab.live.commerce.core.campaign.infrastructure.persistence.CampaignQueryRepository;
 import org.springframework.stereotype.Component;
@@ -24,5 +25,10 @@ public class JpaCampaignQueryAdapter implements CampaignQueryPort {
   @Override
   public Optional<GetCampaignResult> findById(Long id) {
     return queryRepository.findById(id);
+  }
+
+  @Override
+  public List<ProductLinkedCampaignDto> findByProductId(Long productId) {
+    return queryRepository.findByProductId(productId);
   }
 }

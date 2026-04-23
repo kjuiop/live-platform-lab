@@ -26,8 +26,8 @@ public class FaqQuestion implements ActionHandler<ActionRequest, ActionResponse>
       throw new IllegalArgumentException("payload.question is required");
     }
     Object productId = req.payload().get("productId");
-    if (productId == null) {
-      throw new IllegalArgumentException("payload.productId is required");
+    if (!(productId instanceof Number n) || n.longValue() <= 0) {
+      throw new IllegalArgumentException("payload.productId must be a positive number");
     }
 
     // 1) 질문 echo — 채팅방 전체에 즉시 브로드캐스트 (controller가 처리)

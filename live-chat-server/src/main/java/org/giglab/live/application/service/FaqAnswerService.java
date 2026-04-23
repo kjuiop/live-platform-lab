@@ -39,7 +39,8 @@ public class FaqAnswerService {
       }
       Long productId = ((Number) rawProductId).longValue();
 
-      String answer = faqAnswerPort.ask(productId, question);
+      String rawAnswer = faqAnswerPort.ask(productId, question);
+      String answer = (rawAnswer != null && !rawAnswer.isBlank()) ? rawAnswer : "답변을 생성할 수 없습니다.";
       ActionResponse res =
           ActionResponse.of(
               req.roomId(),

@@ -2,6 +2,9 @@ package org.giglab.live.presentation.api.v1.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -190,5 +193,37 @@ class RoomControllerTest {
         .andExpect(jsonPath("$.data[0].title").value("최신 채팅방"))
         .andExpect(jsonPath("$.data[1].roomId").value("ROOM_002"))
         .andExpect(jsonPath("$.data[2].roomId").value("ROOM_001")); // 오래된 것이 마지막
+  }
+
+  @Test
+  @DisplayName("채팅방 삭제 성공 - 204 NO_CONTENT")
+  void deleteRoomSuccessReturns204() throws Exception {
+    // given
+    String roomId = "ROOM_123456789ABC";
+    willDoNothing().given(roomService).deleteRoom(roomId);
+
+    // when & then
+    mockMvc
+        .perform(delete("/api/v1/rooms/{roomId}", roomId))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+
+    verify(roomService).deleteRoom(roomId);
+  }
+
+  @Test
+  @DisplayName("채팅방 삭제 - 존재하지 않는 roomId도 204 NO_CONTENT (idempotent)")
+  void deleteRoomNotExistsReturns204() throws Exception {
+    // given
+    String roomId = "ROOM_NOTEXISTS0000";
+    willDoNothing().given(roomService).deleteRoom(roomId);
+
+    // when & then
+    mockMvc
+        .perform(delete("/api/v1/rooms/{roomId}", roomId))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+
+    verify(roomService).deleteRoom(roomId);
   }
 }

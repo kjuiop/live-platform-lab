@@ -12,6 +12,7 @@ interface Product {
   price: number;
   stockQuantity: number;
   categoryName?: string;
+  embeddingStatus: 'NONE' | 'PENDING' | 'WORKING' | 'DONE';
 }
 
 export default function Products() {
@@ -64,10 +65,20 @@ export default function Products() {
         .card-desc { font-size: 13px; color: #64748b; line-height: 1.65; margin-bottom: 20px; }
         .card-divider { height: 1px; background: rgba(255,255,255,0.07); margin-bottom: 16px; }
         .card-bottom { display: flex; align-items: center; justify-content: space-between; }
+        .card-ai { margin-top: 14px; border-radius: 10px; padding: 9px 14px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+        .card-ai-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .card-ai-label { flex: 1; }
+        .card-ai-icon { font-size: 14px; }
+        .ai-done { background: linear-gradient(90deg, rgba(16,185,129,0.1), rgba(16,185,129,0.04)); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+        .ai-done .card-ai-dot { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
+        .ai-working { background: linear-gradient(90deg, rgba(251,191,36,0.1), rgba(251,191,36,0.04)); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; animation: pulse-border 1.8s ease-in-out infinite; }
+        .ai-working .card-ai-dot { background: #f59e0b; box-shadow: 0 0 6px rgba(251,191,36,0.7); animation: pulse-dot 1.8s ease-in-out infinite; }
+        .ai-none { background: rgba(100,116,139,0.06); border: 1px solid rgba(100,116,139,0.14); color: #475569; }
+        .ai-none .card-ai-dot { background: #334155; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes pulse-border { 0%,100% { border-color: rgba(251,191,36,0.2); } 50% { border-color: rgba(251,191,36,0.45); } }
         .price { font-size: 18px; font-weight: 800; color: #f1f5f9; }
         .badge-embed { font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; }
-        .embed-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
-        .embed-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
         .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
         .loading { text-align: center; color: #475569; padding: 60px 0; font-size: 14px; }
         .btn-more { display: block; margin: 28px auto 0; padding: 10px 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
@@ -104,8 +115,22 @@ export default function Products() {
                   <div className="card-divider" />
                   <div className="card-bottom">
                     <span className="price">{Number(p.price).toLocaleString()}원</span>
-                    <span className="embed-none" style={{ fontSize: '11px', fontWeight: 700, padding: '4px 11px', borderRadius: '999px' }}>
-                      재고 {p.stockQuantity}개
+                    <span className="badge-embed embed-none">재고 {p.stockQuantity}개</span>
+                  </div>
+                  <div className={`card-ai ${
+                    p.embeddingStatus === 'DONE' ? 'ai-done'
+                    : p.embeddingStatus === 'WORKING' || p.embeddingStatus === 'PENDING' ? 'ai-working'
+                    : 'ai-none'
+                  }`}>
+                    <span className="card-ai-dot" />
+                    <span className="card-ai-label">
+                      {p.embeddingStatus === 'DONE' ? 'AI 임베딩 완료'
+                        : p.embeddingStatus === 'WORKING' ? 'AI 임베딩 중'
+                        : p.embeddingStatus === 'PENDING' ? 'AI 임베딩 대기'
+                        : 'AI 미임베딩'}
+                    </span>
+                    <span className="card-ai-icon">
+                      {p.embeddingStatus === 'DONE' ? '✦' : p.embeddingStatus === 'NONE' ? '○' : '◌'}
                     </span>
                   </div>
                 </div>

@@ -6,10 +6,21 @@ import { useRouter } from 'next/router';
 interface ProductForm {
   name: string;
   price: string;
+  stockQuantity: string;
   description: string;
   ingredients: string;
   usage: string;
   manufacturer: string;
+}
+
+interface ParsedProductApiResponse {
+  documentId: number | null;
+  name: string | null;
+  price: number | null;
+  description: string | null;
+  manufacturer: string | null;
+  ingredients: string | null;
+  usageMethod: string | null;
 }
 
 interface CategoryNode {
@@ -24,26 +35,19 @@ interface CategoryNode {
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
 
 const EMPTY_FORM: ProductForm = {
-  name: '', price: '', description: '',
+  name: '', price: '', stockQuantity: '', description: '',
   ingredients: '', usage: '', manufacturer: '',
 };
 
-// PDF 업로드 시 AI 추출 시뮬레이션 데이터
-const MOCK_PDF_EXTRACTED: Partial<ProductForm> = {
-  name: '모이스처라이징 선크림',
-  price: '32000',
-  description: 'SPF50+ PA++++ 자외선 차단과 동시에 피부 보습을 케어하는 멀티 기능성 선크림입니다.',
-  ingredients: '정제수, 이산화티탄, 징크옥사이드, 글리세린, 나이아신아마이드, 히알루론산나트륨, 판테놀',
-  usage: '외출 30분 전 피부 마지막 단계에 적당량을 얼굴 전체에 고르게 펴 바르세요. 2~3시간마다 덧바르는 것을 권장합니다.',
-  manufacturer: '스킨랩',
-};
 
 export default function ProductNew() {
   const router = useRouter();
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<ProductForm> & { category?: string; submit?: string }>({});
   const [pdfFile, setPdfFile] = useState<{ name: string; size: string } | null>(null);
-  const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done'>('idle');
+  const [pdfState, setPdfState] = useState<'idle' | 'extracting' | 'done' | 'error'>('idle');
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfDocumentId, setPdfDocumentId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,26 +77,46 @@ export default function ProductNew() {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const handlePdf = (files: FileList | null) => {
+  const handlePdf = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.name.endsWith('.pdf')) return;
 
     setPdfFile({ name: file.name, size: `${(file.size / 1024 / 1024).toFixed(1)} MB` });
     setPdfState('extracting');
+    setPdfError(null);
 
-    setTimeout(() => {
-      const extracted = MOCK_PDF_EXTRACTED;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${API_BASE}/products/pdf/parse`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `PDF 분석 실패 (${res.status})`);
+      }
+
+      const json = await res.json();
+      const parsed: ParsedProductApiResponse = json.data ?? {};
+
       setForm((prev) => ({
-        name: prev.name || extracted.name || '',
-        price: prev.price || extracted.price || '',
-        description: prev.description || extracted.description || '',
-        ingredients: prev.ingredients || extracted.ingredients || '',
-        usage: prev.usage || extracted.usage || '',
-        manufacturer: prev.manufacturer || extracted.manufacturer || '',
+        name: prev.name || parsed.name || '',
+        price: prev.price || (parsed.price != null ? String(parsed.price) : ''),
+        description: prev.description || parsed.description || '',
+        ingredients: prev.ingredients || parsed.ingredients || '',
+        usage: prev.usage || parsed.usageMethod || '',
+        manufacturer: prev.manufacturer || parsed.manufacturer || '',
       }));
+      setPdfDocumentId(parsed.documentId ?? null);
       setPdfState('done');
-    }, 1800);
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : 'PDF 분석 중 오류가 발생했습니다.');
+      setPdfState('error');
+    }
   };
 
   const openCategoryModal = () => {
@@ -131,11 +155,12 @@ export default function ProductNew() {
           description: form.description,
           price: Number(form.price),
           categoryIds: [selectedCategoryId],
-          stockQuantity: 0,
+          stockQuantity: Number(form.stockQuantity) || 0,
           sortOrder: 0,
           manufacturer: form.manufacturer || null,
           ingredients: form.ingredients || null,
           usageMethod: form.usage || null,
+          pdfDocumentId: pdfDocumentId ?? null,
         }),
       });
       if (!res.ok) {
@@ -232,6 +257,7 @@ export default function ProductNew() {
         .pdf-status { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; }
         .pdf-extracting { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
         .pdf-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+        .pdf-error-badge { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
 
         .extract-notice { margin-top: 12px; padding: 10px 14px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); border-radius: 8px; font-size: 12px; color: #6ee7b7; line-height: 1.55; }
 
@@ -372,6 +398,20 @@ export default function ProductNew() {
                 {errors.price && <span className="field-error">{errors.price}</span>}
               </div>
               <div className="field">
+                <label className="label">재고 수량</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  placeholder="예) 100"
+                  value={form.stockQuantity}
+                  onChange={set('stockQuantity')}
+                />
+              </div>
+            </div>
+
+            <div className="field-row">
+              <div className="field">
                 <label className="label">제조사</label>
                 <input
                   className="input"
@@ -380,6 +420,7 @@ export default function ProductNew() {
                   onChange={set('manufacturer')}
                 />
               </div>
+              <div className="field" />
             </div>
 
             <div className="section-divider" />
@@ -452,13 +493,18 @@ export default function ProductNew() {
                       <div className="pdf-file-name">{pdfFile.name}</div>
                       <div className="pdf-file-size">{pdfFile.size}</div>
                     </div>
-                    <span className={`pdf-status ${pdfState === 'extracting' ? 'pdf-extracting' : 'pdf-done'}`}>
-                      {pdfState === 'extracting' ? '분석 중...' : '완료'}
+                    <span className={`pdf-status ${pdfState === 'extracting' ? 'pdf-extracting' : pdfState === 'error' ? 'pdf-error-badge' : 'pdf-done'}`}>
+                      {pdfState === 'extracting' ? '분석 중...' : pdfState === 'error' ? '실패' : '완료'}
                     </span>
                   </div>
                   {pdfState === 'done' && (
                     <div className="extract-notice">
                       PDF에서 상품 정보를 추출했습니다. 내용을 확인하고 필요하면 수정해주세요.
+                    </div>
+                  )}
+                  {pdfState === 'error' && pdfError && (
+                    <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', fontSize: '12px', color: '#f87171', lineHeight: 1.55 }}>
+                      {pdfError}
                     </div>
                   )}
                 </>

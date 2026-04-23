@@ -6,5 +6,5 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {
-  Optional<Campaign> findByIdAndDeleteYn(Long id, YnType deleteYn);
+  Optional<Campaign> findByIdAndDeleteYn(Long campaignId, YnType deleteYn);
 }

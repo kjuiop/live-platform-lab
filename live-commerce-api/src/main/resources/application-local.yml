@@ -1,7 +1,19 @@
 cors:
   allowed-origins: http://localhost:3000
 
+app:
+  upload:
+    base-path: uploads
+
 spring:
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
   config:
     import: optional:file:.env
     activate:

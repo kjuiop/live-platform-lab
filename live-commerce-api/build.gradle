@@ -18,8 +18,19 @@ java {
     }
 }
 
+ext {
+    springAiVersion = "2.0.0-M2"
+}
+
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
 dependencies {

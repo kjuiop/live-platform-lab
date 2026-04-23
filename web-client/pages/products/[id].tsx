@@ -5,12 +5,11 @@ import { useRouter } from 'next/router';
 
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
 
-type EmbeddingStatus = 'none' | 'pending' | 'done';
-
 interface Product {
   id: number;
   name: string;
   status: string;
+  embeddingStatus: 'NONE' | 'PENDING' | 'WORKING' | 'DONE';
   price: number;
   stockQuantity: number;
   sortOrder: number;
@@ -22,13 +21,10 @@ interface Product {
   updatedAt?: string;
 }
 
-interface Document {
-  id: string;
-  name: string;
-  size: string;
-  uploadedAt: string;
-  status: EmbeddingStatus;
-  chunkCount?: number;
+interface ApiDocument {
+  documentId: number;
+  filename: string;
+  embedYn: 'Y' | 'N';
 }
 
 interface QnAItem {
@@ -45,18 +41,6 @@ interface RelatedBroadcast {
   viewerCount?: number;
 }
 
-
-const MOCK_DOCUMENTS: Record<string, Document[]> = {
-  P001: [
-    { id: 'D001', name: '워터프루프_립스틱_성분표.pdf', size: '1.2 MB', uploadedAt: '2026-04-10', status: 'done', chunkCount: 24 },
-    { id: 'D002', name: '립스틱_사용설명서.pdf', size: '0.8 MB', uploadedAt: '2026-04-10', status: 'done', chunkCount: 15 },
-  ],
-  P002: [
-    { id: 'D003', name: '비타민C_세럼_성분분석.pdf', size: '2.1 MB', uploadedAt: '2026-04-08', status: 'done', chunkCount: 38 },
-  ],
-  P003: [],
-};
-
 const MOCK_BROADCASTS: Record<string, RelatedBroadcast[]> = {
   P001: [
     { id: 'B001', title: '봄맞이 뷰티 라이브', status: 'live', viewerCount: 1243 },
@@ -69,21 +53,6 @@ const MOCK_BROADCASTS: Record<string, RelatedBroadcast[]> = {
   ],
 };
 
-const MOCK_AI_ANSWERS: Record<string, string> = {
-  '성분': '이 제품의 주요 성분으로는 보습 효과가 뛰어난 글리세린과 히알루론산이 포함되어 있으며, 피부과 테스트를 완료한 저자극 포뮬러입니다.',
-  '지속력': '워터프루프 포뮬러 적용으로 최대 12시간 지속됩니다. 물이나 땀에도 번짐 없이 유지됩니다.',
-  '사용법': '세안 후 스킨케어 마지막 단계에 사용해주세요. 소량을 덜어 얼굴 전체에 고르게 펴 바르면 됩니다.',
-  '가격': `정상가 기준이며, 방송 라이브 중 특가 혜택이 적용될 수 있습니다. 상세 가격은 방송을 참고해주세요.`,
-  '부작용': '민감성 피부의 경우 사용 전 팔 안쪽에 패치 테스트를 권장합니다. 이상이 있을 경우 즉시 사용을 중단하고 전문가와 상담하세요.',
-  default: '해당 상품의 등록된 정보를 기반으로 답변드립니다. 더 구체적인 질문을 입력해주시면 더 정확한 답변을 제공할 수 있습니다.',
-};
-
-const categoryColors: Record<string, string> = {
-  '뷰티': '#f472b6',
-  '스킨케어': '#60a5fa',
-  '패션': '#34d399',
-  '식품': '#fbbf24',
-};
 
 const broadcastStatusLabel = { scheduled: '예정', live: '라이브 중', ended: '종료' };
 const broadcastStatusClass = { scheduled: 'bs-scheduled', live: 'bs-live', ended: 'bs-ended' };
@@ -94,14 +63,15 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const documents = MOCK_DOCUMENTS[id as string] ?? [];
+  const [documents, setDocuments] = useState<ApiDocument[]>([]);
+  const [embeddingIds, setEmbeddingIds] = useState<Set<number>>(new Set());
   const relatedBroadcasts = MOCK_BROADCASTS[id as string] ?? [];
+
+  const [productEmbedding, setProductEmbedding] = useState(false);
+  const [bulkEmbedding, setBulkEmbedding] = useState(false);
 
   const [qnaList, setQnaList] = useState<QnAItem[]>([]);
   const [aiInput, setAiInput] = useState('');
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [mockDocs, setMockDocs] = useState<Document[]>(documents);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const qnaBottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -123,45 +93,97 @@ export default function ProductDetail() {
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/products/${id}/documents`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((json) => {
+        if (json?.data?.items) setDocuments(json.data.items);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [qnaList]);
 
-  // 문서 목록은 id가 바뀔 때 동기화
-  useEffect(() => {
-    setMockDocs(MOCK_DOCUMENTS[id as string] ?? []);
-  }, [id]);
+  const handleEmbedProductInfo = async () => {
+    setProductEmbedding(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}/embed-info`, { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        setProduct((prev) => prev ? { ...prev, embeddingStatus: json.data.embeddingStatus } : prev);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setProductEmbedding(false);
+    }
+  };
 
-  const askAI = () => {
+  const handleEmbedAll = async () => {
+    setBulkEmbedding(true);
+    try {
+      await fetch(`${API_BASE}/products/${id}/documents/embed-all`, { method: 'POST' });
+      const docsRes = await fetch(`${API_BASE}/products/${id}/documents`);
+      const docsJson = await docsRes.json();
+      if (docsJson?.data?.items) setDocuments(docsJson.data.items);
+    } catch {
+      // ignore
+    } finally {
+      setBulkEmbedding(false);
+    }
+  };
+
+  const handleEmbed = async (documentId: number) => {
+    setEmbeddingIds((prev) => new Set(prev).add(documentId));
+    try {
+      const res = await fetch(`${API_BASE}/products/documents/${documentId}/embed`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        setDocuments((prev) =>
+          prev.map((doc) =>
+            doc.documentId === documentId ? { ...doc, embedYn: 'Y' } : doc
+          )
+        );
+      }
+    } catch {
+      // ignore
+    } finally {
+      setEmbeddingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
+  };
+
+  const askAI = async () => {
     const q = aiInput.trim();
     if (!q) return;
     setAiInput('');
     const newItem: QnAItem = { id: Date.now(), question: q, answer: '', isLoading: true };
     setQnaList((prev) => [...prev, newItem]);
-    const keyword = Object.keys(MOCK_AI_ANSWERS).find((k) => k !== 'default' && q.includes(k));
-    const answer = MOCK_AI_ANSWERS[keyword ?? 'default'];
-    setTimeout(() => {
-      setQnaList((prev) => prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item));
-    }, 1200);
-  };
 
-  const handleFileDrop = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      const newDoc: Document = {
-        id: `D${Date.now()}`,
-        name: file.name,
-        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-        uploadedAt: new Date().toISOString().slice(0, 10),
-        status: 'pending',
-      };
-      setMockDocs((prev) => [...prev, newDoc]);
-      // 임베딩 완료 시뮬레이션
-      setTimeout(() => {
-        setMockDocs((prev) =>
-          prev.map((d) => d.id === newDoc.id ? { ...d, status: 'done', chunkCount: Math.floor(Math.random() * 30) + 10 } : d)
-        );
-      }, 2000);
-    });
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q }),
+      });
+      const json = await res.json();
+      const answer = res.ok ? json.data.answer : '답변을 가져오지 못했습니다.';
+      setQnaList((prev) =>
+        prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item)
+      );
+    } catch {
+      setQnaList((prev) =>
+        prev.map((item) =>
+          item.id === newItem.id ? { ...item, answer: '오류가 발생했습니다.', isLoading: false } : item
+        )
+      );
+    }
   };
 
   if (!id || loading) return null;
@@ -182,8 +204,6 @@ export default function ProductDetail() {
       </>
     );
   }
-
-  const totalChunks = mockDocs.filter((d) => d.status === 'done').reduce((sum, d) => sum + (d.chunkCount ?? 0), 0);
 
   return (
     <>
@@ -208,7 +228,6 @@ export default function ProductDetail() {
         .embed-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
         .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
         .info-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .cat-badge { font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
         .info-price { font-size: 22px; font-weight: 800; color: #f1f5f9; }
         .info-desc { font-size: 14px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
         .info-details { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 20px; }
@@ -221,12 +240,6 @@ export default function ProductDetail() {
         .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .section-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
         .section-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
-        .chunk-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-
-        .drop-zone { border: 1.5px dashed rgba(99,102,241,0.3); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-bottom: 14px; }
-        .drop-zone:hover, .drop-zone.over { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.05); }
-        .drop-zone-text { font-size: 13px; color: #475569; }
-        .drop-zone-sub { font-size: 11px; color: #334155; margin-top: 4px; }
 
         .doc-list { display: flex; flex-direction: column; gap: 8px; }
         .doc-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }
@@ -237,7 +250,18 @@ export default function ProductDetail() {
         .doc-status { flex-shrink: 0; }
         .doc-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
         .doc-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-        .doc-pending { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.2); }
+        .doc-embed-btn { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); cursor: pointer; transition: background 0.15s; }
+        .doc-embed-btn:hover { background: rgba(99,102,241,0.3); }
+        .doc-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .doc-embedding { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.2); }
+        .bulk-embed-btn { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); cursor: pointer; transition: background 0.15s; }
+        .bulk-embed-btn:hover { background: rgba(99,102,241,0.3); }
+        .bulk-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .info-embed-btn { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+        .info-embed-btn:hover { background: rgba(16,185,129,0.25); }
+        .info-embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .embed-status-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+        .embed-status-done { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
 
         .no-docs { font-size: 13px; color: #475569; text-align: center; padding: 16px 0; }
 
@@ -302,7 +326,17 @@ export default function ProductDetail() {
             <div className="info-card">
               <div className="info-top">
                 <h1 className="info-name">{product.name}</h1>
-                <span className="embed-badge embed-none">{product.status}</span>
+                <div style={{ flexShrink: 0 }}>
+                  {product.embeddingStatus === 'DONE' ? (
+                    <span className="embed-badge embed-status-done">정보 임베딩 완료</span>
+                  ) : productEmbedding ? (
+                    <span className="embed-badge embed-status-none">임베딩 중...</span>
+                  ) : (
+                    <button className="info-embed-btn" onClick={handleEmbedProductInfo}>
+                      정보 임베딩
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="info-meta">
                 <span className="info-price">{Number(product.price).toLocaleString()}원</span>
@@ -338,52 +372,43 @@ export default function ProductDetail() {
                   <div className="section-title">등록된 문서</div>
                   <div className="section-sub">업로드한 PDF가 AI Q&A의 근거 자료로 활용됩니다</div>
                 </div>
-                {totalChunks > 0 && (
-                  <span className="chunk-badge">{totalChunks} chunks</span>
+                {documents.some((d) => d.embedYn === 'N') && (
+                  <button className="bulk-embed-btn" onClick={handleEmbedAll} disabled={bulkEmbedding}>
+                    {bulkEmbedding ? '처리 중...' : '전체 임베딩'}
+                  </button>
                 )}
               </div>
 
-              {/* 드래그 업로드 */}
-              <div
-                className={`drop-zone ${isDragOver ? 'over' : ''}`}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileDrop(e.dataTransfer.files); }}
-              >
-                <div className="drop-zone-text">PDF 파일을 드래그하거나 클릭하여 업로드</div>
-                <div className="drop-zone-sub">업로드 즉시 AI 임베딩이 시작됩니다</div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={(e) => handleFileDrop(e.target.files)}
-                />
-              </div>
-
-              {mockDocs.length === 0 ? (
+              {documents.length === 0 ? (
                 <div className="no-docs">등록된 문서가 없습니다.</div>
               ) : (
                 <div className="doc-list">
-                  {mockDocs.map((doc) => (
-                    <div key={doc.id} className="doc-item">
-                      <span className="doc-icon">📄</span>
-                      <div className="doc-info">
-                        <div className="doc-name">{doc.name}</div>
-                        <div className="doc-meta">
-                          {doc.size} · {doc.uploadedAt}
-                          {doc.chunkCount && ` · ${doc.chunkCount} chunks`}
+                  {documents.map((doc) => {
+                    const isEmbedding = embeddingIds.has(doc.documentId);
+                    return (
+                      <div key={doc.documentId} className="doc-item">
+                        <span className="doc-icon">📄</span>
+                        <div className="doc-info">
+                          <div className="doc-name">{doc.filename}</div>
+                          <div className="doc-meta">ID: {doc.documentId}</div>
+                        </div>
+                        <div className="doc-status">
+                          {doc.embedYn === 'Y' ? (
+                            <span className="doc-badge doc-done">임베딩 완료</span>
+                          ) : isEmbedding ? (
+                            <span className="doc-embedding">처리 중...</span>
+                          ) : (
+                            <button
+                              className="doc-embed-btn"
+                              onClick={() => handleEmbed(doc.documentId)}
+                            >
+                              임베딩 시작
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="doc-status">
-                        <span className={`doc-badge ${doc.status === 'done' ? 'doc-done' : 'doc-pending'}`}>
-                          {doc.status === 'done' ? '완료' : '처리 중...'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

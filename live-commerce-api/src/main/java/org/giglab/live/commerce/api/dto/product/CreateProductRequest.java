@@ -15,4 +15,5 @@ public record CreateProductRequest(
     int sortOrder,
     String manufacturer,
     String ingredients,
-    String usageMethod) {}
+    String usageMethod,
+    Long pdfDocumentId) {}

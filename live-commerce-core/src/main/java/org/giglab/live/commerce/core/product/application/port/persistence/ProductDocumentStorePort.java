@@ -10,4 +10,6 @@ public interface ProductDocumentStorePort {
   Optional<ProductDocument> findEntityById(Long documentId);
 
   List<ProductDocument> findAllByProductId(Long productId);
+
+  void markAllEmbedded(List<Long> ids);
 }

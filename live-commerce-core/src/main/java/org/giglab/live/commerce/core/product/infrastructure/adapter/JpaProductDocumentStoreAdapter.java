@@ -28,4 +28,9 @@ public class JpaProductDocumentStoreAdapter implements ProductDocumentStorePort 
   public List<ProductDocument> findAllByProductId(Long productId) {
     return productDocumentRepository.findAllByProductId(productId);
   }
+
+  @Override
+  public void markAllEmbedded(List<Long> ids) {
+    productDocumentRepository.markAllEmbedded(ids);
+  }
 }

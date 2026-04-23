@@ -8,6 +8,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class AskProductQuestionUseCase {
@@ -49,6 +50,10 @@ public class AskProductQuestionUseCase {
             .user(question)
             .call()
             .content();
+
+    if (!StringUtils.hasText(answer)) {
+      answer = "답변을 생성할 수 없습니다.";
+    }
 
     return new AskProductQuestionResult(answer);
   }

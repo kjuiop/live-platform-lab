@@ -20,3 +20,8 @@ cors:
 commerce-core:
   url: http://localhost:8090
   base-path: /api/v1
+  http:
+    connect-timeout: 3000
+    read-timeout: 30000
+    max-connections: 10
+    max-connections-per-route: 10

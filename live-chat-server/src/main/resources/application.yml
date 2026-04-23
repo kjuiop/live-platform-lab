@@ -15,6 +15,13 @@ management:
       show-details: always
     prometheus:
       enabled: true
+commerce-core:
+  http:
+    connect-timeout: 3000   # ms
+    read-timeout: 30000     # ms
+    max-connections: 50     # 전체 커넥션 풀 크기
+    max-connections-per-route: 20  # 단일 호스트 최대 연결 수
+
 logging:
   level:
     org.springframework.web.socket: DEBUG

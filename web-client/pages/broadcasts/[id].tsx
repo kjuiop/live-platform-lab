@@ -105,6 +105,7 @@ function ChatQnAPanel({
   nickname,
   setNickname,
   onSend,
+  wsConnected,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -114,8 +115,10 @@ function ChatQnAPanel({
   nickname: string;
   setNickname: (v: string) => void;
   onSend: () => void;
+  wsConnected: boolean;
 }) {
   const isScheduled = status === 'scheduled';
+  const isLive = status === 'live';
   const [tab, setTab] = useState<'chat' | 'faq'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
@@ -204,7 +207,7 @@ function ChatQnAPanel({
             <>
               <div className="lp-nick-row">
                 <span className="lp-nick-label">닉네임</span>
-                <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} disabled={isScheduled} />
+                <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} disabled={isScheduled || (isLive && !wsConnected)} />
               </div>
               <div className="lp-input-row">
                 <input
@@ -212,10 +215,10 @@ function ChatQnAPanel({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKey}
-                  placeholder={isScheduled ? '방송 시작 전입니다.' : '메시지를 입력하세요...'}
-                  disabled={isScheduled}
+                  placeholder={isScheduled ? '방송 시작 전입니다.' : isLive && !wsConnected ? '채팅 연결 중...' : '메시지를 입력하세요...'}
+                  disabled={isScheduled || (isLive && !wsConnected)}
                 />
-                <button className="lp-send" onClick={onSend} disabled={isScheduled || !inputValue.trim()}>전송</button>
+                <button className="lp-send" onClick={onSend} disabled={isScheduled || (isLive && !wsConnected) || !inputValue.trim()}>전송</button>
               </div>
             </>
           )}
@@ -496,6 +499,7 @@ export default function BroadcastDetail() {
   const clientRef = useRef<any>(null);
   const subRef = useRef<any>(null);
   const seenKeysRef = useRef<Set<string>>(new Set());
+  const isConnectingRef = useRef(false);
 
   const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080';
 
@@ -558,6 +562,7 @@ export default function BroadcastDetail() {
       const json = await res.json();
       const data: BroadcastStatusData = json.data;
       setCampaign((prev) => prev ? { ...prev, status: data.status, startedAt: data.startedAt, chatRoomId: data.chatRoomId ?? prev.chatRoomId } : prev);
+      if (data.chatRoomId) connect(data.chatRoomId);
     } catch {
       alert('방송 시작에 실패했습니다.');
     } finally {
@@ -631,6 +636,7 @@ export default function BroadcastDetail() {
   };
 
   const disconnect = () => {
+    isConnectingRef.current = false;
     publishLeave();
     try { subRef.current?.unsubscribe?.(); clientRef.current?.disconnect?.(); } finally {
       clientRef.current = null; subRef.current = null; setWsConnected(false);
@@ -639,19 +645,24 @@ export default function BroadcastDetail() {
 
   const connect = (roomId: string) => {
     if (!areScriptsReady || !roomId) return;
+    if (isConnectingRef.current || clientRef.current) return;
     const SockJS = (window as any).SockJS;
     const StompJs = (window as any).StompJs;
     if (!SockJS || !StompJs) return;
-    disconnect();
+    isConnectingRef.current = true;
     const socket = new SockJS(`${WS_BASE_URL}/ws`);
     const client = StompJs.Stomp.over(socket);
     client.debug = () => {};
     client.connect({}, () => {
+      isConnectingRef.current = false;
       clientRef.current = client;
       setWsConnected(true);
       subRef.current = client.subscribe(`/sub/room/${roomId}`, (msg: any) => appendMessage(msg?.body ?? ''));
       publishJoin(client, roomId);
-    }, () => setWsConnected(false));
+    }, () => {
+      isConnectingRef.current = false;
+      setWsConnected(false);
+    });
   };
 
   const sendMessage = () => {
@@ -676,7 +687,7 @@ export default function BroadcastDetail() {
   useEffect(() => {
     if (!campaign || !areScriptsReady) return;
     const uiStatus = toUiStatus(campaign.status);
-    if (uiStatus === 'live' && campaign.chatRoomId && !wsConnected) {
+    if (uiStatus === 'live' && campaign.chatRoomId && !wsConnected && !isConnectingRef.current) {
       connect(campaign.chatRoomId);
     }
     if (uiStatus === 'ended' && wsConnected) {
@@ -949,6 +960,7 @@ export default function BroadcastDetail() {
                 nickname={nickname}
                 setNickname={setNickname}
                 onSend={sendMessage}
+                wsConnected={wsConnected}
               />
             )}
             {uiStatus === 'ended' && <EndedAnalysisPanel />}

@@ -196,7 +196,12 @@ public class RedisRoomRepository implements RoomRepository {
       if (results == null) {
         throw new RedisOperationException("DELETE", roomKey, "Transaction returned null", null);
       }
-      log.info("채팅방 삭제 완료 - roomId={}", roomId);
+      long deleted = results.getFirst() instanceof Long l ? l : 0L;
+      if (deleted > 0) {
+        log.info("채팅방 삭제 완료 - roomId={}, deleted={}", roomId, deleted);
+      } else {
+        log.debug("채팅방 삭제 요청 - 이미 존재하지 않는 roomId={}", roomId);
+      }
 
     } catch (RedisOperationException e) {
       throw e;

@@ -11,6 +11,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
 import org.giglab.live.commerce.core.campaign.application.usecase.AssignChatRoomUseCase;
+import org.giglab.live.commerce.core.campaign.application.usecase.ClearChatRoomUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.EndCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignListUseCase;
@@ -29,6 +30,7 @@ public class CampaignService {
   private final StartCampaignUseCase startCampaignUseCase;
   private final EndCampaignUseCase endCampaignUseCase;
   private final AssignChatRoomUseCase assignChatRoomUseCase;
+  private final ClearChatRoomUseCase clearChatRoomUseCase;
   private final ChatRoomCreatePort chatRoomCreatePort;
   private final ChatRoomDeletePort chatRoomDeletePort;
 
@@ -68,6 +70,9 @@ public class CampaignService {
     if (result.chatRoomId() != null) {
       try {
         chatRoomDeletePort.deleteRoom(result.chatRoomId());
+
+        // TX 2: chatRoomId 초기화 커밋
+        clearChatRoomUseCase.execute(campaignId);
         return new BroadcastStatusResult(
             result.title(), result.status(), result.startedAt(), result.endedAt(), null);
       } catch (Exception e) {

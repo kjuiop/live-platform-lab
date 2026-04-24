@@ -54,7 +54,7 @@ public class AsyncConfig {
     executor.setMaxPoolSize(chatMaxPoolSize);
     executor.setQueueCapacity(chatQueueCapacity);
     executor.setThreadNamePrefix("chat-async-");
-    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
     executor.initialize();
 
     ExecutorServiceMetrics.monitor(

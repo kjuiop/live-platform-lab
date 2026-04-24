@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionDispatcher;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.service.ChatMessageService;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -20,11 +21,13 @@ public class RoomActionController {
 
   private final ActionDispatcher dispatcher;
   private final SimpMessageSendingOperations operations;
+  private final ChatMessageService chatMessageService;
 
   @MessageMapping(DESTINATION)
   public void handle(@Valid ActionRequest req) {
     ActionResponse res = dispatcher.dispatch(req);
     operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), res);
+    chatMessageService.saveIfNeeded(res);
   }
 
   @MessageExceptionHandler

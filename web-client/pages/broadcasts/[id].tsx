@@ -492,6 +492,7 @@ function EndedAnalysisPanel() {
 
 // ─── 메인 페이지 ─────────────────────────────────────────────────────
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+const CHAT_API_BASE = `${process.env.NEXT_PUBLIC_CHAT_URL ?? 'http://localhost:8080'}/api/v1`;
 
 export default function BroadcastDetail() {
   const router = useRouter();
@@ -523,6 +524,7 @@ export default function BroadcastDetail() {
   const subRef = useRef<any>(null);
   const seenKeysRef = useRef<Set<string>>(new Set());
   const isConnectingRef = useRef(false);
+  const historyLoadedRoomsRef = useRef<Set<string>>(new Set());
 
   const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080';
 
@@ -677,14 +679,50 @@ export default function BroadcastDetail() {
 
   const disconnect = () => {
     isConnectingRef.current = false;
+    if (campaign?.chatRoomId) historyLoadedRoomsRef.current.delete(campaign.chatRoomId);
     publishLeave();
     try { subRef.current?.unsubscribe?.(); clientRef.current?.disconnect?.(); } finally {
       clientRef.current = null; subRef.current = null; setWsConnected(false);
     }
   };
 
+  const loadHistory = async (roomId: string) => {
+    if (historyLoadedRoomsRef.current.has(roomId)) return;
+    try {
+      const res = await fetch(`${CHAT_API_BASE}/rooms/${roomId}/messages?limit=100`);
+      if (!res.ok) return;
+      const json = await res.json();
+      const items: any[] = json.data ?? [];
+      const history: Message[] = items.map((item) => {
+        const action: string = item.action ?? '';
+        const msgType: Message['msgType'] =
+          action === 'CHAT.MESSAGE' ? 'chat' :
+          action === 'FAQ.QUESTION' ? 'faq-question' :
+          action === 'FAQ.ANSWER' ? 'faq-answer' :
+          action === 'FAQ.ERROR' ? 'faq-error' : 'chat';
+        const text =
+          action === 'CHAT.MESSAGE' ? (item.payload?.message ?? '') :
+          action === 'FAQ.QUESTION' ? (item.payload?.question ?? '') :
+          action === 'FAQ.ANSWER' ? (item.payload?.answer ?? '') :
+          action === 'FAQ.ERROR' ? (item.payload?.message ?? '') : '';
+        return {
+          id: item.id ?? Date.now() + Math.random(),
+          nickname: item.senderNickname ?? '시청자',
+          text,
+          timestamp: new Date(item.sentAt),
+          msgType,
+          faqQuestion: action === 'FAQ.ANSWER' ? item.payload?.question : undefined,
+        };
+      });
+      historyLoadedRoomsRef.current.add(roomId);
+      setMessages((prev) => [...history, ...prev]);
+    } catch {
+      // 히스토리 로드 실패는 무시 — 실시간 메시지는 계속 수신됨
+    }
+  };
+
   const connect = (roomId: string) => {
-    if (!areScriptsReady || !roomId) return;
+    if (!roomId) return;
     if (isConnectingRef.current || clientRef.current) return;
     const SockJS = (window as any).SockJS;
     const StompJs = (window as any).StompJs;
@@ -699,6 +737,7 @@ export default function BroadcastDetail() {
       setWsConnected(true);
       subRef.current = client.subscribe(`/sub/room/${roomId}`, (msg: any) => appendMessage(msg?.body ?? ''));
       publishJoin(client, roomId);
+      loadHistory(roomId);
     }, () => {
       isConnectingRef.current = false;
       setWsConnected(false);
@@ -738,18 +777,19 @@ export default function BroadcastDetail() {
     setInputValue('');
   };
 
-  // 방송 상태에 따른 자동 WebSocket 연결/해제
+  // 페이지 진입 시 이미 live 상태이거나 스크립트 로드 완료 시점에 자동 연결 (새로고침 대응)
   useEffect(() => {
     if (!campaign || !areScriptsReady) return;
     const uiStatus = toUiStatus(campaign.status);
     if (uiStatus === 'live' && campaign.chatRoomId && !wsConnected && !isConnectingRef.current) {
       connect(campaign.chatRoomId);
     }
-    if (uiStatus === 'ended' && wsConnected) {
-      disconnect();
-    }
-    return () => { disconnect(); };
   }, [campaign?.status, campaign?.chatRoomId, areScriptsReady]);
+
+  // 컴포넌트 언마운트 시에만 연결 해제
+  useEffect(() => {
+    return () => { disconnect(); };
+  }, []);
 
   if (!id) return null;
 

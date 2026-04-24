@@ -13,6 +13,7 @@ import org.giglab.live.application.command.ActionDispatcher;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
+import org.giglab.live.application.service.ChatMessageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,11 +28,13 @@ class RoomActionControllerTest {
 
   @Mock private SimpMessageSendingOperations messaging;
 
+  @Mock private ChatMessageService chatMessageService;
+
   private RoomActionController controller;
 
   @BeforeEach
   void setUp() {
-    controller = new RoomActionController(dispatcher, messaging);
+    controller = new RoomActionController(dispatcher, messaging, chatMessageService);
   }
 
   @Test

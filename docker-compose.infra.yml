@@ -12,11 +12,6 @@ services:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -72,6 +67,21 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
 
+  mongodb:
+    image: mongo:7
+    container_name: live-platform-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - live-platform-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   prometheus:
     image: prom/prometheus
     container_name: live-platform-prometheus
@@ -81,11 +91,6 @@ services:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
   grafana:
     image: grafana/grafana
@@ -101,17 +106,13 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
 volumes:
   mysql_data:
   grafana_data:
   redis_data:
   es-data:
+  mongodb_data:
 
 networks:
   live-platform-network:

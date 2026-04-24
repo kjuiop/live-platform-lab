@@ -3,6 +3,8 @@ spring:
     activate:
       on-profile: dev
   data:
+    mongodb:
+      auto-index-creation: true
     redis:
       host: redis
       port: 6379

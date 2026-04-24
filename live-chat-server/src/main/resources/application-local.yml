@@ -25,3 +25,9 @@ commerce-core:
     read-timeout: 30000
     max-connections: 10
     max-connections-per-route: 10
+
+async:
+  faq:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 20

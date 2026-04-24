@@ -23,7 +23,7 @@ public class FaqAnswerService {
   private final FaqAnswerPort faqAnswerPort;
   private final SimpMessagingTemplate operations;
 
-  @Async
+  @Async("faqAsyncExecutor")
   public void generateAndBroadcast(ActionRequest req) {
     String question = null;
     try {

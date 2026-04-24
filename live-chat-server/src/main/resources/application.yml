@@ -22,6 +22,12 @@ commerce-core:
     max-connections: 50     # 전체 커넥션 풀 크기
     max-connections-per-route: 20  # 단일 호스트 최대 연결 수
 
+async:
+  faq:
+    core-pool-size: 5
+    max-pool-size: 20
+    queue-capacity: 100
+
 logging:
   level:
     org.springframework.web.socket: DEBUG

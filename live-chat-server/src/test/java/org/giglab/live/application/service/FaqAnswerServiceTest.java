@@ -28,6 +28,7 @@ class FaqAnswerServiceTest {
 
   @Mock private FaqAnswerPort faqAnswerPort;
   @Mock private SimpMessagingTemplate operations;
+  @Mock private ChatMessageService chatMessageService;
 
   @InjectMocks private FaqAnswerService service;
 

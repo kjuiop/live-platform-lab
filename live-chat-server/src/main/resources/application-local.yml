@@ -38,3 +38,6 @@ async:
     core-pool-size: 1
     max-pool-size: 2
     queue-capacity: 100
+
+scheduling:
+  enabled: true

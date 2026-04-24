@@ -14,11 +14,14 @@ import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.service.ChatMessageService;
+import org.giglab.live.application.service.ViewerSessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,11 +33,17 @@ class RoomActionControllerTest {
 
   @Mock private ChatMessageService chatMessageService;
 
+  @Mock private ViewerSessionService viewerSessionService;
+
   private RoomActionController controller;
+  private SimpMessageHeaderAccessor headerAccessor;
 
   @BeforeEach
   void setUp() {
-    controller = new RoomActionController(dispatcher, messaging, chatMessageService);
+    controller =
+        new RoomActionController(dispatcher, messaging, chatMessageService, viewerSessionService);
+    headerAccessor = Mockito.mock(SimpMessageHeaderAccessor.class);
+    Mockito.lenient().when(headerAccessor.getSessionId()).thenReturn("test-session-id");
   }
 
   @Test
@@ -46,7 +55,7 @@ class RoomActionControllerTest {
     when(dispatcher.dispatch(request)).thenReturn(response);
 
     // When
-    controller.handle(request);
+    controller.handle(request, headerAccessor);
 
     // Then
     verify(dispatcher).dispatch(request);
@@ -63,7 +72,7 @@ class RoomActionControllerTest {
     when(dispatcher.dispatch(request)).thenReturn(response);
 
     // When
-    controller.handle(request);
+    controller.handle(request, headerAccessor);
 
     // Then
     verify(messaging).convertAndSend(eq("/sub/room/" + roomId), any(ActionResponse.class));
@@ -80,7 +89,7 @@ class RoomActionControllerTest {
     // When & Then
     // 단위 테스트에서 직접 handle() 호출 시 예외가 전파됨
     // 실제 Spring STOMP 인프라에서는 @MessageExceptionHandler 가 이를 가로채 세션을 유지함
-    assertThrows(IllegalArgumentException.class, () -> controller.handle(request));
+    assertThrows(IllegalArgumentException.class, () -> controller.handle(request, headerAccessor));
     verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
   }
 
@@ -107,7 +116,7 @@ class RoomActionControllerTest {
     when(dispatcher.dispatch(request)).thenReturn(response);
 
     // When
-    controller.handle(request);
+    controller.handle(request, headerAccessor);
 
     // Then
     verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
@@ -122,7 +131,7 @@ class RoomActionControllerTest {
     when(dispatcher.dispatch(request)).thenReturn(response);
 
     // When
-    controller.handle(request);
+    controller.handle(request, headerAccessor);
 
     // Then
     verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
@@ -137,7 +146,7 @@ class RoomActionControllerTest {
     when(dispatcher.dispatch(request)).thenReturn(response);
 
     // When
-    controller.handle(request);
+    controller.handle(request, headerAccessor);
 
     // Then
     verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));

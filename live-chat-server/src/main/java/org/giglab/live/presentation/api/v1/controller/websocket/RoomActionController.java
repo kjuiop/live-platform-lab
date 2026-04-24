@@ -31,7 +31,11 @@ public class RoomActionController {
     ActionResponse res = dispatcher.dispatch(req);
     operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), res);
     chatMessageService.saveIfNeeded(res);
-    viewerSessionService.saveUserIdIfJoin(req, headerAccessor.getSessionId());
+    try {
+      viewerSessionService.saveUserIdIfJoin(req, headerAccessor.getSessionId());
+    } catch (Exception e) {
+      log.warn("시청자 userId 저장 실패 (무시) - sessionId={}", headerAccessor.getSessionId(), e);
+    }
   }
 
   @MessageExceptionHandler

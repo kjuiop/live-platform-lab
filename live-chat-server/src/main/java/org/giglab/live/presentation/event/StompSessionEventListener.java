@@ -35,6 +35,10 @@ public class StompSessionEventListener {
     }
 
     String sessionId = accessor.getSessionId();
+    if (sessionId == null) {
+      log.warn("sessionId 없음 - 입장 처리 스킵: destination={}", destination);
+      return;
+    }
     String roomId = extractRoomId(destination);
 
     viewerRedisRepository.addViewer(roomId, sessionId);
@@ -53,7 +57,7 @@ public class StompSessionEventListener {
 
     ViewerContext ctx = findViewer.get();
     Instant leaveAt = Instant.now();
-    long durationSeconds = Duration.between(ctx.joinAt(), leaveAt).getSeconds();
+    long durationSeconds = Math.max(0, Duration.between(ctx.joinAt(), leaveAt).getSeconds());
 
     // 시청 기록 저장
     ViewerSession session =

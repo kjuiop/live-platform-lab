@@ -12,11 +12,6 @@ services:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -81,11 +76,6 @@ services:
       - mongodb_data:/data/db
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -101,11 +91,6 @@ services:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
   grafana:
     image: grafana/grafana
@@ -121,11 +106,6 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - live-platform-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
 volumes:
   mysql_data:

@@ -36,7 +36,7 @@ docker-mongodb-up:
 	@docker-compose -f docker-compose.infra.yml up -d mongodb
 
 docker-mongodb-down:
-	@docker-compose -f docker-compose.infra.yml down mongodb
+	@docker-compose -f docker-compose.infra.yml stop mongodb
 
 git-setup: git-template git-hooks
 	@echo "Done. (repo-local git template + hooks applied)"

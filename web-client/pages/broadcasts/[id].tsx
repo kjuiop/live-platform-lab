@@ -524,6 +524,7 @@ export default function BroadcastDetail() {
   const subRef = useRef<any>(null);
   const seenKeysRef = useRef<Set<string>>(new Set());
   const isConnectingRef = useRef(false);
+  const historyLoadedRoomsRef = useRef<Set<string>>(new Set());
 
   const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080';
 
@@ -678,6 +679,7 @@ export default function BroadcastDetail() {
 
   const disconnect = () => {
     isConnectingRef.current = false;
+    if (campaign?.chatRoomId) historyLoadedRoomsRef.current.delete(campaign.chatRoomId);
     publishLeave();
     try { subRef.current?.unsubscribe?.(); clientRef.current?.disconnect?.(); } finally {
       clientRef.current = null; subRef.current = null; setWsConnected(false);
@@ -685,6 +687,7 @@ export default function BroadcastDetail() {
   };
 
   const loadHistory = async (roomId: string) => {
+    if (historyLoadedRoomsRef.current.has(roomId)) return;
     try {
       const res = await fetch(`${CHAT_API_BASE}/rooms/${roomId}/messages?limit=100`);
       if (!res.ok) return;
@@ -711,6 +714,7 @@ export default function BroadcastDetail() {
           faqQuestion: action === 'FAQ.ANSWER' ? item.payload?.question : undefined,
         };
       });
+      historyLoadedRoomsRef.current.add(roomId);
       setMessages((prev) => [...history, ...prev]);
     } catch {
       // 히스토리 로드 실패는 무시 — 실시간 메시지는 계속 수신됨

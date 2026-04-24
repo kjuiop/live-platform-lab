@@ -1,5 +1,6 @@
 package org.giglab.live.application.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.giglab.live.application.dto.ChatMessageResponse;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.domain.model.ChatMessage;
 import org.giglab.live.domain.repository.ChatMessageRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -27,6 +29,7 @@ public class ChatMessageService {
 
   private final ChatMessageRepository chatMessageRepository;
 
+  @Async("chatAsyncExecutor")
   public void saveIfNeeded(ActionResponse res) {
     if (!SAVEABLE_ACTIONS.contains(res.action())) {
       return;
@@ -39,8 +42,9 @@ public class ChatMessageService {
   }
 
   public List<ChatMessageResponse> getRecentMessages(String roomId, int limit) {
-    return chatMessageRepository.findRecentByRoomId(roomId, Math.min(limit, MAX_LIMIT)).stream()
-        .map(ChatMessageResponse::from)
-        .toList();
+    List<ChatMessage> messages =
+        chatMessageRepository.findRecentByRoomId(roomId, Math.min(Math.max(1, limit), MAX_LIMIT));
+    Collections.reverse(messages);
+    return messages.stream().map(ChatMessageResponse::from).toList();
   }
 }

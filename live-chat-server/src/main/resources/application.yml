@@ -31,6 +31,10 @@ async:
     core-pool-size: 5
     max-pool-size: 20
     queue-capacity: 100
+  chat:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 500
 
 logging:
   level:

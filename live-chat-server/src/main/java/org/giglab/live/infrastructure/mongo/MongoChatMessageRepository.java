@@ -27,7 +27,7 @@ public class MongoChatMessageRepository implements ChatMessageRepository {
   public List<ChatMessage> findRecentByRoomId(String roomId, int limit) {
     Query query =
         new Query(Criteria.where("roomId").is(roomId))
-            .with(Sort.by(Sort.Direction.ASC, "sentAt"))
+            .with(Sort.by(Sort.Direction.DESC, "sentAt"))
             .limit(limit);
     return mongoTemplate.find(query, ChatMessage.class);
   }

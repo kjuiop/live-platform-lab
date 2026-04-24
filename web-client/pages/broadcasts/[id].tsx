@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -106,9 +106,17 @@ function ChatQnAPanel({
   const faqBottomRef = useRef<HTMLDivElement>(null);
   const [faqInput, setFaqInput] = useState('');
 
-  const chatMessages = messages.filter((m) => !m.msgType || m.msgType === 'chat');
-  const faqMessages = messages.filter(
-    (m) => m.msgType === 'faq-question' || m.msgType === 'faq-answer' || m.msgType === 'faq-error'
+  const chatMessages = useMemo(
+    () => messages.filter((m) => !m.msgType || m.msgType === 'chat'),
+    [messages]
+  );
+  const faqMessages = useMemo(
+    () => messages.filter((m) => m.msgType === 'faq-question' || m.msgType === 'faq-answer' || m.msgType === 'faq-error'),
+    [messages]
+  );
+  const faqQuestionCount = useMemo(
+    () => faqMessages.filter((m) => m.msgType === 'faq-question').length,
+    [faqMessages]
   );
 
 
@@ -133,7 +141,7 @@ function ChatQnAPanel({
           </button>
           <button className={`lp-tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}>
             🤖 FAQ
-            {isLive && faqMessages.length > 0 && <span className="faq-count">{faqMessages.filter((m) => m.msgType === 'faq-question').length}</span>}
+            {isLive && faqMessages.length > 0 && <span className="faq-count">{faqQuestionCount}</span>}
           </button>
         </div>
       </div>
@@ -607,9 +615,14 @@ export default function BroadcastDetail() {
     if ((window as any).SockJS && (window as any).StompJs) setAreScriptsReady(true);
   };
 
+  const SEEN_MAX = 200;
+
   const appendMessage = (rawBody: string) => {
     if (seenKeysRef.current.has(rawBody)) return;
     seenKeysRef.current.add(rawBody);
+    if (seenKeysRef.current.size > SEEN_MAX) {
+      seenKeysRef.current.delete(seenKeysRef.current.values().next().value!);
+    }
     try {
       const p = JSON.parse(rawBody ?? '{}') as any;
       const nick = p.actor?.sender || p.actor?.username || '시청자';

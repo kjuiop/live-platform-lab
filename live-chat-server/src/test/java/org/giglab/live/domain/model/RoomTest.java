@@ -8,10 +8,6 @@ import org.giglab.live.presentation.api.error.exception.InvalidRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author : JAKE
- * @date : 26. 1. 11.
- */
 class RoomTest {
 
   @Test

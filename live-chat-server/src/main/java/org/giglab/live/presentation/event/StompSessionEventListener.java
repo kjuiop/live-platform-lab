@@ -55,6 +55,7 @@ public class StompSessionEventListener {
     Instant leaveAt = Instant.now();
     long durationSeconds = Duration.between(ctx.joinAt(), leaveAt).getSeconds();
 
+    // 시청 기록 저장
     ViewerSession session =
         ViewerSession.builder()
             .sessionId(ctx.sessionId())

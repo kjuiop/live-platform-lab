@@ -1,5 +1,6 @@
 package org.giglab.live.infrastructure.redis;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
@@ -38,13 +39,19 @@ public class ViewerRedisRepository {
         Map.of(FIELD_JOIN_AT, String.valueOf(Instant.now().toEpochMilli()), FIELD_ROOM_ID, roomId);
 
     redisTemplate.execute(
+        // 하나의 커넥션에서 명령을 수행
         new SessionCallback<List<Object>>() {
           @Override
           @SuppressWarnings("unchecked")
           public <K, V> List<Object> execute(RedisOperations<K, V> ops) throws DataAccessException {
             ops.multi();
+            // session Hash 저장
+            // session id 별 joinAt, roomId, userId 정보 저장 (userId는 CHAT_JOIN 시점에 업데이트)
+            // LEAVE 시점에 joinAt과 roomId 조회해서 시청기록과 roomId 저장
             ops.opsForHash().putAll((K) sessionKey, fields);
             ops.expire((K) sessionKey, VIEWER_TTL);
+            // viewer key 에서 sessionId 추가
+            // SCARD 한 번으로 동시 시청자 수 조회하도록 사용
             ops.opsForSet().add((K) viewersKey(roomId), (V) sessionId);
             ops.expire((K) viewersKey(roomId), VIEWER_TTL);
             return ops.exec();
@@ -113,9 +120,14 @@ public class ViewerRedisRepository {
             connection -> {
               try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
                 while (cursor.hasNext()) {
-                  String key = new String(cursor.next());
+                  String key = new String(cursor.next(), StandardCharsets.UTF_8);
                   // "LIVE:ROOM:{roomId}:VIEWERS" → roomId
-                  roomIds.add(key.split(":")[2]);
+                  String[] parts = key.split(":");
+                  if (parts.length >= 3) {
+                    roomIds.add(parts[2]);
+                  } else {
+                    log.warn("예상치 못한 Redis 키 포맷 - key={}", key);
+                  }
                 }
               } catch (Exception e) {
                 log.error("활성 방 목록 SCAN 실패: {}", e.getMessage(), e);

@@ -2,11 +2,13 @@ package org.giglab.live.presentation.event;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.domain.model.ViewerSession;
 import org.giglab.live.infrastructure.mongo.MongoViewerSessionRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository;
+import org.giglab.live.infrastructure.redis.ViewerRedisRepository.ViewerContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -43,30 +45,32 @@ public class StompSessionEventListener {
   public void onDisconnect(SessionDisconnectEvent event) {
     String sessionId = event.getSessionId();
 
-    viewerRedisRepository
-        .getAndRemoveViewer(sessionId)
-        .ifPresent(
-            ctx -> {
-              Instant leaveAt = Instant.now();
-              long durationSeconds = Duration.between(ctx.joinAt(), leaveAt).getSeconds();
+    Optional<ViewerContext> findViewer = viewerRedisRepository.getAndRemoveViewer(sessionId);
+    if (findViewer.isEmpty()) {
+      log.debug("세션 정보 없음 - sessionId={}", sessionId);
+      return;
+    }
 
-              ViewerSession session =
-                  ViewerSession.builder()
-                      .sessionId(ctx.sessionId())
-                      .roomId(ctx.roomId())
-                      .userId(ctx.userId())
-                      .joinAt(ctx.joinAt())
-                      .leaveAt(leaveAt)
-                      .durationSeconds(durationSeconds)
-                      .build();
+    ViewerContext ctx = findViewer.get();
+    Instant leaveAt = Instant.now();
+    long durationSeconds = Duration.between(ctx.joinAt(), leaveAt).getSeconds();
 
-              viewerSessionRepository.save(session);
-              log.debug(
-                  "시청자 퇴장 저장 - sessionId={}, roomId={}, duration={}s",
-                  sessionId,
-                  ctx.roomId(),
-                  durationSeconds);
-            });
+    ViewerSession session =
+        ViewerSession.builder()
+            .sessionId(ctx.sessionId())
+            .roomId(ctx.roomId())
+            .userId(ctx.userId())
+            .joinAt(ctx.joinAt())
+            .leaveAt(leaveAt)
+            .durationSeconds(durationSeconds)
+            .build();
+
+    viewerSessionRepository.save(session);
+    log.debug(
+        "시청자 퇴장 저장 - sessionId={}, roomId={}, duration={}s",
+        sessionId,
+        ctx.roomId(),
+        durationSeconds);
   }
 
   // /sub/room/{roomId} 만 처리, /sub/room/{roomId}/host 등 하위 경로 제외

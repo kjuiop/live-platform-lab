@@ -46,13 +46,21 @@ public class ViewerRedisRepository {
             ops.opsForHash().putAll((K) sessionKey, fields);
             ops.expire((K) sessionKey, VIEWER_TTL);
             ops.opsForSet().add((K) viewersKey(roomId), (V) sessionId);
+            ops.expire((K) viewersKey(roomId), VIEWER_TTL);
             return ops.exec();
           }
         });
   }
 
   public void saveUserId(String sessionId, String userId) {
-    redisTemplate.opsForHash().put(sessionKey(sessionId), FIELD_USER_ID, userId);
+    String key = sessionKey(sessionId);
+    Boolean exists = redisTemplate.hasKey(key);
+    if (!Boolean.TRUE.equals(exists)) {
+      log.warn("saveUserId 스킵 - 세션 Hash 없음: sessionId={}", sessionId);
+      return;
+    }
+    redisTemplate.opsForHash().put(key, FIELD_USER_ID, userId);
+    redisTemplate.expire(key, VIEWER_TTL);
   }
 
   public Optional<ViewerContext> getAndRemoveViewer(String sessionId) {
@@ -81,6 +89,12 @@ public class ViewerRedisRepository {
             return ops.exec();
           }
         });
+
+    Long remaining = redisTemplate.opsForSet().size(viewersSetKey);
+    if (remaining != null && remaining == 0) {
+      redisTemplate.delete(viewersSetKey);
+      log.debug("빈 VIEWERS Set 삭제 - roomId={}", roomId);
+    }
 
     return Optional.of(new ViewerContext(sessionId, roomId, userId, joinAt));
   }

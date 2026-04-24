@@ -72,6 +72,26 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
 
+  mongodb:
+    image: mongo:7
+    container_name: live-platform-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - live-platform-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   prometheus:
     image: prom/prometheus
     container_name: live-platform-prometheus
@@ -112,6 +132,7 @@ volumes:
   grafana_data:
   redis_data:
   es-data:
+  mongodb_data:
 
 networks:
   live-platform-network:

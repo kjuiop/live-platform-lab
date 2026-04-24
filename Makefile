@@ -23,8 +23,20 @@ build_num:
 docker_build:
 	docker build --platform linux/amd64 --tag $(DOCKER_REPOSITORY)/$(MODULE_NAME):$(VERSION_NUM).$(BUILD_NUM) .
 
+infra-up:
+	@docker-compose -f docker-compose.infra.yml up -d
+
+infra-down:
+	@docker-compose -f docker-compose.infra.yml down
+
 docker-mysql-up:
 	@docker-compose -f docker-compose.infra.yml up -d mysql
+
+docker-mongodb-up:
+	@docker-compose -f docker-compose.infra.yml up -d mongodb
+
+docker-mongodb-down:
+	@docker-compose -f docker-compose.infra.yml down mongodb
 
 git-setup: git-template git-hooks
 	@echo "Done. (repo-local git template + hooks applied)"

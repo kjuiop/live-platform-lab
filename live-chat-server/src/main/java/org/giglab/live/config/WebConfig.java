@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.web.config;
+package org.giglab.live.config;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

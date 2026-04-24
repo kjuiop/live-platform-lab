@@ -22,6 +22,7 @@ public class FaqAnswerService {
 
   private final FaqAnswerPort faqAnswerPort;
   private final SimpMessagingTemplate operations;
+  private final ChatMessageService chatMessageService;
 
   @Async("faqAsyncExecutor")
   public void generateAndBroadcast(ActionRequest req) {
@@ -48,6 +49,7 @@ public class FaqAnswerService {
               AI_ACTOR,
               Map.of("answer", answer, "question", question));
       operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), res);
+      chatMessageService.saveIfNeeded(res);
       log.info("FAQ 답변 브로드캐스트 - roomId={}, productId={}", req.roomId(), productId);
     } catch (Exception e) {
       log.warn("FAQ 답변 생성 실패 - roomId={}", req.roomId(), e);
@@ -58,6 +60,7 @@ public class FaqAnswerService {
       ActionResponse errRes =
           ActionResponse.of(req.roomId(), ActionType.FAQ_ERROR.getKey(), AI_ACTOR, errPayload);
       operations.convertAndSend(SUBSCRIBE_PREFIX + req.roomId(), errRes);
+      chatMessageService.saveIfNeeded(errRes);
     }
   }
 }

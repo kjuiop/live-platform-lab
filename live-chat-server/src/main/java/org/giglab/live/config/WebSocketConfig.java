@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.websocket.config;
+package org.giglab.live.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

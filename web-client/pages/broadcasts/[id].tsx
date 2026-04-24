@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -42,33 +42,11 @@ interface Message {
   nickname: string;
   text: string;
   timestamp: Date;
+  msgType?: 'chat' | 'faq-question' | 'faq-answer' | 'faq-error';
+  faqQuestion?: string;
 }
 
-interface QnAItem {
-  id: number;
-  question: string;
-  answer: string;
-  askedBy?: string;
-  timestamp: Date;
-  isLoading?: boolean;
-}
 
-// Mock AI 응답
-const MOCK_AI_ANSWERS: Record<string, string> = {
-  default: '해당 상품에 대한 정보를 분석 중입니다. 잠시 후 답변을 제공해드릴게요.',
-  '성분': '이 제품은 피부에 자극이 적은 성분으로 구성되어 있으며, 피부과 테스트를 완료했습니다.',
-  '지속력': '워터프루프 포뮬러로 최대 12시간 지속됩니다. 물이나 땀에도 번짐 없이 유지됩니다.',
-  '발색': '한 번만 발라도 선명한 발색이 가능하며, 레이어링 시 더욱 진하게 연출할 수 있습니다.',
-  '가격': '정상가 28,000원이며, 방송 기간 한정으로 특가 할인이 적용됩니다.',
-  '배송': '오늘 주문 시 내일 오후까지 배송 완료됩니다. 5만원 이상 무료배송입니다.',
-};
-
-const MOCK_LIVE_FAQS: QnAItem[] = [
-  { id: 1, question: '방수 기능이 진짜 있나요?', answer: '', askedBy: '뷰티러버', timestamp: new Date(Date.now() - 8 * 60000) },
-  { id: 2, question: '컬러가 몇 가지나 있어요?', answer: '', askedBy: '핑크사랑', timestamp: new Date(Date.now() - 5 * 60000) },
-  { id: 3, question: '민감한 피부도 사용 가능한가요?', answer: '', askedBy: '피부걱정', timestamp: new Date(Date.now() - 3 * 60000) },
-  { id: 4, question: '맥 립스틱이랑 비교하면 어때요?', answer: '', askedBy: '화장품덕후', timestamp: new Date(Date.now() - 1 * 60000) },
-];
 
 const MOCK_AI_ANALYSIS = {
   peakViewers: 1892,
@@ -106,6 +84,8 @@ function ChatQnAPanel({
   setNickname,
   onSend,
   wsConnected,
+  onSendFaq,
+  defaultProductId,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -116,30 +96,29 @@ function ChatQnAPanel({
   setNickname: (v: string) => void;
   onSend: () => void;
   wsConnected: boolean;
+  onSendFaq?: (question: string, productId: number) => void;
+  defaultProductId?: number;
 }) {
   const isScheduled = status === 'scheduled';
   const isLive = status === 'live';
   const [tab, setTab] = useState<'chat' | 'faq'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
-  const [liveFaqs] = useState<QnAItem[]>(MOCK_LIVE_FAQS);
+  const [faqInput, setFaqInput] = useState('');
 
-  // 예정 탭: AI Q&A 상태
-  const [aiInput, setAiInput] = useState('');
-  const [aiQnaList, setAiQnaList] = useState<QnAItem[]>([
-    {
-      id: 1,
-      question: '이 제품은 어떤 피부 타입에 적합한가요?',
-      answer: '건성, 지성, 복합성 모든 피부 타입에 사용 가능합니다. 특히 수분 밸런스를 유지하는 포뮬러로 구성되어 있습니다.',
-      timestamp: new Date(Date.now() - 30 * 60000),
-    },
-    {
-      id: 2,
-      question: '발색이 자연스러운가요, 선명한가요?',
-      answer: '레이어링 방법에 따라 조절 가능합니다. 한 번 발랐을 때는 데일리로 쓰기 좋은 자연스러운 발색이고, 두 번 이상 발랐을 때는 선명한 컬러가 연출됩니다.',
-      timestamp: new Date(Date.now() - 15 * 60000),
-    },
-  ]);
+  const chatMessages = useMemo(
+    () => messages.filter((m) => !m.msgType || m.msgType === 'chat'),
+    [messages]
+  );
+  const faqMessages = useMemo(
+    () => messages.filter((m) => m.msgType === 'faq-question' || m.msgType === 'faq-answer' || m.msgType === 'faq-error'),
+    [messages]
+  );
+  const faqQuestionCount = useMemo(
+    () => faqMessages.filter((m) => m.msgType === 'faq-question').length,
+    [faqMessages]
+  );
+
 
   useEffect(() => {
     if (tab === 'chat') messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -147,23 +126,10 @@ function ChatQnAPanel({
 
   useEffect(() => {
     if (tab === 'faq') faqBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [aiQnaList, tab]);
+  }, [faqMessages, tab]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') onSend();
-  };
-
-  const askAI = () => {
-    const q = aiInput.trim();
-    if (!q) return;
-    setAiInput('');
-    const newItem: QnAItem = { id: Date.now(), question: q, answer: '', timestamp: new Date(), isLoading: true };
-    setAiQnaList((prev) => [...prev, newItem]);
-    const keyword = Object.keys(MOCK_AI_ANSWERS).find((k) => k !== 'default' && q.includes(k));
-    const answer = MOCK_AI_ANSWERS[keyword ?? 'default'];
-    setTimeout(() => {
-      setAiQnaList((prev) => prev.map((item) => item.id === newItem.id ? { ...item, answer, isLoading: false } : item));
-    }, 1200);
   };
 
   return (
@@ -174,104 +140,155 @@ function ChatQnAPanel({
             💬 채팅
           </button>
           <button className={`lp-tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}>
-            {isScheduled ? '🤖 AI Q&A' : '❓ Q&A 모음'}
-            {!isScheduled && <span className="faq-count">{liveFaqs.length}</span>}
+            🤖 FAQ
+            {isLive && faqMessages.length > 0 && <span className="faq-count">{faqQuestionCount}</span>}
           </button>
         </div>
       </div>
 
       {tab === 'chat' ? (
-        <>
-          {isScheduled && (
-            <div className="lp-rehearsal-banner">🎬 리허설 모드 · 방송 시작 전입니다</div>
-          )}
+        isScheduled ? (
+          /* 예정: 채팅 비활성 안내 */
           <div className="lp-messages">
-            {messages.length === 0 ? (
-              <div className="lp-empty">{isScheduled ? '리허설 채팅을 시작해보세요!' : '채팅을 시작해보세요!'}</div>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className="msg">
-                  <div className="msg-header">
-                    <span className="msg-nick">{msg.nickname}</span>
-                    <span className="msg-time">{msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <div className="msg-text">{msg.text}</div>
-                </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
+            <div className="lp-faq-unavailable">
+              <div className="lp-faq-unavailable-icon">💬</div>
+              <div className="lp-faq-unavailable-text">방송 시작 후 이용할 수 있습니다</div>
+              <div className="lp-faq-unavailable-sub">방송이 시작되면 채팅에 참여할 수 있어요</div>
+            </div>
           </div>
-          {status === 'ended' ? (
-            <div className="lp-ended-notice">방송이 종료되었습니다.</div>
-          ) : (
-            <>
-              <div className="lp-nick-row">
-                <span className="lp-nick-label">닉네임</span>
-                <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} disabled={isScheduled || (isLive && !wsConnected)} />
-              </div>
-              <div className="lp-input-row">
-                <input
-                  className="lp-input"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKey}
-                  placeholder={isScheduled ? '방송 시작 전입니다.' : isLive && !wsConnected ? '채팅 연결 중...' : '메시지를 입력하세요...'}
-                  disabled={isScheduled || (isLive && !wsConnected)}
-                />
-                <button className="lp-send" onClick={onSend} disabled={isScheduled || (isLive && !wsConnected) || !inputValue.trim()}>전송</button>
-              </div>
-            </>
-          )}
-        </>
+        ) : (
+          <>
+            <div className="lp-messages">
+              {chatMessages.length === 0 ? (
+                <div className="lp-empty">채팅을 시작해보세요!</div>
+              ) : (
+                chatMessages.map((msg) => (
+                  <div key={msg.id} className="msg">
+                    <div className="msg-header">
+                      <span className="msg-nick">{msg.nickname}</span>
+                      <span className="msg-time">{msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className="msg-text">{msg.text}</div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+            {status === 'ended' ? (
+              <div className="lp-ended-notice">방송이 종료되었습니다.</div>
+            ) : (
+              <>
+                <div className="lp-nick-row">
+                  <span className="lp-nick-label">닉네임</span>
+                  <input className="lp-nick-input" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} disabled={isLive && !wsConnected} />
+                </div>
+                <div className="lp-input-row">
+                  <input
+                    className="lp-input"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKey}
+                    placeholder={isLive && !wsConnected ? '채팅 연결 중...' : '메시지를 입력하세요...'}
+                    disabled={isLive && !wsConnected}
+                  />
+                  <button className="lp-send" onClick={onSend} disabled={(isLive && !wsConnected) || !inputValue.trim()}>전송</button>
+                </div>
+              </>
+            )}
+          </>
+        )
       ) : isScheduled ? (
-        /* 예정: AI Q&A 탭 */
+        /* 예정: FAQ 비활성 안내 */
+        <div className="lp-faq-body">
+          <div className="lp-faq-unavailable">
+            <div className="lp-faq-unavailable-icon">🤖</div>
+            <div className="lp-faq-unavailable-text">방송 시작 후 이용할 수 있습니다</div>
+            <div className="lp-faq-unavailable-sub">방송 중 AI에게 상품 관련 질문을 해보세요</div>
+          </div>
+        </div>
+      ) : (
+        /* 라이브: 실시간 AI FAQ 탭 */
         <>
           <div className="lp-faq-body">
-            <div className="lp-faq-info">방송 전 궁금한 점을 AI에게 물어보세요.</div>
-            {aiQnaList.map((item) => (
-              <div key={item.id} className="qna-item">
-                <div className="qna-row">
-                  <span className="qna-badge q">Q</span>
-                  <span className="qna-text">{item.question}</span>
-                </div>
-                <div className="qna-row">
-                  <span className="qna-badge a">AI</span>
-                  {item.isLoading ? (
-                    <span className="qna-loading">답변 생성 중<span className="dots" /></span>
-                  ) : (
-                    <span className="qna-text answer">{item.answer}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+            {faqMessages.length === 0 ? (
+              <div className="lp-faq-info">AI에게 상품 관련 질문을 해보세요. 답변이 채팅방 전체에 공유됩니다.</div>
+            ) : (
+              faqMessages.map((msg) => {
+                if (msg.msgType === 'faq-question') {
+                  return (
+                    <div key={msg.id} className="qna-item">
+                      <div className="qna-row">
+                        <span className="qna-badge q">Q</span>
+                        <div style={{ flex: 1 }}>
+                          <span className="qna-text">{msg.text}</span>
+                          <div style={{ fontSize: 10, color: '#475569', marginTop: 3 }}>
+                            {msg.nickname} · {msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                if (msg.msgType === 'faq-answer') {
+                  return (
+                    <div key={msg.id} className="qna-item faq-answer-item">
+                      {msg.faqQuestion && (
+                        <div className="qna-row" style={{ opacity: 0.6 }}>
+                          <span className="qna-badge q" style={{ fontSize: 9 }}>Q</span>
+                          <span className="qna-text" style={{ fontSize: 12 }}>{msg.faqQuestion}</span>
+                        </div>
+                      )}
+                      <div className="qna-row">
+                        <span className="qna-badge a">AI</span>
+                        <span className="qna-text answer">{msg.text}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                if (msg.msgType === 'faq-error') {
+                  return (
+                    <div key={msg.id} className="qna-item faq-error-item">
+                      <div className="qna-row">
+                        <span className="qna-badge err">!</span>
+                        <span className="qna-text" style={{ color: '#fca5a5' }}>{msg.text}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })
+            )}
             <div ref={faqBottomRef} />
           </div>
-          <div className="lp-input-row">
-            <input
-              className="lp-input"
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && askAI()}
-              placeholder={`${productName}에 대해 질문해보세요...`}
-            />
-            <button className="lp-send ai" onClick={askAI} disabled={!aiInput.trim()}>질문</button>
-          </div>
-        </>
-      ) : (
-        /* 라이브: Q&A 모음 탭 */
-        <div className="lp-faq-body">
-          <div className="lp-faq-info">시청자들이 방송 중 남긴 질문들을 모아볼 수 있어요.</div>
-          {liveFaqs.map((item) => (
-            <div key={item.id} className="faq-card">
-              <div className="faq-card-top">
-                <span className="faq-asker">👤 {item.askedBy}</span>
-                <span className="faq-time">{item.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
-              <div className="faq-q-text">{item.question}</div>
+          {isLive && wsConnected && onSendFaq && defaultProductId != null && (
+            <div className="lp-input-row">
+              <input
+                className="lp-input"
+                value={faqInput}
+                onChange={(e) => setFaqInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && faqInput.trim()) {
+                    onSendFaq(faqInput.trim(), defaultProductId);
+                    setFaqInput('');
+                  }
+                }}
+                placeholder="AI에게 상품 질문하기..."
+              />
+              <button
+                className="lp-send ai"
+                onClick={() => {
+                  if (faqInput.trim()) {
+                    onSendFaq(faqInput.trim(), defaultProductId);
+                    setFaqInput('');
+                  }
+                }}
+                disabled={!faqInput.trim()}
+              >
+                질문
+              </button>
             </div>
-          ))}
-          <div ref={faqBottomRef} />
-        </div>
+          )}
+        </>
       )}
 
       <style jsx>{`
@@ -290,8 +307,7 @@ function ChatQnAPanel({
         .lp-messages::-webkit-scrollbar { width: 4px; }
         .lp-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .lp-empty { color: #475569; font-size: 13px; text-align: center; margin-top: 40px; }
-        .lp-rehearsal-banner { padding: 7px 16px; background: rgba(251,191,36,0.08); border-bottom: 1px solid rgba(251,191,36,0.15); font-size: 11px; font-weight: 600; color: #fcd34d; text-align: center; letter-spacing: 0.02em; }
-        .lp-ended-notice { padding: 14px 16px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid rgba(255,255,255,0.07); }
+.lp-ended-notice { padding: 14px 16px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid rgba(255,255,255,0.07); }
         .msg { display: flex; flex-direction: column; gap: 2px; }
         .msg-header { display: flex; align-items: center; gap: 6px; }
         .msg-nick { font-size: 12px; font-weight: 700; color: #818cf8; }
@@ -311,6 +327,10 @@ function ChatQnAPanel({
         .lp-faq-body::-webkit-scrollbar { width: 4px; }
         .lp-faq-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .lp-faq-info { font-size: 12px; color: #475569; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center; }
+        .lp-faq-unavailable { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; }
+        .lp-faq-unavailable-icon { font-size: 36px; opacity: 0.3; }
+        .lp-faq-unavailable-text { font-size: 14px; font-weight: 600; color: #475569; }
+        .lp-faq-unavailable-sub { font-size: 12px; color: #334155; text-align: center; line-height: 1.6; }
         .faq-card { padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; display: flex; flex-direction: column; gap: 6px; }
         .faq-card-top { display: flex; align-items: center; justify-content: space-between; }
         .faq-asker { font-size: 11px; font-weight: 600; color: #818cf8; }
@@ -321,6 +341,9 @@ function ChatQnAPanel({
         .qna-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; margin-top: 2px; }
         .qna-badge.q { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
         .qna-badge.a { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+        .qna-badge.err { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+        .faq-answer-item { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.15); }
+        .faq-error-item { background: rgba(239,68,68,0.04); border-color: rgba(239,68,68,0.15); }
         .qna-text { font-size: 13px; color: #cbd5e1; line-height: 1.6; }
         .qna-text.answer { color: #94a3b8; }
         .qna-loading { font-size: 13px; color: #6ee7b7; display: flex; align-items: center; gap: 4px; }
@@ -592,18 +615,34 @@ export default function BroadcastDetail() {
     if ((window as any).SockJS && (window as any).StompJs) setAreScriptsReady(true);
   };
 
+  const SEEN_MAX = 200;
+
   const appendMessage = (rawBody: string) => {
     if (seenKeysRef.current.has(rawBody)) return;
     seenKeysRef.current.add(rawBody);
+    if (seenKeysRef.current.size > SEEN_MAX) {
+      seenKeysRef.current.delete(seenKeysRef.current.values().next().value!);
+    }
     try {
       const p = JSON.parse(rawBody ?? '{}') as any;
-      if (p.action !== 'CHAT.MESSAGE') return;
-      const text = p.payload?.message ?? rawBody;
       const nick = p.actor?.sender || p.actor?.username || '시청자';
       const ts = p.sentAt ? new Date(p.sentAt) : new Date();
-      setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts }]);
+      if (p.action === 'CHAT.MESSAGE') {
+        const text = p.payload?.message ?? rawBody;
+        setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'chat' }]);
+      } else if (p.action === 'FAQ.QUESTION') {
+        const text = p.payload?.question ?? '';
+        setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'faq-question' }]);
+      } else if (p.action === 'FAQ.ANSWER') {
+        const text = p.payload?.answer ?? '';
+        const faqQuestion = p.payload?.question;
+        setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'faq-answer', faqQuestion }]);
+      } else if (p.action === 'FAQ.ERROR') {
+        const text = p.payload?.message ?? '답변 생성에 실패했습니다.';
+        setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'faq-error' }]);
+      }
     } catch {
-      setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: '시청자', text: rawBody, timestamp: new Date() }]);
+      setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: '시청자', text: rawBody, timestamp: new Date(), msgType: 'chat' }]);
     }
   };
 
@@ -664,6 +703,21 @@ export default function BroadcastDetail() {
       isConnectingRef.current = false;
       setWsConnected(false);
     });
+  };
+
+  const sendFaqQuestion = (question: string, productId: number) => {
+    if (!campaign?.chatRoomId || !wsConnected || !clientRef.current) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'FAQ.QUESTION',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: { question, productId },
+      }));
+    } catch {
+      // 전송 실패는 무시
+    }
   };
 
   const sendMessage = () => {
@@ -962,6 +1016,8 @@ export default function BroadcastDetail() {
                 setNickname={setNickname}
                 onSend={sendMessage}
                 wsConnected={wsConnected}
+                onSendFaq={sendFaqQuestion}
+                defaultProductId={campaign.campaignProducts[0]?.productId}
               />
             )}
             {uiStatus === 'ended' && <EndedAnalysisPanel />}

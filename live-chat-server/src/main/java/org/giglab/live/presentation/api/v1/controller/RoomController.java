@@ -4,10 +4,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.application.dto.room.ChatStatsResponse;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
 import org.giglab.live.application.service.RoomService;
+import org.giglab.live.domain.aggregator.ChatMessageAggregator;
 import org.giglab.live.presentation.api.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoomController {
 
   private final RoomService roomService;
+  private final ChatMessageAggregator chatMessageAggregator;
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<GetRoomResponse>>> getRooms(
@@ -38,6 +41,15 @@ public class RoomController {
   public ResponseEntity<Void> deleteRoom(@PathVariable String roomId) {
     roomService.deleteRoom(roomId);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{roomId}/stats")
+  public ResponseEntity<ApiResponse<ChatStatsResponse>> getChatStats(@PathVariable String roomId) {
+    ChatMessageAggregator.ChatStats stats = chatMessageAggregator.aggregate(roomId);
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            new ChatStatsResponse(
+                stats.totalMessages(), stats.totalQuestions(), stats.aiAnswerCount())));
   }
 
   @PostMapping

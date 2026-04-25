@@ -88,6 +88,7 @@ function ChatQnAPanel({
   wsConnected,
   onSendFaq,
   defaultProductId,
+  chatStats,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -100,6 +101,7 @@ function ChatQnAPanel({
   wsConnected: boolean;
   onSendFaq?: (question: string, productId: number) => void;
   defaultProductId?: number;
+  chatStats?: { totalMessages: number; faqCount: number } | null;
 }) {
   const isScheduled = status === 'scheduled';
   const isLive = status === 'live';
@@ -146,12 +148,12 @@ function ChatQnAPanel({
           )}
           <button className={`lp-tab ${tab === 'chat' ? 'active' : ''}`} onClick={() => setTab('chat')}>
             💬 채팅
-            {isEnded && <span className="tab-stat-badge">{chatMessages.length.toLocaleString()}</span>}
+            {isEnded && <span className="tab-stat-badge">{(chatStats?.totalMessages ?? chatMessages.length).toLocaleString()}</span>}
           </button>
           <button className={`lp-tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}>
             🤖 FAQ
             {isLive && faqMessages.length > 0 && <span className="faq-count">{faqQuestionCount}</span>}
-            {isEnded && <span className="tab-stat-badge">{faqQuestionCount}</span>}
+            {isEnded && <span className="tab-stat-badge">{chatStats?.faqCount ?? faqQuestionCount}</span>}
           </button>
         </div>
       </div>
@@ -589,6 +591,7 @@ export default function BroadcastDetail() {
   const [wsConnected, setWsConnected] = useState(false);
   const [areScriptsReady, setAreScriptsReady] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const [chatStats, setChatStats] = useState<{ totalMessages: number; faqCount: number } | null>(null);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -876,6 +879,18 @@ export default function BroadcastDetail() {
     return () => { disconnect(); };
   }, []);
 
+  // 방송 종료 시 채팅·FAQ 집계 조회
+  useEffect(() => {
+    if (!campaign?.chatRoomId || toUiStatus(campaign.status) !== 'ended') return;
+    fetch(`${CHAT_API_BASE}/rooms/${campaign.chatRoomId}/stats`)
+      .then((res) => res.json())
+      .then((json) => {
+        const d = json?.data;
+        if (d) setChatStats({ totalMessages: d.totalMessages, faqCount: d.totalQuestions });
+      })
+      .catch(() => {});
+  }, [campaign?.chatRoomId, campaign?.status]);
+
   if (!id) return null;
 
   if (loading) {
@@ -1142,6 +1157,7 @@ export default function BroadcastDetail() {
               wsConnected={wsConnected}
               onSendFaq={sendFaqQuestion}
               defaultProductId={campaign.campaignProducts[0]?.productId}
+              chatStats={chatStats}
             />
           </div>
         </div>

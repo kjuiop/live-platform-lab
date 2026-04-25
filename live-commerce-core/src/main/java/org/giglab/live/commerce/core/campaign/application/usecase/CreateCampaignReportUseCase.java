@@ -2,7 +2,7 @@ package org.giglab.live.commerce.core.campaign.application.usecase;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.giglab.live.commerce.core.campaign.application.dto.SaveCampaignReportCommand;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignReportStorePort;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignStorePort;
 import org.giglab.live.commerce.core.campaign.domain.entity.Campaign;
@@ -15,15 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class SaveCampaignReportUseCase {
+public class CreateCampaignReportUseCase {
 
   private final CampaignStorePort campaignStorePort;
   private final CampaignReportStorePort campaignReportStorePort;
 
-  public void execute(SaveCampaignReportCommand command) {
+  public void execute(Long campaignId, CreateCampaignReportCommand command) {
 
-    Optional<Campaign> findCampaign =
-        campaignStorePort.findEntityByChatRoomId(command.chatRoomId());
+    Optional<Campaign> findCampaign = campaignStorePort.findEntityById(campaignId);
     if (findCampaign.isEmpty()) {
       throw new CampaignReportDomainException(CampaignReportErrorCode.CAMPAIGN_NOT_FOUND);
     }

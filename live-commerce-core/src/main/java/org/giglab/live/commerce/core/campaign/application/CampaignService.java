@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
 import org.giglab.live.commerce.core.campaign.application.usecase.AssignChatRoomUseCase;
+import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignReportUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.EndCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignListUseCase;
@@ -31,6 +33,7 @@ public class CampaignService {
   private final AssignChatRoomUseCase assignChatRoomUseCase;
   private final ChatRoomCreatePort chatRoomCreatePort;
   private final ChatRoomDeletePort chatRoomDeletePort;
+  private final CreateCampaignReportUseCase createCampaignReportUseCase;
 
   public GetCampaignListResult getList(CampaignListQuery query) {
     return getCampaignListUseCase.execute(query);
@@ -78,5 +81,9 @@ public class CampaignService {
 
   public CreateCampaignResult create(CreateCampaignCommand request) {
     return createCampaignUseCase.execute(request);
+  }
+
+  public void saveCampaignReport(Long campaignId, CreateCampaignReportCommand command) {
+    createCampaignReportUseCase.execute(campaignId, command);
   }
 }

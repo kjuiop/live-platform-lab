@@ -26,6 +26,6 @@ public class JpaCampaignStoreAdapter implements CampaignStorePort {
 
   @Override
   public Optional<Campaign> findEntityByChatRoomId(String chatRoomId) {
-    return campaignRepository.findByChatRoomId(chatRoomId);
+    return campaignRepository.findByChatRoomIdAndDeleteYn(chatRoomId, YnType.N);
   }
 }

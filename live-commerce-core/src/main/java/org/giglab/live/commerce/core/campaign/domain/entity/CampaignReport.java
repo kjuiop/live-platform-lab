@@ -44,4 +44,31 @@ public class CampaignReport extends AuditedEntity {
 
   private LocalDateTime startedAt;
   private LocalDateTime endedAt;
+
+  public static CampaignReport create(
+      Long campaignId,
+      String roomId,
+      int totalViewers,
+      int peakConcurrent,
+      long avgDurationSeconds,
+      int totalMessages,
+      int totalQuestions,
+      int aiAnswerCount,
+      String aiReportText,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt) {
+    return CampaignReport.builder()
+        .campaignId(campaignId)
+        .roomId(roomId)
+        .totalViewers(totalViewers)
+        .peakConcurrent(peakConcurrent)
+        .avgDurationSeconds(avgDurationSeconds)
+        .totalMessages(totalMessages)
+        .totalQuestions(totalQuestions)
+        .aiAnswerCount(aiAnswerCount)
+        .aiReportText(aiReportText)
+        .startedAt(startedAt)
+        .endedAt(endedAt)
+        .build();
+  }
 }

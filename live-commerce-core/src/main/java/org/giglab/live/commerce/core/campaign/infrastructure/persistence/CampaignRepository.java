@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {
   Optional<Campaign> findByIdAndDeleteYn(Long campaignId, YnType deleteYn);
 
-  Optional<Campaign> findByChatRoomId(String chatRoomId);
+  Optional<Campaign> findByChatRoomIdAndDeleteYn(String chatRoomId, YnType deleteYn);
 }

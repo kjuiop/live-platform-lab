@@ -22,7 +22,8 @@ public class SaveCampaignReportUseCase {
 
   public void execute(SaveCampaignReportCommand command) {
 
-    Optional<Campaign> findCampaign = campaignStorePort.findEntityByChatRoomId(command.roomId());
+    Optional<Campaign> findCampaign =
+        campaignStorePort.findEntityByChatRoomId(command.chatRoomId());
     if (findCampaign.isEmpty()) {
       throw new CampaignReportDomainException(CampaignReportErrorCode.CAMPAIGN_NOT_FOUND);
     }
@@ -30,18 +31,35 @@ public class SaveCampaignReportUseCase {
     Campaign campaign = findCampaign.get();
 
     CampaignReport report =
-        CampaignReport.create(
-            campaign.getId(),
-            command.roomId(),
-            command.totalViewers(),
-            command.peakConcurrent(),
-            command.avgDurationSeconds(),
-            command.totalMessages(),
-            command.totalQuestions(),
-            command.aiAnswerCount(),
-            command.aiReportText(),
-            command.startedAt(),
-            command.endedAt());
+        campaignReportStorePort
+            .findByRoomId(command.chatRoomId())
+            .orElseGet(
+                () ->
+                    CampaignReport.create(
+                        campaign.getId(),
+                        command.chatRoomId(),
+                        command.totalViewers(),
+                        command.peakConcurrent(),
+                        command.avgDurationSeconds(),
+                        command.totalMessages(),
+                        command.totalQuestions(),
+                        command.aiAnswerCount(),
+                        command.aiReportText(),
+                        command.startedAt(),
+                        command.endedAt()));
+
+    if (report.getId() != null) {
+      report.update(
+          command.totalViewers(),
+          command.peakConcurrent(),
+          command.avgDurationSeconds(),
+          command.totalMessages(),
+          command.totalQuestions(),
+          command.aiAnswerCount(),
+          command.aiReportText(),
+          command.startedAt(),
+          command.endedAt());
+    }
 
     campaignReportStorePort.store(report);
   }

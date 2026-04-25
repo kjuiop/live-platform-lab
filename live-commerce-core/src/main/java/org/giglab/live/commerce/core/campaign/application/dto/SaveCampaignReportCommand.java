@@ -3,7 +3,7 @@ package org.giglab.live.commerce.core.campaign.application.dto;
 import java.time.LocalDateTime;
 
 public record SaveCampaignReportCommand(
-    String roomId,
+    String chatRoomId,
     int totalViewers,
     int peakConcurrent,
     long avgDurationSeconds,

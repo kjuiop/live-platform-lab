@@ -45,6 +45,27 @@ public class CampaignReport extends AuditedEntity {
   private LocalDateTime startedAt;
   private LocalDateTime endedAt;
 
+  public void update(
+      int totalViewers,
+      int peakConcurrent,
+      long avgDurationSeconds,
+      int totalMessages,
+      int totalQuestions,
+      int aiAnswerCount,
+      String aiReportText,
+      LocalDateTime startedAt,
+      LocalDateTime endedAt) {
+    this.totalViewers = totalViewers;
+    this.peakConcurrent = peakConcurrent;
+    this.avgDurationSeconds = avgDurationSeconds;
+    this.totalMessages = totalMessages;
+    this.totalQuestions = totalQuestions;
+    this.aiAnswerCount = aiAnswerCount;
+    this.aiReportText = aiReportText;
+    this.startedAt = startedAt;
+    this.endedAt = endedAt;
+  }
+
   public static CampaignReport create(
       Long campaignId,
       String roomId,

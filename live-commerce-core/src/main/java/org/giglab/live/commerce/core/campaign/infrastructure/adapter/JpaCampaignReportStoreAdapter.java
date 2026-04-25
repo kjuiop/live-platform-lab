@@ -1,5 +1,6 @@
 package org.giglab.live.commerce.core.campaign.infrastructure.adapter;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignReportStorePort;
 import org.giglab.live.commerce.core.campaign.domain.entity.CampaignReport;
@@ -15,5 +16,10 @@ public class JpaCampaignReportStoreAdapter implements CampaignReportStorePort {
   @Override
   public CampaignReport store(CampaignReport campaignReport) {
     return campaignReportRepository.save(campaignReport);
+  }
+
+  @Override
+  public Optional<CampaignReport> findByRoomId(String roomId) {
+    return campaignReportRepository.findByRoomId(roomId);
   }
 }

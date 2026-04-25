@@ -9,6 +9,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResu
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
+import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
 import org.giglab.live.commerce.core.campaign.application.usecase.AssignChatRoomUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.EndCampaignUseCase;
@@ -29,6 +30,7 @@ public class CampaignService {
   private final EndCampaignUseCase endCampaignUseCase;
   private final AssignChatRoomUseCase assignChatRoomUseCase;
   private final ChatRoomCreatePort chatRoomCreatePort;
+  private final ChatRoomDeletePort chatRoomDeletePort;
 
   public GetCampaignListResult getList(CampaignListQuery query) {
     return getCampaignListUseCase.execute(query);
@@ -59,7 +61,19 @@ public class CampaignService {
   }
 
   public BroadcastStatusResult end(Long campaignId) {
-    return endCampaignUseCase.execute(campaignId);
+    // TX 1: 방송 종료 커밋 — DB 커넥션 즉시 반환
+    BroadcastStatusResult result = endCampaignUseCase.execute(campaignId);
+
+    // HTTP: 채팅방 삭제 — chatRoomId는 DB에 유지 (stats 조회 용도)
+    if (result.chatRoomId() != null) {
+      try {
+        chatRoomDeletePort.deleteRoom(result.chatRoomId());
+      } catch (Exception e) {
+        log.warn("채팅방 삭제 실패 (chat-server) - campaignId={}", campaignId, e);
+      }
+    }
+
+    return result;
   }
 
   public CreateCampaignResult create(CreateCampaignCommand request) {

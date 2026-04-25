@@ -44,7 +44,9 @@ public class ViewerSessionAggregator {
 
     int totalViewers = viewerMap != null ? ((Number) viewerMap.get("totalViewers")).intValue() : 0;
     long avgDurationSeconds =
-        viewerMap != null ? ((Number) viewerMap.get("avgDurationSeconds")).longValue() : 0L;
+        viewerMap != null
+            ? Math.round(((Number) viewerMap.get("avgDurationSeconds")).doubleValue())
+            : 0L;
     int peakConcurrent = peakMap != null ? ((Number) peakMap.get("peakConcurrent")).intValue() : 0;
 
     return new ViewerStats(totalViewers, peakConcurrent, avgDurationSeconds);

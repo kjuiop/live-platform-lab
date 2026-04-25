@@ -4,10 +4,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.giglab.live.application.dto.room.ChatStatsResponse;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
+import org.giglab.live.application.dto.stats.ChatStatsResponse;
 import org.giglab.live.application.service.RoomService;
 import org.giglab.live.domain.aggregator.ChatMessageAggregator;
 import org.giglab.live.presentation.api.response.ApiResponse;
@@ -45,11 +45,8 @@ public class RoomController {
 
   @GetMapping("/{roomId}/stats")
   public ResponseEntity<ApiResponse<ChatStatsResponse>> getChatStats(@PathVariable String roomId) {
-    ChatMessageAggregator.ChatStats stats = chatMessageAggregator.aggregate(roomId);
-    return ResponseEntity.ok(
-        ApiResponse.success(
-            new ChatStatsResponse(
-                stats.totalMessages(), stats.totalQuestions(), stats.aiAnswerCount())));
+    ChatStatsResponse response = chatMessageAggregator.aggregate(roomId);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 
   @PostMapping

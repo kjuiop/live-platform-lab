@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.command.ActionType;
+import org.giglab.live.application.dto.stats.ChatStatsResponse;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -19,7 +20,7 @@ public class ChatMessageAggregator {
 
   private final MongoTemplate mongoTemplate;
 
-  public ChatStats aggregate(String roomId) {
+  public ChatStatsResponse aggregate(String roomId) {
     // action별 메시지 수 집계
     Aggregation countAgg =
         Aggregation.newAggregation(
@@ -46,10 +47,7 @@ public class ChatMessageAggregator {
       }
     }
 
-    // 미답변 질문 추출: FAQ_QUESTION 중 FAQ_ANSWER에 없는 질문
-    List<String> unanswered = findUnansweredQuestions(roomId);
-
-    return new ChatStats(totalMessages, totalQuestions, aiAnswerCount, unanswered);
+    return new ChatStatsResponse(totalMessages, totalQuestions, aiAnswerCount);
   }
 
   private List<String> findUnansweredQuestions(String roomId) {
@@ -67,7 +65,4 @@ public class ChatMessageAggregator {
         .filter(q -> q != null && !q.isBlank())
         .collect(Collectors.toList());
   }
-
-  public record ChatStats(
-      int totalMessages, int totalQuestions, int aiAnswerCount, List<String> unansweredQuestions) {}
 }

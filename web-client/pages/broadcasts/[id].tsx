@@ -49,8 +49,10 @@ interface Message {
 
 
 const MOCK_AI_ANALYSIS = {
+  totalViewers: 3241,
   peakViewers: 1892,
   totalMessages: 4231,
+  faqCount: 47,
   avgWatchTime: '18분 32초',
   sentiment: { positive: 72, neutral: 20, negative: 8 },
   topKeywords: ['발색', '지속력', '가격', '방수', '향기', '촉촉함'],
@@ -144,10 +146,12 @@ function ChatQnAPanel({
           )}
           <button className={`lp-tab ${tab === 'chat' ? 'active' : ''}`} onClick={() => setTab('chat')}>
             💬 채팅
+            {isEnded && <span className="tab-stat-badge">{chatMessages.length.toLocaleString()}</span>}
           </button>
           <button className={`lp-tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}>
             🤖 FAQ
             {isLive && faqMessages.length > 0 && <span className="faq-count">{faqQuestionCount}</span>}
+            {isEnded && <span className="tab-stat-badge">{faqQuestionCount}</span>}
           </button>
         </div>
       </div>
@@ -161,8 +165,8 @@ function ChatQnAPanel({
                 <div className="rp-section">
                   <div className="rp-section-title">주요 지표</div>
                   <div className="rp-metrics">
-                    <div className="rp-metric"><div className="rp-metric-val">{a.peakViewers.toLocaleString()}</div><div className="rp-metric-label">최고 시청자</div></div>
-                    <div className="rp-metric"><div className="rp-metric-val">{a.totalMessages.toLocaleString()}</div><div className="rp-metric-label">총 채팅 수</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{a.totalViewers.toLocaleString()}</div><div className="rp-metric-label">누적 시청자</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{a.peakViewers.toLocaleString()}</div><div className="rp-metric-label">최고 동시 시청자</div></div>
                     <div className="rp-metric"><div className="rp-metric-val">{a.avgWatchTime}</div><div className="rp-metric-label">평균 시청 시간</div></div>
                   </div>
                 </div>
@@ -403,6 +407,7 @@ function ChatQnAPanel({
         .rp-section { display: flex; flex-direction: column; gap: 10px; }
         .rp-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6366f1; }
         .rp-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .tab-stat-badge { background: rgba(99,102,241,0.2); color: #a5b4fc; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 4px; }
         .rp-metric { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 10px; text-align: center; }
         .rp-metric-val { font-size: 16px; font-weight: 800; color: #f1f5f9; }
         .rp-metric-label { font-size: 10px; color: #64748b; margin-top: 4px; }

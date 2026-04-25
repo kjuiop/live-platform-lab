@@ -2,6 +2,7 @@ package org.giglab.live.domain.aggregator;
 
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.application.dto.stats.ViewerStats;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -48,6 +49,4 @@ public class ViewerSessionAggregator {
 
     return new ViewerStats(totalViewers, peakConcurrent, avgDurationSeconds);
   }
-
-  public record ViewerStats(int totalViewers, int peakConcurrent, long avgDurationSeconds) {}
 }

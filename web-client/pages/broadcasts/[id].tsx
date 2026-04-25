@@ -37,6 +37,12 @@ function toUiStatus(apiStatus: string): BroadcastStatus {
   return 'scheduled';
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
+
 interface Message {
   id: number;
   nickname: string;
@@ -101,7 +107,13 @@ function ChatQnAPanel({
   wsConnected: boolean;
   onSendFaq?: (question: string, productId: number) => void;
   defaultProductId?: number;
-  chatStats?: { totalMessages: number; faqCount: number } | null;
+  chatStats?: {
+    totalViewers: number;
+    peakConcurrent: number;
+    avgDurationSeconds: number;
+    totalMessages: number;
+    faqCount: number;
+  } | null;
 }) {
   const isScheduled = status === 'scheduled';
   const isLive = status === 'live';
@@ -167,9 +179,9 @@ function ChatQnAPanel({
                 <div className="rp-section">
                   <div className="rp-section-title">주요 지표</div>
                   <div className="rp-metrics">
-                    <div className="rp-metric"><div className="rp-metric-val">{a.totalViewers.toLocaleString()}</div><div className="rp-metric-label">누적 시청자</div></div>
-                    <div className="rp-metric"><div className="rp-metric-val">{a.peakViewers.toLocaleString()}</div><div className="rp-metric-label">최고 동시 시청자</div></div>
-                    <div className="rp-metric"><div className="rp-metric-val">{a.avgWatchTime}</div><div className="rp-metric-label">평균 시청 시간</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.totalViewers ?? a.totalViewers).toLocaleString()}</div><div className="rp-metric-label">누적 시청자</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.peakConcurrent ?? a.peakViewers).toLocaleString()}</div><div className="rp-metric-label">최고 동시 시청자</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{chatStats ? formatDuration(chatStats.avgDurationSeconds) : a.avgWatchTime}</div><div className="rp-metric-label">평균 시청 시간</div></div>
                   </div>
                 </div>
                 <div className="rp-section">
@@ -591,7 +603,13 @@ export default function BroadcastDetail() {
   const [wsConnected, setWsConnected] = useState(false);
   const [areScriptsReady, setAreScriptsReady] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
-  const [chatStats, setChatStats] = useState<{ totalMessages: number; faqCount: number } | null>(null);
+  const [chatStats, setChatStats] = useState<{
+    totalViewers: number;
+    peakConcurrent: number;
+    avgDurationSeconds: number;
+    totalMessages: number;
+    faqCount: number;
+  } | null>(null);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -886,7 +904,13 @@ export default function BroadcastDetail() {
       .then((res) => res.json())
       .then((json) => {
         const d = json?.data;
-        if (d) setChatStats({ totalMessages: d.totalMessages, faqCount: d.totalQuestions });
+        if (d) setChatStats({
+          totalViewers: d.totalViewers,
+          peakConcurrent: d.peakConcurrent,
+          avgDurationSeconds: d.avgDurationSeconds,
+          totalMessages: d.totalMessages,
+          faqCount: d.totalQuestions,
+        });
       })
       .catch(() => {});
   }, [campaign?.chatRoomId, campaign?.status]);

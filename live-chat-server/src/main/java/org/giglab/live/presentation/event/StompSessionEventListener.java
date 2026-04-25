@@ -7,7 +7,9 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionType;
+import org.giglab.live.domain.model.PeakViewerSnapshot;
 import org.giglab.live.domain.model.ViewerSession;
+import org.giglab.live.infrastructure.mongo.MongoPeakViewerSnapshotRepository;
 import org.giglab.live.infrastructure.mongo.MongoViewerSessionRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository.ViewerContext;
@@ -27,6 +29,7 @@ public class StompSessionEventListener {
 
   private final ViewerRedisRepository viewerRedisRepository;
   private final MongoViewerSessionRepository viewerSessionRepository;
+  private final MongoPeakViewerSnapshotRepository peakViewerSnapshotRepository;
   private final SimpMessagingTemplate messagingTemplate;
 
   @EventListener
@@ -47,6 +50,7 @@ public class StompSessionEventListener {
 
     viewerRedisRepository.addViewer(roomId, sessionId);
     log.debug("시청자 입장 - sessionId={}, roomId={}", sessionId, roomId);
+    saveSnapshot(roomId);
     broadcastViewerCount(roomId);
   }
 
@@ -82,6 +86,19 @@ public class StompSessionEventListener {
         ctx.roomId(),
         durationSeconds);
     broadcastViewerCount(ctx.roomId());
+  }
+
+  private void saveSnapshot(String roomId) {
+    long count = viewerRedisRepository.getViewerCount(roomId);
+    if (count <= 0) {
+      return;
+    }
+    peakViewerSnapshotRepository.save(
+        PeakViewerSnapshot.builder()
+            .roomId(roomId)
+            .viewerCount((int) count)
+            .recordedAt(Instant.now())
+            .build());
   }
 
   private void broadcastViewerCount(String roomId) {

@@ -33,6 +33,7 @@ public class ViewerRedisRepository {
 
   private final RedisTemplate<String, Object> redisTemplate;
 
+  // StompSessionEventListener.onSubscribe()에서 시청자 입장 처리 시 addViewer() 호출
   public void addViewer(String roomId, String sessionId) {
     String sessionKey = sessionKey(sessionId);
     Map<String, String> fields =
@@ -59,6 +60,9 @@ public class ViewerRedisRepository {
         });
   }
 
+  // 호출 시점: CHAT_JOIN 액션 처리 시 (세션에 userId 업데이트)
+  // STOMP CONNECT 이후 CHAT_JOIN 액션이 오기 전까지 userId 저장이 안되어 있을 수 있음
+  // 따라서 CHAT_JOIN 액션이 왔을 때 session Hash에 userId 업데이트
   public void saveUserId(String sessionId, String userId) {
     String key = sessionKey(sessionId);
     Boolean exists = redisTemplate.hasKey(key);
@@ -70,6 +74,7 @@ public class ViewerRedisRepository {
     redisTemplate.expire(key, VIEWER_TTL);
   }
 
+  // StompSessionEventListener.onDisconnect()에서 시청자 퇴장 처리 시 getAndRemoveViewer() 호출
   public Optional<ViewerContext> getAndRemoveViewer(String sessionId) {
     Map<Object, Object> entries = redisTemplate.opsForHash().entries(sessionKey(sessionId));
 

@@ -622,13 +622,6 @@ export default function BroadcastDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => {
-    if (!campaign || toUiStatus(campaign.status) !== 'live') return;
-    const interval = setInterval(() => {
-      setViewerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 20) - 8));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [campaign?.status]);
 
   useEffect(() => {
     if (timerIntervalRef.current) {
@@ -718,6 +711,8 @@ export default function BroadcastDetail() {
       } else if (p.action === 'FAQ.ERROR') {
         const text = p.payload?.message ?? '답변 생성에 실패했습니다.';
         setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'faq-error' }]);
+      } else if (p.action === 'VIEWER.COUNT') {
+        setViewerCount(p.payload?.count ?? 0);
       }
     } catch {
       setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: '시청자', text: rawBody, timestamp: new Date(), msgType: 'chat' }]);

@@ -10,7 +10,8 @@ public enum ActionType {
   CHAT_SYSTEM("CHAT.SYSTEM"),
   FAQ_QUESTION("FAQ.QUESTION"),
   FAQ_ANSWER("FAQ.ANSWER"),
-  FAQ_ERROR("FAQ.ERROR");
+  FAQ_ERROR("FAQ.ERROR"),
+  VIEWER_COUNT("VIEWER.COUNT");
 
   private final String key;
 

@@ -2,14 +2,17 @@ package org.giglab.live.presentation.event;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.application.command.ActionType;
 import org.giglab.live.domain.model.ViewerSession;
 import org.giglab.live.infrastructure.mongo.MongoViewerSessionRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository.ViewerContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -24,6 +27,7 @@ public class StompSessionEventListener {
 
   private final ViewerRedisRepository viewerRedisRepository;
   private final MongoViewerSessionRepository viewerSessionRepository;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @EventListener
   public void onSubscribe(SessionSubscribeEvent event) {
@@ -43,6 +47,7 @@ public class StompSessionEventListener {
 
     viewerRedisRepository.addViewer(roomId, sessionId);
     log.debug("시청자 입장 - sessionId={}, roomId={}", sessionId, roomId);
+    broadcastViewerCount(roomId);
   }
 
   @EventListener
@@ -76,6 +81,18 @@ public class StompSessionEventListener {
         sessionId,
         ctx.roomId(),
         durationSeconds);
+    broadcastViewerCount(ctx.roomId());
+  }
+
+  private void broadcastViewerCount(String roomId) {
+    long count = viewerRedisRepository.getViewerCount(roomId);
+    Map<String, Object> message =
+        Map.of(
+            "action", ActionType.VIEWER_COUNT.getKey(),
+            "roomId", roomId,
+            "payload", Map.of("count", count));
+    messagingTemplate.convertAndSend(ROOM_DESTINATION_PREFIX + roomId, (Object) message);
+    log.debug("시청자 수 브로드캐스트 - roomId={}, count={}", roomId, count);
   }
 
   // /sub/room/{roomId} 만 처리, /sub/room/{roomId}/host 등 하위 경로 제외

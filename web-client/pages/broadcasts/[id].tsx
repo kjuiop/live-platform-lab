@@ -689,6 +689,15 @@ export default function BroadcastDetail() {
   const SEEN_MAX = 200;
 
   const appendMessage = (rawBody: string) => {
+    try {
+      const p = JSON.parse(rawBody ?? '{}') as any;
+      if (p.action === 'VIEWER.COUNT') {
+        setViewerCount(p.payload?.count ?? 0);
+        return;
+      }
+    } catch {
+      // fall through to normal handling
+    }
     if (seenKeysRef.current.has(rawBody)) return;
     seenKeysRef.current.add(rawBody);
     if (seenKeysRef.current.size > SEEN_MAX) {
@@ -711,8 +720,6 @@ export default function BroadcastDetail() {
       } else if (p.action === 'FAQ.ERROR') {
         const text = p.payload?.message ?? '답변 생성에 실패했습니다.';
         setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: nick, text, timestamp: ts, msgType: 'faq-error' }]);
-      } else if (p.action === 'VIEWER.COUNT') {
-        setViewerCount(p.payload?.count ?? 0);
       }
     } catch {
       setMessages((prev) => [...prev, { id: Date.now() + Math.random(), nickname: '시청자', text: rawBody, timestamp: new Date(), msgType: 'chat' }]);
@@ -802,6 +809,8 @@ export default function BroadcastDetail() {
     const socket = new SockJS(`${WS_BASE_URL}/ws`);
     const client = StompJs.Stomp.over(socket);
     client.debug = () => {};
+    client.heartbeat.outgoing = 5000;
+    client.heartbeat.incoming = 5000;
     client.connect({}, () => {
       isConnectingRef.current = false;
       clientRef.current = client;

@@ -7,4 +7,6 @@ public interface CampaignStorePort {
   Campaign store(Campaign newCampaign);
 
   Optional<Campaign> findEntityById(Long campaignId);
+
+  Optional<Campaign> findEntityByChatRoomId(String chatRoomId);
 }

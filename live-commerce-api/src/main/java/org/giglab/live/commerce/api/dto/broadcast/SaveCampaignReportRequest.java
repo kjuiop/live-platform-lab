@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record SaveCampaignReportRequest(
-    @NotBlank String roomId,
+    @NotBlank String chatRoomId,
     int totalViewers,
     int peakConcurrent,
     long avgDurationSeconds,

@@ -17,7 +17,11 @@ import java.util.List;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
+import org.giglab.live.application.dto.stats.ChatStats;
+import org.giglab.live.application.dto.stats.ViewerStats;
 import org.giglab.live.application.service.RoomService;
+import org.giglab.live.domain.aggregator.ChatMessageAggregator;
+import org.giglab.live.domain.aggregator.ViewerSessionAggregator;
 import org.giglab.live.presentation.api.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +46,8 @@ class RoomControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @MockitoBean private RoomService roomService;
+  @MockitoBean private ChatMessageAggregator chatMessageAggregator;
+  @MockitoBean private ViewerSessionAggregator viewerSessionAggregator;
 
   @Test
   @DisplayName("채팅방 생성 성공 - 201 CREATED")
@@ -209,6 +215,54 @@ class RoomControllerTest {
         .andExpect(status().isNoContent());
 
     verify(roomService).deleteRoom(roomId);
+  }
+
+  @Test
+  @DisplayName("방 통계 조회 성공 - 정상 데이터 200 OK")
+  void getRoomStatsReturnsAggregatedData() throws Exception {
+    // given
+    String roomId = "ROOM_123456789ABC";
+    ViewerStats viewerStats = new ViewerStats(50, 20, 142L);
+    ChatStats chatStats = new ChatStats(100, 15, 12, List.of());
+
+    given(viewerSessionAggregator.aggregate(roomId)).willReturn(viewerStats);
+    given(chatMessageAggregator.aggregate(roomId)).willReturn(chatStats);
+
+    // when & then
+    mockMvc
+        .perform(get("/api/v1/rooms/{roomId}/stats", roomId))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalViewers").value(50))
+        .andExpect(jsonPath("$.data.peakConcurrent").value(20))
+        .andExpect(jsonPath("$.data.avgDurationSeconds").value(142))
+        .andExpect(jsonPath("$.data.totalMessages").value(100))
+        .andExpect(jsonPath("$.data.totalQuestions").value(15))
+        .andExpect(jsonPath("$.data.aiAnswerCount").value(12));
+  }
+
+  @Test
+  @DisplayName("방 통계 조회 성공 - 데이터 없을 때 0값으로 200 OK")
+  void getRoomStatsReturnsZeroWhenNoData() throws Exception {
+    // given
+    String roomId = "ROOM_EMPTY00000000";
+    ViewerStats viewerStats = new ViewerStats(0, 0, 0L);
+    ChatStats chatStats = new ChatStats(0, 0, 0, List.of());
+
+    given(viewerSessionAggregator.aggregate(roomId)).willReturn(viewerStats);
+    given(chatMessageAggregator.aggregate(roomId)).willReturn(chatStats);
+
+    // when & then
+    mockMvc
+        .perform(get("/api/v1/rooms/{roomId}/stats", roomId))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalViewers").value(0))
+        .andExpect(jsonPath("$.data.peakConcurrent").value(0))
+        .andExpect(jsonPath("$.data.avgDurationSeconds").value(0))
+        .andExpect(jsonPath("$.data.totalMessages").value(0))
+        .andExpect(jsonPath("$.data.totalQuestions").value(0))
+        .andExpect(jsonPath("$.data.aiAnswerCount").value(0));
   }
 
   @Test

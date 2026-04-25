@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
+import org.giglab.live.commerce.api.dto.campaign.CreateCampaignReportRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
@@ -56,5 +57,13 @@ public class CampaignController {
   @PostMapping("/{campaignId}/end")
   public ApiResponse<BroadcastStatusResponse> end(@PathVariable Long campaignId) {
     return ApiResponse.success(campaignFacade.end(campaignId));
+  }
+
+  @Operation(summary = "방송 리포트 저장", description = "방송 종료 후 AI 분석 리포트를 저장합니다.")
+  @PostMapping("/{campaignId}/reports")
+  public ApiResponse<Void> save(
+      @PathVariable Long campaignId, @RequestBody @Valid CreateCampaignReportRequest request) {
+    campaignFacade.saveCampaignReport(campaignId, request);
+    return ApiResponse.success();
   }
 }

@@ -37,6 +37,12 @@ function toUiStatus(apiStatus: string): BroadcastStatus {
   return 'scheduled';
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
+
 interface Message {
   id: number;
   nickname: string;
@@ -49,8 +55,10 @@ interface Message {
 
 
 const MOCK_AI_ANALYSIS = {
+  totalViewers: 3241,
   peakViewers: 1892,
   totalMessages: 4231,
+  faqCount: 47,
   avgWatchTime: '18분 32초',
   sentiment: { positive: 72, neutral: 20, negative: 8 },
   topKeywords: ['발색', '지속력', '가격', '방수', '향기', '촉촉함'],
@@ -86,6 +94,7 @@ function ChatQnAPanel({
   wsConnected,
   onSendFaq,
   defaultProductId,
+  chatStats,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -98,10 +107,18 @@ function ChatQnAPanel({
   wsConnected: boolean;
   onSendFaq?: (question: string, productId: number) => void;
   defaultProductId?: number;
+  chatStats?: {
+    totalViewers: number;
+    peakConcurrent: number;
+    avgDurationSeconds: number;
+    totalMessages: number;
+    faqCount: number;
+  } | null;
 }) {
   const isScheduled = status === 'scheduled';
   const isLive = status === 'live';
-  const [tab, setTab] = useState<'chat' | 'faq'>('chat');
+  const isEnded = status === 'ended';
+  const [tab, setTab] = useState<'report' | 'chat' | 'faq'>(isEnded ? 'report' : 'chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
   const [faqInput, setFaqInput] = useState('');
@@ -136,17 +153,66 @@ function ChatQnAPanel({
     <div className="lp">
       <div className="lp-header">
         <div className="lp-tabs">
+          {isEnded && (
+            <button className={`lp-tab ${tab === 'report' ? 'active' : ''}`} onClick={() => setTab('report')}>
+              📊 AI 리포트
+            </button>
+          )}
           <button className={`lp-tab ${tab === 'chat' ? 'active' : ''}`} onClick={() => setTab('chat')}>
             💬 채팅
+            {isEnded && <span className="tab-stat-badge">{(chatStats?.totalMessages ?? chatMessages.length).toLocaleString()}</span>}
           </button>
           <button className={`lp-tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}>
             🤖 FAQ
             {isLive && faqMessages.length > 0 && <span className="faq-count">{faqQuestionCount}</span>}
+            {isEnded && <span className="tab-stat-badge">{chatStats?.faqCount ?? faqQuestionCount}</span>}
           </button>
         </div>
       </div>
 
-      {tab === 'chat' ? (
+      {tab === 'report' && isEnded ? (
+        <div className="lp-report-body">
+          {(() => {
+            const a = MOCK_AI_ANALYSIS;
+            return (
+              <>
+                <div className="rp-section">
+                  <div className="rp-section-title">주요 지표</div>
+                  <div className="rp-metrics">
+                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.totalViewers ?? a.totalViewers).toLocaleString()}</div><div className="rp-metric-label">누적 시청자</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.peakConcurrent ?? a.peakViewers).toLocaleString()}</div><div className="rp-metric-label">최고 동시 시청자</div></div>
+                    <div className="rp-metric"><div className="rp-metric-val">{chatStats ? formatDuration(chatStats.avgDurationSeconds) : a.avgWatchTime}</div><div className="rp-metric-label">평균 시청 시간</div></div>
+                  </div>
+                </div>
+                <div className="rp-section">
+                  <div className="rp-section-title">시청자 반응 분석</div>
+                  <div className="rp-sent-bars">
+                    {[{label:'긍정', cls:'positive', val:a.sentiment.positive, color:'#10b981,#34d399'},{label:'중립', cls:'neutral', val:a.sentiment.neutral, color:'#6366f1,#818cf8'},{label:'부정', cls:'negative', val:a.sentiment.negative, color:'#ef4444,#f87171'}].map(row=>(
+                      <div key={row.label} className="rp-sent-row">
+                        <span className={`rp-sent-label ${row.cls}`}>{row.label}</span>
+                        <div className="rp-bar-wrap"><div className="rp-bar" style={{width:`${row.val}%`,background:`linear-gradient(90deg,${row.color})`}}/></div>
+                        <span className="rp-sent-pct">{row.val}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rp-section">
+                  <div className="rp-section-title">주요 키워드</div>
+                  <div className="rp-keywords">{a.topKeywords.map((kw,i)=><span key={kw} className="rp-keyword" style={{opacity:1-i*0.1}}>#{kw}</span>)}</div>
+                </div>
+                <div className="rp-section">
+                  <div className="rp-section-title">시청자 주요 질문</div>
+                  <div className="rp-questions">{a.topQuestions.map((q,i)=><div key={i} className="rp-question"><span className="rp-q-num">{i+1}</span><span className="rp-q-text">{q}</span></div>)}</div>
+                </div>
+                <div className="rp-section">
+                  <div className="rp-section-title">AI 인사이트 & 추천</div>
+                  <div className="rp-insights">{a.insights.map((ins,i)=><div key={i} className="rp-insight"><span className="rp-insight-dot">✦</span><span className="rp-insight-text">{ins}</span></div>)}</div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      ) : tab === 'chat' ? (
         isScheduled ? (
           /* 예정: 채팅 비활성 안내 */
           <div className="lp-messages">
@@ -349,6 +415,35 @@ function ChatQnAPanel({
         .qna-loading { font-size: 13px; color: #6ee7b7; display: flex; align-items: center; gap: 4px; }
         .dots::after { content: '...'; animation: dotanim 1.2s steps(4, end) infinite; }
         @keyframes dotanim { 0%,100% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+        .lp-report-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+        .lp-report-body::-webkit-scrollbar { width: 4px; }
+        .lp-report-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .rp-section { display: flex; flex-direction: column; gap: 10px; }
+        .rp-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6366f1; }
+        .rp-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .tab-stat-badge { background: rgba(99,102,241,0.2); color: #a5b4fc; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 4px; }
+        .rp-metric { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 10px; text-align: center; }
+        .rp-metric-val { font-size: 16px; font-weight: 800; color: #f1f5f9; }
+        .rp-metric-label { font-size: 10px; color: #64748b; margin-top: 4px; }
+        .rp-sent-bars { display: flex; flex-direction: column; gap: 8px; }
+        .rp-sent-row { display: flex; align-items: center; gap: 8px; }
+        .rp-sent-label { font-size: 11px; font-weight: 600; width: 28px; }
+        .rp-sent-label.positive { color: #6ee7b7; }
+        .rp-sent-label.neutral { color: #a5b4fc; }
+        .rp-sent-label.negative { color: #fca5a5; }
+        .rp-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; }
+        .rp-bar { height: 100%; border-radius: 999px; }
+        .rp-sent-pct { font-size: 11px; font-weight: 700; color: #94a3b8; width: 30px; text-align: right; }
+        .rp-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+        .rp-keyword { font-size: 12px; font-weight: 600; color: #a5b4fc; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); padding: 4px 10px; border-radius: 999px; }
+        .rp-questions { display: flex; flex-direction: column; gap: 6px; }
+        .rp-question { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }
+        .rp-q-num { font-size: 11px; font-weight: 700; color: #6366f1; background: rgba(99,102,241,0.15); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rp-q-text { font-size: 13px; color: #94a3b8; line-height: 1.55; }
+        .rp-insights { display: flex; flex-direction: column; gap: 8px; }
+        .rp-insight { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.15); border-radius: 8px; }
+        .rp-insight-dot { color: #6366f1; font-size: 10px; margin-top: 3px; flex-shrink: 0; }
+        .rp-insight-text { font-size: 12px; color: #94a3b8; line-height: 1.6; }
       `}</style>
     </div>
   );
@@ -508,6 +603,13 @@ export default function BroadcastDetail() {
   const [wsConnected, setWsConnected] = useState(false);
   const [areScriptsReady, setAreScriptsReady] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const [chatStats, setChatStats] = useState<{
+    totalViewers: number;
+    peakConcurrent: number;
+    avgDurationSeconds: number;
+    totalMessages: number;
+    faqCount: number;
+  } | null>(null);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -546,13 +648,6 @@ export default function BroadcastDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => {
-    if (!campaign || toUiStatus(campaign.status) !== 'live') return;
-    const interval = setInterval(() => {
-      setViewerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 20) - 8));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [campaign?.status]);
 
   useEffect(() => {
     if (timerIntervalRef.current) {
@@ -620,6 +715,15 @@ export default function BroadcastDetail() {
   const SEEN_MAX = 200;
 
   const appendMessage = (rawBody: string) => {
+    try {
+      const p = JSON.parse(rawBody ?? '{}') as any;
+      if (p.action === 'VIEWER.COUNT') {
+        setViewerCount(p.payload?.count ?? 0);
+        return;
+      }
+    } catch {
+      // fall through to normal handling
+    }
     if (seenKeysRef.current.has(rawBody)) return;
     seenKeysRef.current.add(rawBody);
     if (seenKeysRef.current.size > SEEN_MAX) {
@@ -731,6 +835,8 @@ export default function BroadcastDetail() {
     const socket = new SockJS(`${WS_BASE_URL}/ws`);
     const client = StompJs.Stomp.over(socket);
     client.debug = () => {};
+    client.heartbeat.outgoing = 5000;
+    client.heartbeat.incoming = 5000;
     client.connect({}, () => {
       isConnectingRef.current = false;
       clientRef.current = client;
@@ -790,6 +896,24 @@ export default function BroadcastDetail() {
   useEffect(() => {
     return () => { disconnect(); };
   }, []);
+
+  // 방송 종료 시 채팅·FAQ 집계 조회
+  useEffect(() => {
+    if (!campaign?.chatRoomId || toUiStatus(campaign.status) !== 'ended') return;
+    fetch(`${CHAT_API_BASE}/rooms/${campaign.chatRoomId}/stats`)
+      .then((res) => res.json())
+      .then((json) => {
+        const d = json?.data;
+        if (d) setChatStats({
+          totalViewers: d.totalViewers,
+          peakConcurrent: d.peakConcurrent,
+          avgDurationSeconds: d.avgDurationSeconds,
+          totalMessages: d.totalMessages,
+          faqCount: d.totalQuestions,
+        });
+      })
+      .catch(() => {});
+  }, [campaign?.chatRoomId, campaign?.status]);
 
   if (!id) return null;
 
@@ -1045,22 +1169,20 @@ export default function BroadcastDetail() {
 
           {/* 우측 패널: 상태별 */}
           <div className="side-col">
-            {(isScheduled || isLive || isEnded) && (
-              <ChatQnAPanel
-                status={uiStatus}
-                productName={productName}
-                messages={messages}
-                inputValue={inputValue}
-                setInputValue={setInputValue}
-                nickname={nickname}
-                setNickname={setNickname}
-                onSend={sendMessage}
-                wsConnected={wsConnected}
-                onSendFaq={sendFaqQuestion}
-                defaultProductId={campaign.campaignProducts[0]?.productId}
-              />
-            )}
-            {uiStatus === 'ended' && <EndedAnalysisPanel />}
+            <ChatQnAPanel
+              status={uiStatus}
+              productName={productName}
+              messages={messages}
+              inputValue={inputValue}
+              setInputValue={setInputValue}
+              nickname={nickname}
+              setNickname={setNickname}
+              onSend={sendMessage}
+              wsConnected={wsConnected}
+              onSendFaq={sendFaqQuestion}
+              defaultProductId={campaign.campaignProducts[0]?.productId}
+              chatStats={chatStats}
+            />
           </div>
         </div>
       </div>

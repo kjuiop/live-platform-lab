@@ -2,6 +2,7 @@ package org.giglab.live.commerce.api.facade;
 
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
+import org.giglab.live.commerce.api.dto.campaign.CreateCampaignReportRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
@@ -11,6 +12,7 @@ import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
 import org.giglab.live.commerce.core.campaign.application.CampaignService;
 import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
@@ -48,5 +50,10 @@ public class CampaignFacade {
   public BroadcastStatusResponse end(Long campaignId) {
     BroadcastStatusResult result = campaignService.end(campaignId);
     return campaignMapper.toBroadcastStatusResponse(result);
+  }
+
+  public void saveCampaignReport(Long campaignId, CreateCampaignReportRequest request) {
+    CreateCampaignReportCommand command = campaignMapper.toSaveCampaignReportCommand(request);
+    campaignService.saveCampaignReport(campaignId, command);
   }
 }

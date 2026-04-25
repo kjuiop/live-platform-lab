@@ -37,7 +37,4 @@ async:
 
 logging:
   level:
-    org.springframework.web.socket: DEBUG
-    org.springframework.web.socket.messaging: DEBUG
-    org.springframework.messaging: DEBUG
-    org.springframework.messaging.simp.stomp: DEBUG
+    org.giglab.live: INFO

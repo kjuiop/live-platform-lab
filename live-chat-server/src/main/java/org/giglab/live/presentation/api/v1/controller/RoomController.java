@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
+import org.giglab.live.application.dto.stats.RoomStatsResponse;
 import org.giglab.live.application.service.RoomService;
+import org.giglab.live.domain.aggregator.ChatMessageAggregator;
+import org.giglab.live.domain.aggregator.ViewerSessionAggregator;
 import org.giglab.live.presentation.api.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoomController {
 
   private final RoomService roomService;
+  private final ChatMessageAggregator chatMessageAggregator;
+  private final ViewerSessionAggregator viewerSessionAggregator;
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<GetRoomResponse>>> getRooms(
@@ -38,6 +43,13 @@ public class RoomController {
   public ResponseEntity<Void> deleteRoom(@PathVariable String roomId) {
     roomService.deleteRoom(roomId);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{roomId}/stats")
+  public ResponseEntity<ApiResponse<RoomStatsResponse>> getRoomStats(@PathVariable String roomId) {
+    var viewers = viewerSessionAggregator.aggregate(roomId);
+    var chats = chatMessageAggregator.aggregate(roomId);
+    return ResponseEntity.ok(ApiResponse.success(RoomStatsResponse.of(chats, viewers)));
   }
 
   @PostMapping

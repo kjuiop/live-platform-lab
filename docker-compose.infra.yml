@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: live-platform-redis
     hostname: redis
     ports:
@@ -29,6 +29,19 @@ services:
       - redis
     networks:
       - live-platform-network
+
+  redisinsight:
+    image: redis/redisinsight:2.66.0
+    container_name: live-platform-redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight-data:/data
+    depends_on:
+      - redis
+    networks:
+      - live-platform-network
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
@@ -113,6 +126,7 @@ volumes:
   redis_data:
   es-data:
   mongodb_data:
+  redisinsight-data:
 
 networks:
   live-platform-network:

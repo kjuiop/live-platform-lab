@@ -4,11 +4,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.giglab.live.application.dto.report.ChatRoomInsightResponse;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
+import org.giglab.live.application.dto.stats.RoomStatsResponse;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.domain.repository.RoomRepository;
+import org.giglab.live.infrastructure.mongo.MongoChatInsightRepository;
+import org.giglab.live.infrastructure.mongo.aggregator.ChatMessageAggregator;
+import org.giglab.live.infrastructure.mongo.aggregator.ViewerSessionAggregator;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,6 +23,9 @@ public class RoomService {
   private static final int MAX_SIZE = 20;
 
   private final RoomRepository roomRepository;
+  private final ViewerSessionAggregator viewerSessionAggregator;
+  private final ChatMessageAggregator chatMessageAggregator;
+  private final MongoChatInsightRepository chatInsightRepository;
 
   public CreateRoomResponse createRoom(CreateRoomRequest request) {
     Room room = Room.create(request.getTitle());
@@ -28,6 +36,19 @@ public class RoomService {
 
   public void deleteRoom(String roomId) {
     roomRepository.deleteById(roomId);
+  }
+
+  public ChatRoomInsightResponse getInsight(String roomId) {
+    return ChatRoomInsightResponse.of(
+        viewerSessionAggregator.aggregate(roomId),
+        chatMessageAggregator.aggregate(roomId),
+        chatInsightRepository.findPositiveMessages(roomId),
+        chatInsightRepository.findNegativeMessages(roomId));
+  }
+
+  public RoomStatsResponse getStats(String roomId) {
+    return RoomStatsResponse.of(
+        chatMessageAggregator.aggregate(roomId), viewerSessionAggregator.aggregate(roomId));
   }
 
   public List<GetRoomResponse> getRooms(int size) {

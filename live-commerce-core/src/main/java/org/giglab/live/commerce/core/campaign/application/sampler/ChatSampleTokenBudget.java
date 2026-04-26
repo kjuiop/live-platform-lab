@@ -6,7 +6,11 @@ import java.util.Map;
 
 public class ChatSampleTokenBudget {
 
+  // 채팅 샘플에 할당된 토큰 예산. 프롬프트 전체(지시문 ~500 + 지표 ~50 + 채팅 1,800 + 질문 ~200 = ~2,550)에서
+  // 채팅 비중을 고정해 비용을 통제한다. 긍정+부정 20건씩 기준 실사용량 ~1,560토큰으로 예산 안에 수납된다.
   private static final int CHAT_TOKEN_BUDGET = 1800;
+
+  // 레이블(POSITIVE/NEGATIVE/NEUTRAL)별 최대 추출 건수. 긍정·부정 균형을 위해 동일한 상한을 적용한다.
   private static final int LABEL_SAMPLE_SIZE = 20;
 
   /** 레이블 맵에서 특정 레이블에 해당하는 메시지를 최대 20건 추출한다. */
@@ -41,8 +45,8 @@ public class ChatSampleTokenBudget {
     return result;
   }
 
-  /** 한국어 기반 토큰 추정: text.length() * 0.6 (안전 마진 포함) */
+  /** gpt-4o-mini (o200k_base) 기준 토큰 추정. 한국어 한 글자 ≈ 1토큰이며, 공백·구두점·혼합 영어를 고려해 × 1.3 적용. */
   public static int estimateTokens(String text) {
-    return (int) (text.length() * 0.6);
+    return (int) (text.length() * 1.3);
   }
 }

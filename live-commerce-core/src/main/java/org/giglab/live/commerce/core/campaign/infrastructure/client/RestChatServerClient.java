@@ -3,6 +3,7 @@ package org.giglab.live.commerce.core.campaign.infrastructure.client;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignInsightResult;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +47,22 @@ public class RestChatServerClient implements ChatRoomCreatePort, ChatRoomDeleteP
     restTemplate.exchange(
         url, HttpMethod.DELETE, HttpEntity.EMPTY, new ParameterizedTypeReference<Void>() {});
     log.info("채팅방 삭제 완료 - roomId={}", roomId);
+  }
+
+  public CampaignInsightResult getInsight(String roomId) {
+    String url = chatServerUrl + "/api/v1/rooms/" + roomId + "/insight";
+
+    ResponseEntity<ChatApiResponse<CampaignInsightResult>> response =
+        restTemplate.exchange(
+            url, HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<>() {});
+
+    ChatApiResponse<CampaignInsightResult> body = response.getBody();
+    if (body == null || body.data() == null) {
+      throw new IllegalStateException("채팅방 인사이트 응답이 없습니다. roomId=" + roomId);
+    }
+
+    log.debug("채팅방 인사이트 조회 완료 - roomId={}", roomId);
+    return body.data();
   }
 
   private record CreateRoomRequest(String title) {}

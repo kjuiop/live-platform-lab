@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -17,6 +17,21 @@ interface CampaignProduct {
   productId: number;
   name: string;
   displayOrder: number;
+}
+
+interface CampaignReport {
+  id: number;
+  campaignId: number;
+  roomId: string;
+  totalViewers: number;
+  peakConcurrent: number;
+  avgDurationSeconds: number;
+  totalMessages: number;
+  totalQuestions: number;
+  aiAnswerCount: number;
+  aiReportText: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
 }
 
 interface Campaign {
@@ -54,26 +69,6 @@ interface Message {
 
 
 
-const MOCK_AI_ANALYSIS = {
-  totalViewers: 3241,
-  peakViewers: 1892,
-  totalMessages: 4231,
-  faqCount: 47,
-  avgWatchTime: '18분 32초',
-  sentiment: { positive: 72, neutral: 20, negative: 8 },
-  topKeywords: ['발색', '지속력', '가격', '방수', '향기', '촉촉함'],
-  topQuestions: [
-    '다른 컬러도 있나요?',
-    '민감성 피부도 사용 가능한가요?',
-    '방수 기능이 얼마나 지속되나요?',
-  ],
-  insights: [
-    '시청자의 72%가 발색력에 긍정적인 반응을 보였습니다.',
-    '"방수" 키워드 언급이 전체 메시지의 18%를 차지해 주요 관심 포인트로 확인됐습니다.',
-    '방송 시작 후 8분~12분 구간에서 채팅 참여율이 최고조에 달했습니다.',
-    '가격 관련 질문이 많아 다음 방송 시 가격 혜택을 초반에 강조하는 것을 추천합니다.',
-  ],
-};
 
 const statusLabel: Record<BroadcastStatus, string> = {
   scheduled: '예정',
@@ -95,6 +90,8 @@ function ChatQnAPanel({
   onSendFaq,
   defaultProductId,
   chatStats,
+  aiReport,
+  aiReportLoading,
 }: {
   status: BroadcastStatus;
   productName: string;
@@ -114,6 +111,8 @@ function ChatQnAPanel({
     totalMessages: number;
     faqCount: number;
   } | null;
+  aiReport?: CampaignReport | null;
+  aiReportLoading?: boolean;
 }) {
   const isScheduled = status === 'scheduled';
   const isLive = status === 'live';
@@ -172,45 +171,55 @@ function ChatQnAPanel({
 
       {tab === 'report' && isEnded ? (
         <div className="lp-report-body">
-          {(() => {
-            const a = MOCK_AI_ANALYSIS;
-            return (
-              <>
-                <div className="rp-section">
-                  <div className="rp-section-title">주요 지표</div>
-                  <div className="rp-metrics">
-                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.totalViewers ?? a.totalViewers).toLocaleString()}</div><div className="rp-metric-label">누적 시청자</div></div>
-                    <div className="rp-metric"><div className="rp-metric-val">{(chatStats?.peakConcurrent ?? a.peakViewers).toLocaleString()}</div><div className="rp-metric-label">최고 동시 시청자</div></div>
-                    <div className="rp-metric"><div className="rp-metric-val">{chatStats ? formatDuration(chatStats.avgDurationSeconds) : a.avgWatchTime}</div><div className="rp-metric-label">평균 시청 시간</div></div>
+          <div className="rp-section">
+            <div className="rp-section-title">주요 지표</div>
+            <div className="rp-metrics">
+              <div className="rp-metric">
+                <div className="rp-metric-val">{(aiReport?.totalViewers ?? chatStats?.totalViewers ?? 0).toLocaleString()}</div>
+                <div className="rp-metric-label">누적 시청자</div>
+              </div>
+              <div className="rp-metric">
+                <div className="rp-metric-val">{(aiReport?.peakConcurrent ?? chatStats?.peakConcurrent ?? 0).toLocaleString()}</div>
+                <div className="rp-metric-label">최고 동시 시청자</div>
+              </div>
+              <div className="rp-metric">
+                <div className="rp-metric-val">{formatDuration(aiReport?.avgDurationSeconds ?? chatStats?.avgDurationSeconds ?? 0)}</div>
+                <div className="rp-metric-label">평균 시청 시간</div>
+              </div>
+              <div className="rp-metric">
+                <div className="rp-metric-val">{(aiReport?.totalMessages ?? chatStats?.totalMessages ?? 0).toLocaleString()}</div>
+                <div className="rp-metric-label">총 채팅 수</div>
+              </div>
+              <div className="rp-metric">
+                <div className="rp-metric-val">{(aiReport?.totalQuestions ?? chatStats?.faqCount ?? 0).toLocaleString()}</div>
+                <div className="rp-metric-label">FAQ 질문 수</div>
+              </div>
+              <div className="rp-metric">
+                <div className="rp-metric-val">{(aiReport?.aiAnswerCount ?? 0).toLocaleString()}</div>
+                <div className="rp-metric-label">AI 답변 수</div>
+              </div>
+            </div>
+          </div>
+          <div className="rp-section">
+            <div className="rp-section-title">AI 인사이트 & 추천</div>
+            {aiReportLoading ? (
+              <div className="rp-ai-loading">
+                <div className="rp-ai-spinner" />
+                <span>AI가 방송을 분석하고 있습니다<span className="dots" /></span>
+              </div>
+            ) : aiReport?.aiReportText ? (
+              <div className="rp-ai-text">
+                {aiReport.aiReportText.split('\n').filter(Boolean).map((line, i) => (
+                  <div key={i} className="rp-insight">
+                    <span className="rp-insight-dot">✦</span>
+                    <span className="rp-insight-text">{line}</span>
                   </div>
-                </div>
-                <div className="rp-section">
-                  <div className="rp-section-title">시청자 반응 분석</div>
-                  <div className="rp-sent-bars">
-                    {[{label:'긍정', cls:'positive', val:a.sentiment.positive, color:'#10b981,#34d399'},{label:'중립', cls:'neutral', val:a.sentiment.neutral, color:'#6366f1,#818cf8'},{label:'부정', cls:'negative', val:a.sentiment.negative, color:'#ef4444,#f87171'}].map(row=>(
-                      <div key={row.label} className="rp-sent-row">
-                        <span className={`rp-sent-label ${row.cls}`}>{row.label}</span>
-                        <div className="rp-bar-wrap"><div className="rp-bar" style={{width:`${row.val}%`,background:`linear-gradient(90deg,${row.color})`}}/></div>
-                        <span className="rp-sent-pct">{row.val}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rp-section">
-                  <div className="rp-section-title">주요 키워드</div>
-                  <div className="rp-keywords">{a.topKeywords.map((kw,i)=><span key={kw} className="rp-keyword" style={{opacity:1-i*0.1}}>#{kw}</span>)}</div>
-                </div>
-                <div className="rp-section">
-                  <div className="rp-section-title">시청자 주요 질문</div>
-                  <div className="rp-questions">{a.topQuestions.map((q,i)=><div key={i} className="rp-question"><span className="rp-q-num">{i+1}</span><span className="rp-q-text">{q}</span></div>)}</div>
-                </div>
-                <div className="rp-section">
-                  <div className="rp-section-title">AI 인사이트 & 추천</div>
-                  <div className="rp-insights">{a.insights.map((ins,i)=><div key={i} className="rp-insight"><span className="rp-insight-dot">✦</span><span className="rp-insight-text">{ins}</span></div>)}</div>
-                </div>
-              </>
-            );
-          })()}
+                ))}
+              </div>
+            ) : (
+              <div className="rp-ai-unavailable">AI 리포트를 아직 불러올 수 없습니다.</div>
+            )}
+          </div>
         </div>
       ) : tab === 'chat' ? (
         isScheduled ? (
@@ -444,6 +453,11 @@ function ChatQnAPanel({
         .rp-insight { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.15); border-radius: 8px; }
         .rp-insight-dot { color: #6366f1; font-size: 10px; margin-top: 3px; flex-shrink: 0; }
         .rp-insight-text { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+        .rp-ai-loading { display: flex; align-items: center; gap: 10px; padding: 16px 12px; background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.15); border-radius: 8px; font-size: 13px; color: #a5b4fc; }
+        .rp-ai-spinner { width: 14px; height: 14px; border: 2px solid rgba(99,102,241,0.3); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .rp-ai-text { display: flex; flex-direction: column; gap: 8px; }
+        .rp-ai-unavailable { font-size: 13px; color: #475569; padding: 12px; text-align: center; }
       `}</style>
     </div>
   );
@@ -610,6 +624,9 @@ export default function BroadcastDetail() {
     totalMessages: number;
     faqCount: number;
   } | null>(null);
+  const [aiReport, setAiReport] = useState<CampaignReport | null>(null);
+  const [aiReportLoading, setAiReportLoading] = useState(false);
+  const aiPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -915,6 +932,54 @@ export default function BroadcastDetail() {
       .catch(() => {});
   }, [campaign?.chatRoomId, campaign?.status]);
 
+  // 방송 종료 시 AI 리포트 폴링 (aiReportText 채워질 때까지 최대 12회, 5초 간격)
+  const fetchAiReport = useCallback(async () => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`${API_BASE}/campaigns/${id}/reports`);
+      if (!res.ok) return false;
+      const json = await res.json();
+      const data: CampaignReport = json?.data;
+      if (data) {
+        setAiReport(data);
+        if (data.aiReportText) return true; // 완료
+      }
+    } catch {
+      // 리포트 아직 없으면 무시
+    }
+    return false;
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !campaign || toUiStatus(campaign.status) !== 'ended') return;
+    if (aiPollRef.current) return; // 이미 폴링 중
+
+    setAiReportLoading(true);
+    let attempts = 0;
+    const MAX_ATTEMPTS = 12;
+
+    const poll = async () => {
+      attempts++;
+      const done = await fetchAiReport();
+      if (done || attempts >= MAX_ATTEMPTS) {
+        clearInterval(aiPollRef.current!);
+        aiPollRef.current = null;
+        setAiReportLoading(false);
+      }
+    };
+
+    poll();
+    aiPollRef.current = setInterval(poll, 5000);
+
+    return () => {
+      if (aiPollRef.current) {
+        clearInterval(aiPollRef.current);
+        aiPollRef.current = null;
+      }
+      setAiReportLoading(false);
+    };
+  }, [id, campaign?.status]);
+
   if (!id) return null;
 
   if (loading) {
@@ -1182,6 +1247,8 @@ export default function BroadcastDetail() {
               onSendFaq={sendFaqQuestion}
               defaultProductId={campaign.campaignProducts[0]?.productId}
               chatStats={chatStats}
+              aiReport={aiReport}
+              aiReportLoading={aiReportLoading}
             />
           </div>
         </div>

@@ -68,6 +68,9 @@ export default function ProductDetail() {
   const [faqLoading, setFaqLoading] = useState(false);
   const [faqGenerated, setFaqGenerated] = useState(false);
 
+  const [simMessages, setSimMessages] = useState<{ chatMessages: string[]; faqQuestions: string[] } | null>(null);
+  const [simMsgLoading, setSimMsgLoading] = useState(false);
+
   const [qnaList, setQnaList] = useState<QnAItem[]>([]);
   const [aiInput, setAiInput] = useState('');
   const qnaBottomRef = useRef<HTMLDivElement>(null);
@@ -118,6 +121,18 @@ export default function ProductDetail() {
         if (json?.data?.items?.length > 0) {
           setFaqSamples(json.data.items);
           setFaqGenerated(true);
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/products/${id}/simulation-messages`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((json) => {
+        if (json?.data && (json.data.chatMessages?.length > 0 || json.data.faqQuestions?.length > 0)) {
+          setSimMessages(json.data);
         }
       })
       .catch(() => {});
@@ -177,6 +192,20 @@ export default function ProductDetail() {
         next.delete(documentId);
         return next;
       });
+    }
+  };
+
+  const handleGenerateSimMessages = async () => {
+    setSimMsgLoading(true);
+    try {
+      await fetch(`${API_BASE}/products/${id}/simulation-messages`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/products/${id}/simulation-messages`);
+      const json = await res.json();
+      if (res.ok && json?.data) setSimMessages(json.data);
+    } catch {
+      // ignore
+    } finally {
+      setSimMsgLoading(false);
     }
   };
 
@@ -344,6 +373,10 @@ export default function ProductDetail() {
         .faq-text.q { color: #cbd5e1; font-weight: 600; }
         .faq-text.a { color: #94a3b8; }
 
+        /* 시뮬레이션 메시지 */
+        .sim-chat-badge { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .sim-faq-badge { background: rgba(251,191,36,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.25); }
+
         /* 연결된 방송 */
         .broadcast-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
         .broadcast-list::-webkit-scrollbar { width: 4px; }
@@ -499,6 +532,45 @@ export default function ProductDetail() {
                       <div className="faq-row">
                         <span className="faq-badge a">A</span>
                         <span className="faq-text a">{item.answer}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 시뮬레이션 메시지 */}
+            <div className="section-card">
+              <div className="section-header">
+                <div>
+                  <div className="section-title">시뮬레이션 메시지</div>
+                  <div className="section-sub">임베딩 기반 LLM이 생성한 시뮬레이션용 채팅·FAQ</div>
+                </div>
+                <button
+                  className="bulk-embed-btn"
+                  onClick={handleGenerateSimMessages}
+                  disabled={simMsgLoading}
+                >
+                  {simMsgLoading ? '생성 중...' : simMessages ? '메시지 추가 생성' : '메시지 생성'}
+                </button>
+              </div>
+              {!simMessages ? (
+                <div className="no-docs">메시지 생성 버튼을 눌러 시뮬레이션 데이터를 준비하세요.</div>
+              ) : (
+                <div className="faq-list">
+                  {simMessages.chatMessages.map((msg, i) => (
+                    <div key={`chat-${i}`} className="faq-item">
+                      <div className="faq-row">
+                        <span className="faq-badge q sim-chat-badge">채팅</span>
+                        <span className="faq-text q">{msg}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {simMessages.faqQuestions.map((q, i) => (
+                    <div key={`faq-${i}`} className="faq-item">
+                      <div className="faq-row">
+                        <span className="faq-badge a sim-faq-badge">FAQ</span>
+                        <span className="faq-text a">{q}</span>
                       </div>
                     </div>
                   ))}

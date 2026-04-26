@@ -18,6 +18,7 @@ import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsRespons
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
+import org.giglab.live.commerce.api.dto.product.GetSimulationMessagesResponse;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
 import org.giglab.live.commerce.api.facade.ProductFacade;
 import org.giglab.live.commerce.api.response.ApiResponse;
@@ -134,6 +135,24 @@ public class ProductController {
   public ResponseEntity<ApiResponse<EmbedDocumentResponse>> embedDocument(
       @PathVariable Long documentId) {
     EmbedDocumentResponse response = productFacade.embedDocument(documentId);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(
+      summary = "시뮬레이션 메시지 생성",
+      description = "임베딩된 문서 기반으로 시뮬레이션용 채팅·FAQ 메시지를 LLM으로 생성하고 저장합니다.")
+  @PostMapping("/{id}/simulation-messages")
+  public ResponseEntity<ApiResponse<GetSimulationMessagesResponse>> generateSimulationMessages(
+      @PathVariable Long id) {
+    GetSimulationMessagesResponse response = productFacade.generateSimulationMessages(id);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "시뮬레이션 메시지 조회", description = "저장된 시뮬레이션용 채팅·FAQ 메시지를 조회합니다.")
+  @GetMapping("/{id}/simulation-messages")
+  public ResponseEntity<ApiResponse<GetSimulationMessagesResponse>> getSimulationMessages(
+      @PathVariable Long id) {
+    GetSimulationMessagesResponse response = productFacade.getSimulationMessages(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 }

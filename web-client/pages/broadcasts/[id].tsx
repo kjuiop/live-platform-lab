@@ -133,6 +133,8 @@ function ChatQnAPanel({
   const [tab, setTab] = useState<'report' | 'chat' | 'faq'>(isEnded ? 'report' : 'chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isAtChatBottomRef = useRef(true);
   const [faqInput, setFaqInput] = useState('');
 
   const chatMessages = useMemo(
@@ -150,12 +152,21 @@ function ChatQnAPanel({
 
 
   useEffect(() => {
-    if (tab === 'chat') messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (tab === 'chat' && isAtChatBottomRef.current) {
+      const el = chatContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
   }, [messages, tab]);
 
   useEffect(() => {
     if (tab === 'faq') faqBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [faqMessages, tab]);
+
+  const handleChatScroll = useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    isAtChatBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') onSend();
@@ -259,7 +270,7 @@ function ChatQnAPanel({
           </div>
         ) : (
           <>
-            <div className="lp-messages">
+            <div className="lp-messages" ref={chatContainerRef} onScroll={handleChatScroll}>
               {chatMessages.length === 0 ? (
                 <div className="lp-empty">채팅을 시작해보세요!</div>
               ) : (
@@ -636,6 +647,7 @@ export default function BroadcastDetail() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [simRunning, setSimRunning] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -837,6 +849,93 @@ export default function BroadcastDetail() {
       }));
     } catch {
       // leave 실패는 무시
+    }
+  };
+
+  const SIM_VIEWER_NAMES = ['하나', '두리', '세리', '네모', '다솜', '여섯', '일곱', '여덟'];
+
+  const runSimulation = async () => {
+    if (!campaign?.chatRoomId) return;
+    const roomId = campaign.chatRoomId;
+    const productId = campaign.campaignProducts?.[0]?.productId ?? 1;
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (!SockJS || !StompJs) return;
+
+    setSimRunning(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${productId}/simulation-messages`);
+      const json = await res.json();
+      const chatMessages: string[] = json?.data?.chatMessages ?? [];
+      const faqQuestions: string[] = json?.data?.faqQuestions ?? [];
+      if (chatMessages.length === 0) {
+        alert('시뮬레이션 메시지가 없습니다. 상품 상세에서 먼저 생성해주세요.');
+        return;
+      }
+
+      const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+      const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
+      const sendAction = (client: any, action: string, actor: string, payload: object) => {
+        try {
+          client.send('/send/room.action', {}, JSON.stringify({
+            roomId, action,
+            actor: { userId: actor, username: actor, sender: actor },
+            payload,
+          }));
+        } catch { /* 무시 */ }
+      };
+
+      // Phase 1: 가상 시청자 순차 입장
+      const viewers: { name: string; client: any }[] = [];
+      for (const name of SIM_VIEWER_NAMES) {
+        await new Promise<void>((resolve) => {
+          const socket = new SockJS(`${WS_BASE_URL}/ws`);
+          const client = StompJs.Stomp.over(socket);
+          client.debug = () => {};
+          client.heartbeat.outgoing = 0;
+          client.heartbeat.incoming = 0;
+          client.connect({}, () => {
+            client.subscribe(`/sub/room/${roomId}`, () => {});
+            sendAction(client, 'CHAT.JOIN', name, {});
+            viewers.push({ name, client });
+            resolve();
+          }, () => resolve());
+        });
+        await sleep(rand(500, 1500));
+      }
+
+      // Phase 2: 채팅 + FAQ 혼합 (4채팅마다 FAQ 1회)
+      let faqIdx = 0;
+      const messageCount = Math.min(chatMessages.length, 20);
+      for (let i = 0; i < messageCount; i++) {
+        const viewer = viewers[i % viewers.length];
+        if (i > 0 && i % 4 === 0 && faqIdx < faqQuestions.length) {
+          sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
+            question: faqQuestions[faqIdx++], productId,
+          });
+          await sleep(rand(1000, 2000));
+        }
+        sendAction(viewer.client, 'CHAT.MESSAGE', viewer.name, { message: chatMessages[i % chatMessages.length] });
+        await sleep(rand(800, 2000));
+      }
+
+      // 남은 FAQ 발송
+      while (faqIdx < faqQuestions.length) {
+        const viewer = viewers[faqIdx % viewers.length];
+        sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
+          question: faqQuestions[faqIdx++], productId,
+        });
+        await sleep(rand(2000, 4000));
+      }
+
+      // Phase 3: 가상 시청자 순차 퇴장
+      for (const viewer of viewers) {
+        sendAction(viewer.client, 'CHAT.LEAVE', viewer.name, {});
+        await sleep(rand(300, 800));
+        try { viewer.client.disconnect(); } catch { /* 무시 */ }
+      }
+    } finally {
+      setSimRunning(false);
     }
   };
 
@@ -1161,6 +1260,9 @@ export default function BroadcastDetail() {
         .btn-end { flex:1; padding:12px; background:linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
         .btn-end:hover:not(:disabled) { opacity:0.85; }
         .btn-start:disabled, .btn-end:disabled { opacity:0.5; cursor:not-allowed; }
+        .btn-sim-run { flex:1; padding:12px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+        .btn-sim-run:hover:not(:disabled) { opacity:0.85; }
+        .btn-sim-run:disabled { opacity:0.5; cursor:not-allowed; }
 
         .side-col { width:360px; flex-shrink:0; height:calc(100vh - 104px); position:sticky; top:80px; }
 
@@ -1233,6 +1335,15 @@ export default function BroadcastDetail() {
                   <button className="btn-end" onClick={handleEnd} disabled={actionLoading}>
                     {actionLoading ? '처리 중...' : '■ 방송 종료'}
                   </button>
+                  {process.env.NODE_ENV === 'development' && campaign.chatRoomId && (
+                    <button
+                      className="btn-sim-run"
+                      onClick={runSimulation}
+                      disabled={simRunning}
+                    >
+                      {simRunning ? '시뮬레이션 진행 중...' : '🧪 시뮬레이션 실행'}
+                    </button>
+                  )}
                 </div>
               )}
 

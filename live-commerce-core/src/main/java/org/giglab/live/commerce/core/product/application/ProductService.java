@@ -24,6 +24,7 @@ import org.giglab.live.commerce.core.product.application.usecase.GetProductListU
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductDocumentUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductFaqSamplesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocumentsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
@@ -48,6 +49,7 @@ public class ProductService {
   private final EmbedDocumentUseCase embedDocumentUseCase;
   private final AskProductQuestionUseCase askProductQuestionUseCase;
   private final GenerateProductFaqSamplesUseCase generateProductFaqSamplesUseCase;
+  private final CreateProductFaqSamplesUseCase createProductFaqSamplesUseCase;
   private final GetProductFaqSamplesUseCase getProductFaqSamplesUseCase;
   private final EmbedProductInfoUseCase embedProductInfoUseCase;
   private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
@@ -88,7 +90,8 @@ public class ProductService {
   }
 
   public GenerateProductFaqSamplesResult generateFaqSamples(Long productId) {
-    return generateProductFaqSamplesUseCase.execute(productId);
+    GenerateProductFaqSamplesResult result = generateProductFaqSamplesUseCase.execute(productId);
+    return createProductFaqSamplesUseCase.execute(productId, result);
   }
 
   public GetProductFaqSamplesResult getProductFaqSamples(Long productId) {

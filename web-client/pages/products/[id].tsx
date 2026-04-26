@@ -480,7 +480,7 @@ export default function ProductDetail() {
                   onClick={handleGenerateFaqSamples}
                   disabled={faqLoading}
                 >
-                  {faqLoading ? '생성 중...' : faqGenerated ? '재생성' : 'Q&A 생성'}
+                  {faqLoading ? '생성 중...' : faqGenerated ? 'Q&A 추가 생성' : 'Q&A 생성'}
                 </button>
               </div>
 

@@ -9,13 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.commerce.core.product.application.dto.ai.FaqSampleItem;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentPort;
-import org.giglab.live.commerce.core.product.application.port.persistence.ProductFaqSamplePort;
-import org.giglab.live.commerce.core.product.domain.entity.ProductFaqSample;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Slf4j
@@ -51,19 +48,14 @@ public class GenerateProductFaqSamplesUseCase {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final SearchDocumentPort searchDocumentPort;
-  private final ProductFaqSamplePort productFaqSamplePort;
   private final ChatClient chatClient;
 
   public GenerateProductFaqSamplesUseCase(
-      SearchDocumentPort searchDocumentPort,
-      ProductFaqSamplePort productFaqSamplePort,
-      ChatModel chatModel) {
+      SearchDocumentPort searchDocumentPort, ChatModel chatModel) {
     this.searchDocumentPort = searchDocumentPort;
-    this.productFaqSamplePort = productFaqSamplePort;
     this.chatClient = ChatClient.create(chatModel);
   }
 
-  @Transactional
   public GenerateProductFaqSamplesResult execute(Long productId) {
     List<Document> docs = searchDocumentPort.search(productId, SEED_QUERY, TOP_K);
 
@@ -95,13 +87,7 @@ public class GenerateProductFaqSamplesUseCase {
       List<FaqSampleItem> samples =
           MAPPER.readValue(json, new TypeReference<List<FaqSampleItem>>() {});
 
-      List<ProductFaqSample> entities =
-          samples.stream()
-              .map(item -> ProductFaqSample.create(productId, item.question(), item.answer()))
-              .toList();
-      productFaqSamplePort.saveAll(entities);
-
-      log.info("사전 Q&A 저장 완료 - productId={}, count={}", productId, samples.size());
+      log.info("사전 Q&A 생성 완료 - productId={}, count={}", productId, samples.size());
       return new GenerateProductFaqSamplesResult(samples);
     } catch (Exception e) {
       log.error("사전 Q&A JSON 파싱 실패 - productId={}: {}", productId, e.getMessage());

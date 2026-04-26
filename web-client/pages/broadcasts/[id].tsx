@@ -152,8 +152,10 @@ function ChatQnAPanel({
 
 
   useEffect(() => {
-    if (tab === 'chat' && isAtChatBottomRef.current)
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (tab === 'chat' && isAtChatBottomRef.current) {
+      const el = chatContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
   }, [messages, tab]);
 
   useEffect(() => {
@@ -850,6 +852,93 @@ export default function BroadcastDetail() {
     }
   };
 
+  const SIM_VIEWER_NAMES = ['하나', '두리', '세리', '네모', '다솜', '여섯', '일곱', '여덟'];
+
+  const runSimulation = async () => {
+    if (!campaign?.chatRoomId) return;
+    const roomId = campaign.chatRoomId;
+    const productId = campaign.campaignProducts?.[0]?.productId ?? 1;
+    const SockJS = (window as any).SockJS;
+    const StompJs = (window as any).StompJs;
+    if (!SockJS || !StompJs) return;
+
+    setSimRunning(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${productId}/simulation-messages`);
+      const json = await res.json();
+      const chatMessages: string[] = json?.data?.chatMessages ?? [];
+      const faqQuestions: string[] = json?.data?.faqQuestions ?? [];
+      if (chatMessages.length === 0) {
+        alert('시뮬레이션 메시지가 없습니다. 상품 상세에서 먼저 생성해주세요.');
+        return;
+      }
+
+      const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+      const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
+      const sendAction = (client: any, action: string, actor: string, payload: object) => {
+        try {
+          client.send('/send/room.action', {}, JSON.stringify({
+            roomId, action,
+            actor: { userId: actor, username: actor, sender: actor },
+            payload,
+          }));
+        } catch { /* 무시 */ }
+      };
+
+      // Phase 1: 가상 시청자 순차 입장
+      const viewers: { name: string; client: any }[] = [];
+      for (const name of SIM_VIEWER_NAMES) {
+        await new Promise<void>((resolve) => {
+          const socket = new SockJS(`${WS_BASE_URL}/ws`);
+          const client = StompJs.Stomp.over(socket);
+          client.debug = () => {};
+          client.heartbeat.outgoing = 0;
+          client.heartbeat.incoming = 0;
+          client.connect({}, () => {
+            client.subscribe(`/sub/room/${roomId}`, () => {});
+            sendAction(client, 'CHAT.JOIN', name, {});
+            viewers.push({ name, client });
+            resolve();
+          }, () => resolve());
+        });
+        await sleep(rand(500, 1500));
+      }
+
+      // Phase 2: 채팅 + FAQ 혼합 (4채팅마다 FAQ 1회)
+      let faqIdx = 0;
+      const messageCount = Math.min(chatMessages.length, 20);
+      for (let i = 0; i < messageCount; i++) {
+        const viewer = viewers[i % viewers.length];
+        if (i > 0 && i % 4 === 0 && faqIdx < faqQuestions.length) {
+          sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
+            question: faqQuestions[faqIdx++], productId,
+          });
+          await sleep(rand(1000, 2000));
+        }
+        sendAction(viewer.client, 'CHAT.MESSAGE', viewer.name, { message: chatMessages[i % chatMessages.length] });
+        await sleep(rand(800, 2000));
+      }
+
+      // 남은 FAQ 발송
+      while (faqIdx < faqQuestions.length) {
+        const viewer = viewers[faqIdx % viewers.length];
+        sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
+          question: faqQuestions[faqIdx++], productId,
+        });
+        await sleep(rand(2000, 4000));
+      }
+
+      // Phase 3: 가상 시청자 순차 퇴장
+      for (const viewer of viewers) {
+        sendAction(viewer.client, 'CHAT.LEAVE', viewer.name, {});
+        await sleep(rand(300, 800));
+        try { viewer.client.disconnect(); } catch { /* 무시 */ }
+      }
+    } finally {
+      setSimRunning(false);
+    }
+  };
+
   const disconnect = () => {
     isConnectingRef.current = false;
     if (campaign?.chatRoomId) historyLoadedRoomsRef.current.delete(campaign.chatRoomId);
@@ -1249,26 +1338,10 @@ export default function BroadcastDetail() {
                   {process.env.NODE_ENV === 'development' && campaign.chatRoomId && (
                     <button
                       className="btn-sim-run"
-                      onClick={async () => {
-                        setSimRunning(true);
-                        try {
-                          await fetch(`${CHAT_API_BASE}/simulation/run`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              roomId: campaign.chatRoomId,
-                              productId: campaign.campaignProducts?.[0]?.productId ?? 1,
-                              viewerCount: 8,
-                              messageCount: 20,
-                            }),
-                          });
-                        } finally {
-                          setSimRunning(false);
-                        }
-                      }}
+                      onClick={runSimulation}
                       disabled={simRunning}
                     >
-                      {simRunning ? '시뮬레이션 실행 중...' : '🧪 시뮬레이션 실행'}
+                      {simRunning ? '시뮬레이션 진행 중...' : '🧪 시뮬레이션 실행'}
                     </button>
                   )}
                 </div>

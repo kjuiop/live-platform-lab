@@ -7,6 +7,8 @@ import org.giglab.live.commerce.api.dto.product.DocumentItem;
 import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
+import org.giglab.live.commerce.api.dto.product.FaqSampleResponse;
+import org.giglab.live.commerce.api.dto.product.GenerateProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
@@ -25,6 +27,8 @@ import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.FaqSampleItem;
+import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.DocumentSummary;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
@@ -65,6 +69,11 @@ public interface ProductMapper {
   EmbedDocumentResponse toEmbedDocumentResponse(EmbedDocumentResult result);
 
   AskProductQuestionResponse toAskProductQuestionResponse(AskProductQuestionResult result);
+
+  FaqSampleResponse toFaqSampleResponse(FaqSampleItem item);
+
+  GenerateProductFaqSamplesResponse toGenerateProductFaqSamplesResponse(
+      GenerateProductFaqSamplesResult result);
 
   @Mapping(target = "embeddingStatus", expression = "java(result.embeddingStatus().name())")
   EmbedProductInfoResponse toEmbedProductInfoResponse(EmbedProductInfoResult result);

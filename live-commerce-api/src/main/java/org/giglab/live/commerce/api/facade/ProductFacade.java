@@ -10,6 +10,7 @@ import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
+import org.giglab.live.commerce.api.dto.product.GenerateProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
@@ -27,6 +28,7 @@ import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
@@ -73,6 +75,11 @@ public class ProductFacade {
     AskProductQuestionResult result =
         productService.askProductQuestion(productId, request.question());
     return productMapper.toAskProductQuestionResponse(result);
+  }
+
+  public GenerateProductFaqSamplesResponse generateFaqSamples(Long productId) {
+    GenerateProductFaqSamplesResult result = productService.generateFaqSamples(productId);
+    return productMapper.toGenerateProductFaqSamplesResponse(result);
   }
 
   public EmbedProductInfoResponse embedProductInfo(Long productId) {

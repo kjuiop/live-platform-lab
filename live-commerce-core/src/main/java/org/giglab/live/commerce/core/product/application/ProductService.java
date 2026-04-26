@@ -12,6 +12,7 @@ import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuesti
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsContext;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
@@ -25,6 +26,7 @@ import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProduc
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocumentsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.GenerateProductFaqSamplesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GetDocumentListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.MarkAllDocumentsEmbeddedUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.ParseProductPdfUseCase;
@@ -43,6 +45,7 @@ public class ProductService {
   private final GetDocumentListUseCase getDocumentListUseCase;
   private final EmbedDocumentUseCase embedDocumentUseCase;
   private final AskProductQuestionUseCase askProductQuestionUseCase;
+  private final GenerateProductFaqSamplesUseCase generateProductFaqSamplesUseCase;
   private final EmbedProductInfoUseCase embedProductInfoUseCase;
   private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
   private final MarkAllDocumentsEmbeddedUseCase markAllDocumentsEmbeddedUseCase;
@@ -79,6 +82,10 @@ public class ProductService {
 
   public AskProductQuestionResult askProductQuestion(Long productId, String question) {
     return askProductQuestionUseCase.execute(productId, question);
+  }
+
+  public GenerateProductFaqSamplesResult generateFaqSamples(Long productId) {
+    return generateProductFaqSamplesUseCase.execute(productId);
   }
 
   public EmbedProductInfoResult embedProductInfo(Long productId) {

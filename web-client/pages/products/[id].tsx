@@ -34,6 +34,11 @@ interface QnAItem {
   isLoading?: boolean;
 }
 
+interface FaqSampleItem {
+  question: string;
+  answer: string;
+}
+
 interface LinkedCampaign {
   campaignId: number;
   title: string;
@@ -58,6 +63,10 @@ export default function ProductDetail() {
 
   const [productEmbedding, setProductEmbedding] = useState(false);
   const [bulkEmbedding, setBulkEmbedding] = useState(false);
+
+  const [faqSamples, setFaqSamples] = useState<FaqSampleItem[]>([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqGenerated, setFaqGenerated] = useState(false);
 
   const [qnaList, setQnaList] = useState<QnAItem[]>([]);
   const [aiInput, setAiInput] = useState('');
@@ -155,6 +164,22 @@ export default function ProductDetail() {
         next.delete(documentId);
         return next;
       });
+    }
+  };
+
+  const handleGenerateFaqSamples = async () => {
+    setFaqLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}/ai/faq-samples`, { method: 'POST' });
+      const json = await res.json();
+      if (res.ok && json?.data?.samples) {
+        setFaqSamples(json.data.samples);
+        setFaqGenerated(true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setFaqLoading(false);
     }
   };
 
@@ -292,8 +317,21 @@ export default function ProductDetail() {
         .ai-send { padding: 9px 14px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
         .ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        /* 사전 Q&A */
+        .faq-list { display: flex; flex-direction: column; gap: 12px; }
+        .faq-item { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+        .faq-row { display: flex; align-items: flex-start; gap: 8px; }
+        .faq-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; margin-top: 1px; }
+        .faq-badge.q { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .faq-badge.a { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+        .faq-text { font-size: 13px; line-height: 1.65; }
+        .faq-text.q { color: #cbd5e1; font-weight: 600; }
+        .faq-text.a { color: #94a3b8; }
+
         /* 연결된 방송 */
-        .broadcast-list { display: flex; flex-direction: column; gap: 8px; }
+        .broadcast-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+        .broadcast-list::-webkit-scrollbar { width: 4px; }
+        .broadcast-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .b-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; transition: border-color 0.2s; cursor: pointer; }
         .b-item:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.05); }
         .b-info { flex: 1; min-width: 0; }
@@ -410,6 +448,44 @@ export default function ProductDetail() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            {/* 방송 전 사전 Q&A */}
+            <div className="section-card">
+              <div className="section-header">
+                <div>
+                  <div className="section-title">방송 전 사전 Q&A</div>
+                  <div className="section-sub">임베딩된 문서 기반으로 예상 질문과 답변을 생성합니다</div>
+                </div>
+                <button
+                  className="bulk-embed-btn"
+                  onClick={handleGenerateFaqSamples}
+                  disabled={faqLoading}
+                >
+                  {faqLoading ? '생성 중...' : faqGenerated ? '재생성' : 'Q&A 생성'}
+                </button>
+              </div>
+
+              {faqSamples.length === 0 ? (
+                <div className="no-docs">
+                  {faqGenerated ? '생성된 Q&A가 없습니다.' : 'Q&A 생성 버튼을 눌러 예상 질문을 준비하세요.'}
+                </div>
+              ) : (
+                <div className="faq-list">
+                  {faqSamples.map((item, idx) => (
+                    <div key={idx} className="faq-item">
+                      <div className="faq-row">
+                        <span className="faq-badge q">Q</span>
+                        <span className="faq-text q">{item.question}</span>
+                      </div>
+                      <div className="faq-row">
+                        <span className="faq-badge a">A</span>
+                        <span className="faq-text a">{item.answer}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -11,6 +11,7 @@ import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedAllDocumentsResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
+import org.giglab.live.commerce.api.dto.product.GenerateProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
@@ -82,6 +83,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ParsedProductResponse>> parsePdf(
       @RequestParam("file") MultipartFile file) {
     ParsedProductResponse response = productFacade.parsePdf(file);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "사전 Q&A 생성", description = "임베딩된 문서를 기반으로 라이브 방송 전 예상 질문과 답변 목록을 생성합니다.")
+  @PostMapping("/{id}/ai/faq-samples")
+  public ResponseEntity<ApiResponse<GenerateProductFaqSamplesResponse>> generateFaqSamples(
+      @PathVariable Long id) {
+    GenerateProductFaqSamplesResponse response = productFacade.generateFaqSamples(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

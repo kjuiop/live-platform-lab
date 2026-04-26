@@ -2,11 +2,11 @@ package org.giglab.live.commerce.core.campaign.application.usecase;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.commerce.core.campaign.application.ChatInsightPromptBuilder;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignInsightResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.GenerateAiReportCommand;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignStorePort;
+import org.giglab.live.commerce.core.campaign.application.prompt.ChatInsightPromptBuilder;
 import org.giglab.live.commerce.core.campaign.domain.entity.Campaign;
 import org.giglab.live.commerce.core.campaign.domain.exception.CampaignDomainException;
 import org.giglab.live.commerce.core.campaign.domain.exception.CampaignErrorCode;

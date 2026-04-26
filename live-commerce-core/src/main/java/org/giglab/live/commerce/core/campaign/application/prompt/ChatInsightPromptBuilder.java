@@ -37,6 +37,13 @@ public class ChatInsightPromptBuilder {
       sb.append("\n");
     }
 
+    if (!insight.contextMessages().isEmpty()) {
+      sb.append("## 맥락 보완 채팅 샘플 (감성 중립 일반 채팅)\n");
+      sb.append("※ 긍정/부정 샘플이 부족해 추가 수집한 채팅입니다. 분류 없이 맥락 파악용으로만 참고하세요.\n");
+      insight.contextMessages().forEach(m -> sb.append("- ").append(m).append("\n"));
+      sb.append("\n");
+    }
+
     if (!insight.unansweredQuestions().isEmpty()) {
       sb.append("## 미답변 질문 목록\n");
       insight.unansweredQuestions().forEach(q -> sb.append("- ").append(q).append("\n"));

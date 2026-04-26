@@ -11,15 +11,11 @@ public record ChatRoomInsightResponse(
     int totalMessages,
     int totalQuestions,
     int aiAnswerCount,
-    List<String> positiveMessages,
-    List<String> negativeMessages,
+    List<String> rawMessages,
     List<String> unansweredQuestions) {
 
   public static ChatRoomInsightResponse of(
-      ViewerStats viewer,
-      ChatStats chat,
-      List<String> positiveMessages,
-      List<String> negativeMessages) {
+      ViewerStats viewer, ChatStats chat, List<String> rawMessages) {
     return new ChatRoomInsightResponse(
         viewer.totalViewers(),
         viewer.peakConcurrent(),
@@ -27,8 +23,7 @@ public record ChatRoomInsightResponse(
         chat.totalMessages(),
         chat.totalQuestions(),
         chat.aiAnswerCount(),
-        positiveMessages,
-        negativeMessages,
+        rawMessages,
         chat.unansweredQuestions());
   }
 }

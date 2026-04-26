@@ -1,6 +1,7 @@
 package org.giglab.live.commerce.core.campaign.application.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CreateCampaignReportCommand(
     String chatRoomId,
@@ -12,4 +13,5 @@ public record CreateCampaignReportCommand(
     int aiAnswerCount,
     String aiReportText,
     LocalDateTime startedAt,
-    LocalDateTime endedAt) {}
+    LocalDateTime endedAt,
+    List<String> unansweredQuestions) {}

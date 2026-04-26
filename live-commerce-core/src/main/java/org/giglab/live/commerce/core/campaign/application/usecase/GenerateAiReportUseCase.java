@@ -76,7 +76,8 @@ public class GenerateAiReportUseCase {
               insight.aiAnswerCount(),
               aiReportText,
               campaign.getStartedAt(),
-              campaign.getEndedAt()));
+              campaign.getEndedAt(),
+              insight.unansweredQuestions()));
 
       log.info("AI 리포트 생성 완료 - campaignId={}", command.campaignId());
     } catch (Exception e) {

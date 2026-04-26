@@ -45,7 +45,8 @@ public class CreateCampaignReportUseCase {
                         command.aiAnswerCount(),
                         command.aiReportText(),
                         command.startedAt(),
-                        command.endedAt()));
+                        command.endedAt(),
+                        command.unansweredQuestions()));
 
     if (report.getId() != null) {
       report.update(
@@ -57,7 +58,8 @@ public class CreateCampaignReportUseCase {
           command.aiAnswerCount(),
           command.aiReportText(),
           command.startedAt(),
-          command.endedAt());
+          command.endedAt(),
+          command.unansweredQuestions());
     }
 
     campaignReportStorePort.store(report);

@@ -2,7 +2,6 @@ package org.giglab.live.infrastructure.mongo.aggregator;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.command.ActionType;
@@ -53,14 +52,14 @@ public class ChatMessageAggregator {
   }
 
   private List<String> findUnansweredQuestions(String roomId) {
-    List<String> questions = findPayloadQuestions(roomId, ActionType.FAQ_QUESTION.getKey());
-    Set<String> answered = Set.copyOf(findPayloadQuestions(roomId, ActionType.FAQ_ANSWER.getKey()));
-
-    return questions.stream().filter(q -> !answered.contains(q)).toList();
-  }
-
-  private List<String> findPayloadQuestions(String roomId, String action) {
-    Query query = new Query(Criteria.where("roomId").is(roomId).and("action").is(action));
+    Query query =
+        new Query(
+            Criteria.where("roomId")
+                .is(roomId)
+                .and("action")
+                .is(ActionType.FAQ_ANSWER.getKey())
+                .and("payload.answer")
+                .regex("해당 정보를 찾을 수 없습니다"));
 
     return mongoTemplate.find(query, org.giglab.live.domain.model.ChatMessage.class).stream()
         .map(msg -> msg.getPayload() != null ? (String) msg.getPayload().get("question") : null)

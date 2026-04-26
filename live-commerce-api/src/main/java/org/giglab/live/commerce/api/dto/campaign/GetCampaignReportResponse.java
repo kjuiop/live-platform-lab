@@ -1,6 +1,7 @@
 package org.giglab.live.commerce.api.dto.campaign;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
 
 public record GetCampaignReportResponse(
@@ -15,7 +16,8 @@ public record GetCampaignReportResponse(
     int aiAnswerCount,
     String aiReportText,
     LocalDateTime startedAt,
-    LocalDateTime endedAt) {
+    LocalDateTime endedAt,
+    List<String> unansweredQuestions) {
 
   public static GetCampaignReportResponse from(GetCampaignReportResult result) {
     return new GetCampaignReportResponse(
@@ -30,6 +32,7 @@ public record GetCampaignReportResponse(
         result.aiAnswerCount(),
         result.aiReportText(),
         result.startedAt(),
-        result.endedAt());
+        result.endedAt(),
+        result.unansweredQuestions());
   }
 }

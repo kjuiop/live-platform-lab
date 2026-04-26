@@ -32,6 +32,7 @@ interface CampaignReport {
   aiReportText: string | null;
   startedAt: string | null;
   endedAt: string | null;
+  unansweredQuestions: string[];
 }
 
 interface Campaign {
@@ -200,6 +201,19 @@ function ChatQnAPanel({
               </div>
             </div>
           </div>
+          {aiReport?.unansweredQuestions?.length > 0 && (
+            <div className="rp-section">
+              <div className="rp-section-title">AI 미답변 질문</div>
+              <div className="rp-questions">
+                {aiReport.unansweredQuestions.map((q, i) => (
+                  <div key={i} className="rp-question">
+                    <span className="rp-q-num">{i + 1}</span>
+                    <span className="rp-q-text">{q}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="rp-section">
             <div className="rp-section-title">AI 인사이트 & 추천</div>
             {aiReportLoading ? (
@@ -535,7 +549,7 @@ function EndedAnalysisPanel() {
 
         {/* 자주 나온 질문 */}
         <div className="ap-section">
-          <div className="ap-section-title">시청자 주요 질문</div>
+          <div className="ap-section-title">AI 미답변 질문</div>
           <div className="ap-questions">
             {a.topQuestions.map((q, i) => (
               <div key={i} className="ap-question">

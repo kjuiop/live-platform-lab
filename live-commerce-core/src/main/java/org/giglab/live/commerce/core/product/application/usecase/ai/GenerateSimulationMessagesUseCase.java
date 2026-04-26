@@ -50,7 +50,7 @@ public class GenerateSimulationMessagesUseCase {
         ]
       }
 
-      chatMessages 20개(긍정 8개·부정 4개·중립 8개), faqQuestions 5개를 생성하세요.
+      chatMessages 200개(긍정 80개·부정 40개·중립 80개), faqQuestions 10개를 생성하세요.
       """;
 
   private final SearchDocumentPort searchDocumentPort;

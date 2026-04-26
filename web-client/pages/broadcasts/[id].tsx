@@ -905,18 +905,26 @@ export default function BroadcastDetail() {
       }
 
       // Phase 2: 채팅 + FAQ 혼합 (4채팅마다 FAQ 1회)
+      // 목표 총 시뮬레이션 시간 10분 기준으로 메시지당 딜레이 자동 계산
+      const TARGET_DURATION_MS = 10 * 60 * 1000;
+      const viewerOverheadMs = viewers.length * 1000 * 2;
+      const chatBudgetMs = Math.max(TARGET_DURATION_MS - viewerOverheadMs, 1000);
+      const baseIntervalMs = Math.max(Math.floor(chatBudgetMs / chatMessages.length), 500);
+      const minChatMs = Math.floor(baseIntervalMs * 0.7);
+      const maxChatMs = Math.floor(baseIntervalMs * 1.3);
+
       let faqIdx = 0;
-      const messageCount = Math.min(chatMessages.length, 20);
+      const messageCount = chatMessages.length;
       for (let i = 0; i < messageCount; i++) {
         const viewer = viewers[i % viewers.length];
         if (i > 0 && i % 4 === 0 && faqIdx < faqQuestions.length) {
           sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
             question: faqQuestions[faqIdx++], productId,
           });
-          await sleep(rand(1000, 2000));
+          await sleep(rand(minChatMs, maxChatMs));
         }
         sendAction(viewer.client, 'CHAT.MESSAGE', viewer.name, { message: chatMessages[i % chatMessages.length] });
-        await sleep(rand(800, 2000));
+        await sleep(rand(minChatMs, maxChatMs));
       }
 
       // 남은 FAQ 발송
@@ -925,13 +933,13 @@ export default function BroadcastDetail() {
         sendAction(viewer.client, 'FAQ.QUESTION', viewer.name, {
           question: faqQuestions[faqIdx++], productId,
         });
-        await sleep(rand(2000, 4000));
+        await sleep(rand(minChatMs, maxChatMs));
       }
 
-      // Phase 3: 가상 시청자 순차 퇴장
+      // Phase 3: 가상 시청자 순차 퇴장 (랜덤)
       for (const viewer of viewers) {
         sendAction(viewer.client, 'CHAT.LEAVE', viewer.name, {});
-        await sleep(rand(300, 800));
+        await sleep(rand(500, 1500));
         try { viewer.client.disconnect(); } catch { /* 무시 */ }
       }
     } finally {

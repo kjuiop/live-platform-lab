@@ -7,7 +7,8 @@ import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum CampaignReportErrorCode implements DomainErrorCode {
-  CAMPAIGN_NOT_FOUND("CAMPAIGN-REPORT-4401", "채팅방에 연결된 캠페인을 찾을 수 없습니다.");
+  CAMPAIGN_NOT_FOUND("CAMPAIGN-REPORT-4401", "채팅방에 연결된 캠페인을 찾을 수 없습니다."),
+  REPORT_NOT_FOUND("CAMPAIGN-REPORT-4402", "방송 리포트를 찾을 수 없습니다.");
 
   private final String code;
   private final String message;

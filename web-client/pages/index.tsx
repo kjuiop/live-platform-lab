@@ -7,13 +7,13 @@ const features = [
     icon: '📄',
     title: 'PDF 상품 임베딩',
     description: '상품 정보 PDF를 업로드하면 자동으로 벡터화하여 AI 검색에 활용합니다.',
-    status: 'planned',
+    status: 'done',
   },
   {
     icon: '🤖',
     title: 'AI 고객 Q&A',
     description: '방송 중 고객 질문에 RAG 기반으로 상품 정보를 근거로 한 답변을 제공합니다.',
-    status: 'planned',
+    status: 'done',
   },
   {
     icon: '💬',
@@ -25,7 +25,7 @@ const features = [
     icon: '📊',
     title: '호스트 인사이트',
     description: '채팅 메시지를 분석하여 호스트에게 실시간 반응 및 인사이트를 제공합니다.',
-    status: 'planned',
+    status: 'done',
   },
 ];
 

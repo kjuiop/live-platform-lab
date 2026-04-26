@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CampaignReportRepository extends JpaRepository<CampaignReport, Long> {
   Optional<CampaignReport> findByRoomId(String roomId);
+
+  Optional<CampaignReport> findByCampaignId(Long campaignId);
 }

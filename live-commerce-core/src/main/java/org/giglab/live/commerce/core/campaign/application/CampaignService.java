@@ -7,7 +7,9 @@ import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GenerateAiReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomCreatePort;
 import org.giglab.live.commerce.core.campaign.application.port.external.ChatRoomDeletePort;
@@ -15,7 +17,9 @@ import org.giglab.live.commerce.core.campaign.application.usecase.AssignChatRoom
 import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignReportUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.CreateCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.EndCampaignUseCase;
+import org.giglab.live.commerce.core.campaign.application.usecase.GenerateAiReportUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignListUseCase;
+import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignReportUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.StartCampaignUseCase;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,8 @@ public class CampaignService {
   private final ChatRoomCreatePort chatRoomCreatePort;
   private final ChatRoomDeletePort chatRoomDeletePort;
   private final CreateCampaignReportUseCase createCampaignReportUseCase;
+  private final GenerateAiReportUseCase generateAiReportUseCase;
+  private final GetCampaignReportUseCase getCampaignReportUseCase;
 
   public GetCampaignListResult getList(CampaignListQuery query) {
     return getCampaignListUseCase.execute(query);
@@ -67,13 +73,10 @@ public class CampaignService {
     // TX 1: 방송 종료 커밋 — DB 커넥션 즉시 반환
     BroadcastStatusResult result = endCampaignUseCase.execute(campaignId);
 
-    // HTTP: 채팅방 삭제 — chatRoomId는 DB에 유지 (stats 조회 용도)
+    // HTTP: 채팅방 삭제 + AI 리포트 생성 — 둘 다 @Async, end() 응답을 블로킹하지 않음
     if (result.chatRoomId() != null) {
-      try {
-        chatRoomDeletePort.deleteRoom(result.chatRoomId());
-      } catch (Exception e) {
-        log.warn("채팅방 삭제 실패 (chat-server) - campaignId={}", campaignId, e);
-      }
+      chatRoomDeletePort.deleteRoom(result.chatRoomId());
+      generateAiReportUseCase.execute(new GenerateAiReportCommand(campaignId, result.chatRoomId()));
     }
 
     return result;
@@ -85,5 +88,9 @@ public class CampaignService {
 
   public void saveCampaignReport(Long campaignId, CreateCampaignReportCommand command) {
     createCampaignReportUseCase.execute(campaignId, command);
+  }
+
+  public GetCampaignReportResult getCampaignReport(Long campaignId) {
+    return getCampaignReportUseCase.execute(campaignId);
   }
 }

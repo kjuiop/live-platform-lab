@@ -10,6 +10,7 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignReportResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.api.facade.CampaignFacade;
 import org.giglab.live.commerce.api.response.ApiResponse;
@@ -65,5 +66,11 @@ public class CampaignController {
       @PathVariable Long campaignId, @RequestBody @Valid CreateCampaignReportRequest request) {
     campaignFacade.saveCampaignReport(campaignId, request);
     return ApiResponse.success();
+  }
+
+  @Operation(summary = "방송 리포트 조회", description = "캠페인 ID로 AI 분석 리포트를 조회합니다.")
+  @GetMapping("/{campaignId}/reports")
+  public ApiResponse<GetCampaignReportResponse> getReport(@PathVariable Long campaignId) {
+    return ApiResponse.success(campaignFacade.getCampaignReport(campaignId));
   }
 }

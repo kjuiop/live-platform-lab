@@ -7,6 +7,7 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignReportResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
 import org.giglab.live.commerce.core.campaign.application.CampaignService;
@@ -15,6 +16,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignComm
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.springframework.stereotype.Service;
 
@@ -55,5 +57,10 @@ public class CampaignFacade {
   public void saveCampaignReport(Long campaignId, CreateCampaignReportRequest request) {
     CreateCampaignReportCommand command = campaignMapper.toSaveCampaignReportCommand(request);
     campaignService.saveCampaignReport(campaignId, command);
+  }
+
+  public GetCampaignReportResponse getCampaignReport(Long campaignId) {
+    GetCampaignReportResult result = campaignService.getCampaignReport(campaignId);
+    return GetCampaignReportResponse.from(result);
   }
 }

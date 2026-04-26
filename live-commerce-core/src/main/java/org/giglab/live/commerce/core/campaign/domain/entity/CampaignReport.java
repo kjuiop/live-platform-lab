@@ -1,18 +1,21 @@
 package org.giglab.live.commerce.core.campaign.domain.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
+import org.giglab.live.commerce.core.global.jpa.entity.types.StringListConverter;
 
 @Getter
 @Builder
@@ -42,6 +45,10 @@ public class CampaignReport extends AuditedEntity {
   @Column(columnDefinition = "TEXT")
   private String aiReportText;
 
+  @Convert(converter = StringListConverter.class)
+  @Column(columnDefinition = "TEXT")
+  private List<String> unansweredQuestions;
+
   private LocalDateTime startedAt;
   private LocalDateTime endedAt;
 
@@ -54,7 +61,8 @@ public class CampaignReport extends AuditedEntity {
       int aiAnswerCount,
       String aiReportText,
       LocalDateTime startedAt,
-      LocalDateTime endedAt) {
+      LocalDateTime endedAt,
+      List<String> unansweredQuestions) {
     this.totalViewers = totalViewers;
     this.peakConcurrent = peakConcurrent;
     this.avgDurationSeconds = avgDurationSeconds;
@@ -64,6 +72,7 @@ public class CampaignReport extends AuditedEntity {
     this.aiReportText = aiReportText;
     this.startedAt = startedAt;
     this.endedAt = endedAt;
+    this.unansweredQuestions = unansweredQuestions;
   }
 
   public static CampaignReport create(
@@ -77,7 +86,8 @@ public class CampaignReport extends AuditedEntity {
       int aiAnswerCount,
       String aiReportText,
       LocalDateTime startedAt,
-      LocalDateTime endedAt) {
+      LocalDateTime endedAt,
+      List<String> unansweredQuestions) {
     return CampaignReport.builder()
         .campaignId(campaignId)
         .roomId(roomId)
@@ -90,6 +100,7 @@ public class CampaignReport extends AuditedEntity {
         .aiReportText(aiReportText)
         .startedAt(startedAt)
         .endedAt(endedAt)
+        .unansweredQuestions(unansweredQuestions)
         .build();
   }
 }

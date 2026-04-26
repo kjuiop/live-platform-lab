@@ -22,4 +22,9 @@ public class JpaCampaignReportStoreAdapter implements CampaignReportStorePort {
   public Optional<CampaignReport> findByRoomId(String roomId) {
     return campaignReportRepository.findByRoomId(roomId);
   }
+
+  @Override
+  public Optional<CampaignReport> findByCampaignId(Long campaignId) {
+    return campaignReportRepository.findByCampaignId(campaignId);
+  }
 }

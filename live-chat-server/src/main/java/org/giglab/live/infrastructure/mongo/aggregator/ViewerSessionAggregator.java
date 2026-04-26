@@ -1,4 +1,4 @@
-package org.giglab.live.domain.aggregator;
+package org.giglab.live.infrastructure.mongo.aggregator;
 
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

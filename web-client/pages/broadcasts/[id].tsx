@@ -909,6 +909,12 @@ export default function BroadcastDetail() {
     }
   }, [campaign?.status, campaign?.chatRoomId, areScriptsReady]);
 
+  // 방송 종료 상태로 진입하거나 종료 직후 채팅·FAQ 히스토리 로드 (WS 없이 REST로)
+  useEffect(() => {
+    if (!campaign?.chatRoomId || toUiStatus(campaign.status) !== 'ended') return;
+    loadHistory(campaign.chatRoomId);
+  }, [campaign?.chatRoomId, campaign?.status]);
+
   // 컴포넌트 언마운트 시에만 연결 해제
   useEffect(() => {
     return () => { disconnect(); };

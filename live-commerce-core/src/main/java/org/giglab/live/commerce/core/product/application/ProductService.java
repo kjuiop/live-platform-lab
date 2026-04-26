@@ -13,6 +13,7 @@ import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocument
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.GetProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
@@ -28,6 +29,7 @@ import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumen
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GenerateProductFaqSamplesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GetDocumentListUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.GetProductFaqSamplesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.MarkAllDocumentsEmbeddedUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.ParseProductPdfUseCase;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,7 @@ public class ProductService {
   private final EmbedDocumentUseCase embedDocumentUseCase;
   private final AskProductQuestionUseCase askProductQuestionUseCase;
   private final GenerateProductFaqSamplesUseCase generateProductFaqSamplesUseCase;
+  private final GetProductFaqSamplesUseCase getProductFaqSamplesUseCase;
   private final EmbedProductInfoUseCase embedProductInfoUseCase;
   private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
   private final MarkAllDocumentsEmbeddedUseCase markAllDocumentsEmbeddedUseCase;
@@ -86,6 +89,10 @@ public class ProductService {
 
   public GenerateProductFaqSamplesResult generateFaqSamples(Long productId) {
     return generateProductFaqSamplesUseCase.execute(productId);
+  }
+
+  public GetProductFaqSamplesResult getProductFaqSamples(Long productId) {
+    return getProductFaqSamplesUseCase.execute(productId);
   }
 
   public EmbedProductInfoResult embedProductInfo(Long productId) {

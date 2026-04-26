@@ -19,6 +19,18 @@ interface CampaignProduct {
   displayOrder: number;
 }
 
+interface ProductFaqSample {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+interface ProductFaqGroup {
+  productId: number;
+  productName: string;
+  items: ProductFaqSample[];
+}
+
 interface CampaignReport {
   id: number;
   campaignId: number;
@@ -640,6 +652,7 @@ export default function BroadcastDetail() {
   } | null>(null);
   const [aiReport, setAiReport] = useState<CampaignReport | null>(null);
   const [aiReportLoading, setAiReportLoading] = useState(false);
+  const [productFaqGroups, setProductFaqGroups] = useState<ProductFaqGroup[]>([]);
   const aiPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [linkedProductIds, setLinkedProductIds] = useState<number[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
@@ -679,6 +692,21 @@ export default function BroadcastDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+
+  useEffect(() => {
+    if (!campaign || campaign.campaignProducts.length === 0) return;
+    Promise.all(
+      campaign.campaignProducts.map(async (p) => {
+        try {
+          const res = await fetch(`${API_BASE}/products/${p.productId}/faq-samples`);
+          const json = await res.json();
+          return { productId: p.productId, productName: p.name, items: json?.data?.items ?? [] } as ProductFaqGroup;
+        } catch {
+          return { productId: p.productId, productName: p.name, items: [] } as ProductFaqGroup;
+        }
+      })
+    ).then((groups) => setProductFaqGroups(groups.filter((g) => g.items.length > 0)));
+  }, [campaign]);
 
   useEffect(() => {
     if (timerIntervalRef.current) {
@@ -1075,6 +1103,23 @@ export default function BroadcastDetail() {
         .status-overlay.ended { color:#94a3b8; }
 
         .info-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:24px; }
+
+        .pre-faq-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:14px; }
+        .pre-faq-header { display:flex; align-items:baseline; gap:10px; }
+        .pre-faq-title { font-size:14px; font-weight:700; color:#f1f5f9; }
+        .pre-faq-sub { font-size:11px; color:#64748b; }
+        .pre-faq-group { display:flex; flex-direction:column; gap:10px; max-height: 440px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent; }
+        .pre-faq-group::-webkit-scrollbar { width:4px; }
+        .pre-faq-group::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+        .pre-faq-product-name { font-size:11px; font-weight:700; color:#6366f1; letter-spacing:0.04em; padding-bottom:4px; border-bottom:1px solid rgba(99,102,241,0.15); }
+        .pre-faq-item { display:flex; flex-direction:column; gap:6px; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; }
+        .pre-faq-row { display:flex; align-items:flex-start; gap:8px; }
+        .pre-faq-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; flex-shrink:0; margin-top:1px; }
+        .pre-faq-badge.q { background:rgba(99,102,241,0.2); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3); }
+        .pre-faq-badge.a { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.25); }
+        .pre-faq-text { font-size:13px; line-height:1.6; }
+        .pre-faq-text.q { color:#cbd5e1; font-weight:600; }
+        .pre-faq-text.a { color:#94a3b8; }
         .info-title { font-size:22px; font-weight:700; color:#f1f5f9; margin-bottom:12px; }
         .info-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:14px; }
         .s-badge { font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px; }
@@ -1250,6 +1295,35 @@ export default function BroadcastDetail() {
                 )}
               </div>
             </div>
+
+            {/* 사전 Q&A 카드 */}
+            {productFaqGroups.length > 0 && (
+              <div className="pre-faq-card">
+                <div className="pre-faq-header">
+                  <span className="pre-faq-title">📋 방송 전 사전 Q&A</span>
+                  <span className="pre-faq-sub">방송 전 준비된 예상 질문과 답변입니다</span>
+                </div>
+                {productFaqGroups.map((group) => (
+                  <div key={group.productId} className="pre-faq-group">
+                    {productFaqGroups.length > 1 && (
+                      <div className="pre-faq-product-name">{group.productName}</div>
+                    )}
+                    {group.items.map((item) => (
+                      <div key={item.id} className="pre-faq-item">
+                        <div className="pre-faq-row">
+                          <span className="pre-faq-badge q">Q</span>
+                          <span className="pre-faq-text q">{item.question}</span>
+                        </div>
+                        <div className="pre-faq-row">
+                          <span className="pre-faq-badge a">A</span>
+                          <span className="pre-faq-text a">{item.answer}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 우측 패널: 상태별 */}

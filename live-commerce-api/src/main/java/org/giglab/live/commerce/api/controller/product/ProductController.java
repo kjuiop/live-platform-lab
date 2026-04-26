@@ -13,6 +13,7 @@ import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GenerateProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
@@ -86,11 +87,21 @@ public class ProductController {
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 
-  @Operation(summary = "사전 Q&A 생성", description = "임베딩된 문서를 기반으로 라이브 방송 전 예상 질문과 답변 목록을 생성합니다.")
+  @Operation(
+      summary = "사전 Q&A 생성",
+      description = "임베딩된 문서를 기반으로 라이브 방송 전 예상 질문과 답변 목록을 생성하고 저장합니다.")
   @PostMapping("/{id}/ai/faq-samples")
   public ResponseEntity<ApiResponse<GenerateProductFaqSamplesResponse>> generateFaqSamples(
       @PathVariable Long id) {
     GenerateProductFaqSamplesResponse response = productFacade.generateFaqSamples(id);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "사전 Q&A 조회", description = "상품에 저장된 사전 Q&A 목록을 조회합니다.")
+  @GetMapping("/{id}/faq-samples")
+  public ResponseEntity<ApiResponse<GetProductFaqSamplesResponse>> getProductFaqSamples(
+      @PathVariable Long id) {
+    GetProductFaqSamplesResponse response = productFacade.getProductFaqSamples(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

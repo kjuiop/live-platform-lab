@@ -111,6 +111,19 @@ export default function ProductDetail() {
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/products/${id}/faq-samples`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((json) => {
+        if (json?.data?.items?.length > 0) {
+          setFaqSamples(json.data.items);
+          setFaqGenerated(true);
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
     qnaBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [qnaList]);
 
@@ -170,10 +183,11 @@ export default function ProductDetail() {
   const handleGenerateFaqSamples = async () => {
     setFaqLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/products/${id}/ai/faq-samples`, { method: 'POST' });
+      await fetch(`${API_BASE}/products/${id}/ai/faq-samples`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/products/${id}/faq-samples`);
       const json = await res.json();
-      if (res.ok && json?.data?.samples) {
-        setFaqSamples(json.data.samples);
+      if (res.ok && json?.data?.items) {
+        setFaqSamples(json.data.items);
         setFaqGenerated(true);
       }
     } catch {
@@ -318,7 +332,9 @@ export default function ProductDetail() {
         .ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
         /* 사전 Q&A */
-        .faq-list { display: flex; flex-direction: column; gap: 12px; }
+        .faq-list { display: flex; flex-direction: column; gap: 12px; max-height: 440px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+        .faq-list::-webkit-scrollbar { width: 4px; }
+        .faq-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .faq-item { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
         .faq-row { display: flex; align-items: flex-start; gap: 8px; }
         .faq-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; margin-top: 1px; }

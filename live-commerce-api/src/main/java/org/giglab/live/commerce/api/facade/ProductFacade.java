@@ -12,11 +12,13 @@ import org.giglab.live.commerce.api.dto.product.EmbedDocumentResponse;
 import org.giglab.live.commerce.api.dto.product.EmbedProductInfoResponse;
 import org.giglab.live.commerce.api.dto.product.GenerateProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
+import org.giglab.live.commerce.api.dto.product.ProductFaqSampleItem;
 import org.giglab.live.commerce.api.mapper.product.ProductMapper;
 import org.giglab.live.commerce.core.product.application.ProductService;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
@@ -29,6 +31,7 @@ import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuesti
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.GetProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
@@ -80,6 +83,15 @@ public class ProductFacade {
   public GenerateProductFaqSamplesResponse generateFaqSamples(Long productId) {
     GenerateProductFaqSamplesResult result = productService.generateFaqSamples(productId);
     return productMapper.toGenerateProductFaqSamplesResponse(result);
+  }
+
+  public GetProductFaqSamplesResponse getProductFaqSamples(Long productId) {
+    GetProductFaqSamplesResult result = productService.getProductFaqSamples(productId);
+    return new GetProductFaqSamplesResponse(
+        result.productId(),
+        result.items().stream()
+            .map(i -> new ProductFaqSampleItem(i.id(), i.question(), i.answer()))
+            .toList());
   }
 
   public EmbedProductInfoResponse embedProductInfo(Long productId) {

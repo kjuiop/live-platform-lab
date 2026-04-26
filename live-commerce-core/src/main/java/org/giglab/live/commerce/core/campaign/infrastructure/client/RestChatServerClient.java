@@ -11,6 +11,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -41,12 +42,17 @@ public class RestChatServerClient implements ChatRoomCreatePort, ChatRoomDeleteP
     return body.data().roomId();
   }
 
+  @Async
   @Override
   public void deleteRoom(String roomId) {
-    String url = chatServerUrl + "/api/v1/rooms/" + roomId;
-    restTemplate.exchange(
-        url, HttpMethod.DELETE, HttpEntity.EMPTY, new ParameterizedTypeReference<Void>() {});
-    log.info("채팅방 삭제 완료 - roomId={}", roomId);
+    try {
+      String url = chatServerUrl + "/api/v1/rooms/" + roomId;
+      restTemplate.exchange(
+          url, HttpMethod.DELETE, HttpEntity.EMPTY, new ParameterizedTypeReference<Void>() {});
+      log.info("채팅방 삭제 완료 - roomId={}", roomId);
+    } catch (Exception e) {
+      log.warn("채팅방 삭제 실패 (chat-server) - roomId={}", roomId, e);
+    }
   }
 
   public CampaignInsightResult getInsight(String roomId) {

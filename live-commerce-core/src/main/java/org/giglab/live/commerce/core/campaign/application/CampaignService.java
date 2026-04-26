@@ -73,15 +73,9 @@ public class CampaignService {
     // TX 1: 방송 종료 커밋 — DB 커넥션 즉시 반환
     BroadcastStatusResult result = endCampaignUseCase.execute(campaignId);
 
-    // HTTP: 채팅방 삭제 — chatRoomId는 DB에 유지 (stats 조회 용도)
+    // HTTP: 채팅방 삭제 + AI 리포트 생성 — 둘 다 @Async, end() 응답을 블로킹하지 않음
     if (result.chatRoomId() != null) {
-      try {
-        chatRoomDeletePort.deleteRoom(result.chatRoomId());
-      } catch (Exception e) {
-        log.warn("채팅방 삭제 실패 (chat-server) - campaignId={}", campaignId, e);
-      }
-
-      // AI 리포트 생성 트리거 (@Async — end() 응답을 블로킹하지 않음)
+      chatRoomDeletePort.deleteRoom(result.chatRoomId());
       generateAiReportUseCase.execute(new GenerateAiReportCommand(campaignId, result.chatRoomId()));
     }
 

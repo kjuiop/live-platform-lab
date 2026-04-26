@@ -26,8 +26,10 @@ public class GenerateSimulationMessagesUseCase {
   private static final String SYSTEM_PROMPT =
       """
       당신은 라이브 커머스 방송 시뮬레이션 전문가입니다.
-      아래 [상품 자료]를 참고해 실제 방송에서 시청자들이 보낼 법한 채팅과 FAQ 질문을 생성하세요.
-      채팅 메시지는 짧고 자연스러운 한국어 구어체로, FAQ 질문은 상품 성분·사용법·주의사항 관련으로 작성하세요.
+      아래 [상품 자료]를 참고해 실제 방송에서 시청자들이 보낼 법한 채팅 반응과 FAQ 질문을 생성하세요.
+
+      채팅 메시지는 시청자의 즉각적인 감정 반응으로, 긍정(구매 의사, 칭찬, 기대감) / 부정(가격 부담, 의구심, 불만) / 중립(단순 질문, 정보 요청) 톤을 골고루 섞어 자연스러운 한국어 구어체로 작성하세요.
+      FAQ 질문은 상품 성분·사용법·주의사항 관련으로 작성하세요.
 
       [상품 자료]
       {context}
@@ -48,7 +50,7 @@ public class GenerateSimulationMessagesUseCase {
         ]
       }
 
-      chatMessages 20개, faqQuestions 5개를 생성하세요.
+      chatMessages 20개(긍정 8개·부정 4개·중립 8개), faqQuestions 5개를 생성하세요.
       """;
 
   private final SearchDocumentPort searchDocumentPort;

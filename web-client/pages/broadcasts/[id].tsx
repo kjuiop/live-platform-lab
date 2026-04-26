@@ -133,6 +133,8 @@ function ChatQnAPanel({
   const [tab, setTab] = useState<'report' | 'chat' | 'faq'>(isEnded ? 'report' : 'chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isAtChatBottomRef = useRef(true);
   const [faqInput, setFaqInput] = useState('');
 
   const chatMessages = useMemo(
@@ -150,12 +152,19 @@ function ChatQnAPanel({
 
 
   useEffect(() => {
-    if (tab === 'chat') messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (tab === 'chat' && isAtChatBottomRef.current)
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, tab]);
 
   useEffect(() => {
     if (tab === 'faq') faqBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [faqMessages, tab]);
+
+  const handleChatScroll = useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    isAtChatBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') onSend();
@@ -259,7 +268,7 @@ function ChatQnAPanel({
           </div>
         ) : (
           <>
-            <div className="lp-messages">
+            <div className="lp-messages" ref={chatContainerRef} onScroll={handleChatScroll}>
               {chatMessages.length === 0 ? (
                 <div className="lp-empty">채팅을 시작해보세요!</div>
               ) : (

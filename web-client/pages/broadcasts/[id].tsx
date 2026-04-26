@@ -636,6 +636,7 @@ export default function BroadcastDetail() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [simRunning, setSimRunning] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -1161,6 +1162,9 @@ export default function BroadcastDetail() {
         .btn-end { flex:1; padding:12px; background:linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
         .btn-end:hover:not(:disabled) { opacity:0.85; }
         .btn-start:disabled, .btn-end:disabled { opacity:0.5; cursor:not-allowed; }
+        .btn-sim-run { flex:1; padding:12px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+        .btn-sim-run:hover:not(:disabled) { opacity:0.85; }
+        .btn-sim-run:disabled { opacity:0.5; cursor:not-allowed; }
 
         .side-col { width:360px; flex-shrink:0; height:calc(100vh - 104px); position:sticky; top:80px; }
 
@@ -1233,6 +1237,31 @@ export default function BroadcastDetail() {
                   <button className="btn-end" onClick={handleEnd} disabled={actionLoading}>
                     {actionLoading ? '처리 중...' : '■ 방송 종료'}
                   </button>
+                  {process.env.NODE_ENV === 'development' && campaign.chatRoomId && (
+                    <button
+                      className="btn-sim-run"
+                      onClick={async () => {
+                        setSimRunning(true);
+                        try {
+                          await fetch(`${CHAT_API_BASE}/simulation/run`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              roomId: campaign.chatRoomId,
+                              productId: campaign.campaignProducts?.[0]?.productId ?? 1,
+                              viewerCount: 8,
+                              messageCount: 20,
+                            }),
+                          });
+                        } finally {
+                          setSimRunning(false);
+                        }
+                      }}
+                      disabled={simRunning}
+                    >
+                      {simRunning ? '시뮬레이션 실행 중...' : '🧪 시뮬레이션 실행'}
+                    </button>
+                  )}
                 </div>
               )}
 

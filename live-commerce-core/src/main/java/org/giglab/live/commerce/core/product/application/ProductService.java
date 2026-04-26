@@ -14,6 +14,7 @@ import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocument
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GetProductFaqSamplesResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.SimulationMessagesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedPdfData;
@@ -25,12 +26,15 @@ import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCa
 import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductFaqSamplesUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.CreateSimulationMessagesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedAllDocumentsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedDocumentUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.EmbedProductInfoUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GenerateProductFaqSamplesUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.GenerateSimulationMessagesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GetDocumentListUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.GetProductFaqSamplesUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.ai.GetSimulationMessagesUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.MarkAllDocumentsEmbeddedUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.ParseProductPdfUseCase;
 import org.springframework.stereotype.Service;
@@ -54,6 +58,9 @@ public class ProductService {
   private final EmbedProductInfoUseCase embedProductInfoUseCase;
   private final EmbedAllDocumentsUseCase embedAllDocumentsUseCase;
   private final MarkAllDocumentsEmbeddedUseCase markAllDocumentsEmbeddedUseCase;
+  private final GenerateSimulationMessagesUseCase generateSimulationMessagesUseCase;
+  private final CreateSimulationMessagesUseCase createSimulationMessagesUseCase;
+  private final GetSimulationMessagesUseCase getSimulationMessagesUseCase;
 
   public GetProductListResult getList(ProductListQuery query) {
     return getProductListUseCase.execute(query);
@@ -100,6 +107,15 @@ public class ProductService {
 
   public EmbedProductInfoResult embedProductInfo(Long productId) {
     return embedProductInfoUseCase.execute(productId);
+  }
+
+  public SimulationMessagesResult generateSimulationMessages(Long productId) {
+    SimulationMessagesResult result = generateSimulationMessagesUseCase.execute(productId);
+    return createSimulationMessagesUseCase.execute(productId, result);
+  }
+
+  public SimulationMessagesResult getSimulationMessages(Long productId) {
+    return getSimulationMessagesUseCase.execute(productId);
   }
 
   public EmbedAllDocumentsResult embedAllDocuments(Long productId) {

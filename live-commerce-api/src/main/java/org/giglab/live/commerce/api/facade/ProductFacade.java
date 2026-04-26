@@ -17,6 +17,7 @@ import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsRespons
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
+import org.giglab.live.commerce.api.dto.product.GetSimulationMessagesResponse;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
 import org.giglab.live.commerce.api.dto.product.ProductFaqSampleItem;
 import org.giglab.live.commerce.api.mapper.product.ProductMapper;
@@ -32,6 +33,7 @@ import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocument
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.GetProductFaqSamplesResult;
+import org.giglab.live.commerce.core.product.application.dto.ai.SimulationMessagesResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.EmbedDocumentResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.GetDocumentListResult;
 import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductResult;
@@ -92,6 +94,18 @@ public class ProductFacade {
         result.items().stream()
             .map(i -> new ProductFaqSampleItem(i.id(), i.question(), i.answer()))
             .toList());
+  }
+
+  public GetSimulationMessagesResponse generateSimulationMessages(Long productId) {
+    SimulationMessagesResult result = productService.generateSimulationMessages(productId);
+    return new GetSimulationMessagesResponse(
+        productId, result.chatMessages(), result.faqQuestions());
+  }
+
+  public GetSimulationMessagesResponse getSimulationMessages(Long productId) {
+    SimulationMessagesResult result = productService.getSimulationMessages(productId);
+    return new GetSimulationMessagesResponse(
+        productId, result.chatMessages(), result.faqQuestions());
   }
 
   public EmbedProductInfoResponse embedProductInfo(Long productId) {

@@ -42,8 +42,7 @@ public class RoomService {
     return ChatRoomInsightResponse.of(
         viewerSessionAggregator.aggregate(roomId),
         chatMessageAggregator.aggregate(roomId),
-        chatInsightRepository.findPositiveMessages(roomId),
-        chatInsightRepository.findNegativeMessages(roomId));
+        chatInsightRepository.findRawMessages(roomId));
   }
 
   public RoomStatsResponse getStats(String roomId) {

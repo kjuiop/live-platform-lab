@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure;
+package org.giglab.live.infrastructure.adapter;
 
 import java.time.Duration;
 import java.time.Instant;

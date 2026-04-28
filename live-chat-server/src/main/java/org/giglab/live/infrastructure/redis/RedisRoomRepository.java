@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.application.port.persistence.RoomPort;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.infrastructure.redis.exception.RedisOperationException;
 import org.springframework.dao.DataAccessException;
@@ -24,7 +23,7 @@ import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
-public class RedisRoomRepository implements RoomPort {
+public class RedisRoomRepository {
 
   private static final String ROOM_KEY_PREFIX = "LIVE:ROOM";
   private static final String ROOM_INDEX_KEY = "LIVE:ROOM:INDEX";
@@ -39,7 +38,6 @@ public class RedisRoomRepository implements RoomPort {
     this.objectMapper = objectMapper;
   }
 
-  @Override
   public Room save(Room room) {
     String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, room.getRoomId());
 
@@ -79,7 +77,6 @@ public class RedisRoomRepository implements RoomPort {
     }
   }
 
-  @Override
   public List<String> findLatestRoomIds(int limit) {
 
     try {
@@ -98,7 +95,6 @@ public class RedisRoomRepository implements RoomPort {
     }
   }
 
-  @Override
   public Stream<Room> getRoomsByIds(List<String> roomIds) {
     if (roomIds.isEmpty()) {
       return Stream.empty();
@@ -155,7 +151,6 @@ public class RedisRoomRepository implements RoomPort {
     }
   }
 
-  @Override
   public void deleteById(String roomId) {
     String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, roomId);
 

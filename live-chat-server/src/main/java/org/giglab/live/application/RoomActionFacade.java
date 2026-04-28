@@ -24,10 +24,6 @@ public class RoomActionFacade {
     ActionResponse res = dispatcher.dispatch(req);
     broadcastPort.publish(req.roomId(), res);
     chatMessageService.saveIfNeeded(res);
-    try {
-      viewerSessionService.saveUserIdIfJoin(req, sessionId);
-    } catch (Exception e) {
-      log.warn("시청자 userId 저장 실패 - sessionId={}", sessionId, e);
-    }
+    viewerSessionService.saveUserIdIfJoin(req, sessionId);
   }
 }

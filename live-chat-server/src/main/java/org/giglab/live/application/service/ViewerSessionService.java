@@ -26,7 +26,11 @@ public class ViewerSessionService {
     if (sessionId == null || req.actor() == null || req.actor().userId() == null) {
       return;
     }
-    viewerSessionPort.saveUserId(sessionId, req.actor().userId());
+    try {
+      viewerSessionPort.saveUserId(sessionId, req.actor().userId());
+    } catch (Exception e) {
+      log.warn("시청자 userId 저장 실패 - sessionId={}", sessionId, e);
+    }
   }
 
   public void onSubscribe(String roomId, String sessionId) {

@@ -14,6 +14,7 @@ import org.giglab.live.infrastructure.mongo.MongoViewerSessionRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository.ViewerContext;
 import org.giglab.live.infrastructure.redis.pubsub.RoomBroadcastPublisher;
+import org.giglab.live.presentation.StompDestination;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,6 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 public class StompSessionEventListener {
 
   // /sub/room/{roomId} 만 처리, /sub/room/{roomId}/host 등 하위 경로 제외
-  private static final String ROOM_DESTINATION_PREFIX = "/sub/room/";
 
   private final ViewerRedisRepository viewerRedisRepository;
   private final MongoViewerSessionRepository viewerSessionRepository;
@@ -114,14 +114,14 @@ public class StompSessionEventListener {
   }
 
   private boolean isRoomDestination(String destination) {
-    if (!destination.startsWith(ROOM_DESTINATION_PREFIX)) {
+    if (!destination.startsWith(StompDestination.ROOM_PREFIX)) {
       return false;
     }
-    String path = destination.substring(ROOM_DESTINATION_PREFIX.length());
+    String path = destination.substring(StompDestination.ROOM_PREFIX.length());
     return !path.isEmpty() && !path.contains("/");
   }
 
   private String extractRoomId(String destination) {
-    return destination.substring(ROOM_DESTINATION_PREFIX.length());
+    return destination.substring(StompDestination.ROOM_PREFIX.length());
   }
 }

@@ -1,3 +1,15 @@
 package org.giglab.live.application.port.persistence;
 
-public interface RoomQueryPort {}
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.giglab.live.domain.model.Room;
+
+public interface RoomQueryPort {
+
+  List<String> findLatestRoomIds(int limit);
+
+  Stream<Room> getRoomsByIds(List<String> roomIds);
+
+  Optional<Room> findById(String roomId);
+}

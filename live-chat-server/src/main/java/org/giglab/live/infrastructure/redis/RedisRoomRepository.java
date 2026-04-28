@@ -13,8 +13,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.application.port.persistence.RoomQueryPort;
+import org.giglab.live.application.port.persistence.RoomStorePort;
 import org.giglab.live.domain.model.Room;
-import org.giglab.live.domain.repository.RoomRepository;
 import org.giglab.live.infrastructure.redis.exception.RedisOperationException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
-public class RedisRoomRepository implements RoomRepository {
+public class RedisRoomRepository implements RoomQueryPort, RoomStorePort {
 
   private static final String ROOM_KEY_PREFIX = "LIVE:ROOM";
   private static final String ROOM_INDEX_KEY = "LIVE:ROOM:INDEX";

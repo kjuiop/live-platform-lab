@@ -9,8 +9,9 @@ import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
 import org.giglab.live.application.dto.stats.RoomStatsResponse;
+import org.giglab.live.application.port.persistence.RoomQueryPort;
+import org.giglab.live.application.port.persistence.RoomStorePort;
 import org.giglab.live.domain.model.Room;
-import org.giglab.live.domain.repository.RoomRepository;
 import org.giglab.live.infrastructure.mongo.MongoChatInsightRepository;
 import org.giglab.live.infrastructure.mongo.aggregator.ChatMessageAggregator;
 import org.giglab.live.infrastructure.mongo.aggregator.ViewerSessionAggregator;
@@ -22,20 +23,21 @@ public class RoomService {
 
   private static final int MAX_SIZE = 20;
 
-  private final RoomRepository roomRepository;
   private final ViewerSessionAggregator viewerSessionAggregator;
   private final ChatMessageAggregator chatMessageAggregator;
   private final MongoChatInsightRepository chatInsightRepository;
+  private final RoomQueryPort roomQueryPort;
+  private final RoomStorePort roomStorePort;
 
   public CreateRoomResponse createRoom(CreateRoomRequest request) {
     Room room = Room.create(request.getTitle());
-    Room saved = roomRepository.save(room);
+    Room saved = roomStorePort.save(room);
     return new CreateRoomResponse(
         saved.getRoomId(), saved.getTitle(), saved.getCreatedAt(), saved.getUpdatedAt());
   }
 
   public void deleteRoom(String roomId) {
-    roomRepository.deleteById(roomId);
+    roomStorePort.deleteById(roomId);
   }
 
   public ChatRoomInsightResponse getInsight(String roomId) {
@@ -52,12 +54,12 @@ public class RoomService {
 
   public List<GetRoomResponse> getRooms(int size) {
     int validSize = Math.min(MAX_SIZE, size);
-    List<String> roomIds = roomRepository.findLatestRoomIds(validSize);
+    List<String> roomIds = roomQueryPort.findLatestRoomIds(validSize);
     if (roomIds.isEmpty()) {
       return Collections.emptyList();
     }
 
-    return roomRepository
+    return roomQueryPort
         .getRoomsByIds(roomIds)
         .map(GetRoomResponse::from)
         .collect(Collectors.toList());

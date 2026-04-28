@@ -23,6 +23,8 @@ public class RoomBroadcastPublisher {
       log.debug("Redis publish - channel={}", channel);
     } catch (JsonProcessingException e) {
       log.error("Redis publish 직렬화 실패 - roomId={}", roomId, e);
+    } catch (Exception e) {
+      log.error("Redis publish 실패 - roomId={}, channel={}", roomId, channel, e);
     }
   }
 }

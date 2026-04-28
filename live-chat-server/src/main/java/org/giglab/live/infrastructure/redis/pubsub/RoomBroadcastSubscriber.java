@@ -1,6 +1,7 @@
 package org.giglab.live.infrastructure.redis.pubsub;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -20,8 +21,8 @@ public class RoomBroadcastSubscriber implements MessageListener {
 
   @Override
   public void onMessage(Message message, byte[] pattern) {
-    String channel = new String(message.getChannel());
-    String body = new String(message.getBody());
+    String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+    String body = new String(message.getBody(), StandardCharsets.UTF_8);
     String roomId = RedisPubSubChannel.extractRoomId(channel);
 
     try {

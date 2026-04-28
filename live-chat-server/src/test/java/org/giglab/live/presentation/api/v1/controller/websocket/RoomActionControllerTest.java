@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
-import java.util.Objects;
 import org.giglab.live.application.command.ActionDispatcher;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
@@ -44,9 +43,7 @@ class RoomActionControllerTest {
     controller =
         new RoomActionController(dispatcher, publisher, chatMessageService, viewerSessionService);
     headerAccessor = Mockito.mock(SimpMessageHeaderAccessor.class);
-    Mockito.lenient()
-        .when(Objects.requireNonNull(headerAccessor.getSessionId()))
-        .thenReturn("test-session-id");
+    Mockito.doReturn("test-session-id").when(headerAccessor).getSessionId();
   }
 
   @Test

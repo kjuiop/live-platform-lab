@@ -8,7 +8,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 @Configuration
@@ -50,9 +49,7 @@ public class RedisConfig {
       RedisConnectionFactory connectionFactory, RoomBroadcastSubscriber subscriber) {
     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
-    container.addMessageListener(
-        new MessageListenerAdapter(subscriber, "onMessage"),
-        new PatternTopic(RedisPubSubChannel.roomPattern()));
+    container.addMessageListener(subscriber, new PatternTopic(RedisPubSubChannel.roomPattern()));
     return container;
   }
 }

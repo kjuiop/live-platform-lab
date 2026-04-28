@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.client;
+package org.giglab.live.infrastructure.adapter;
 
 import java.net.URI;
 import java.util.Map;
@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RestCommerceClient implements FaqAnswerPort {
+public class CommerceClientAdapter implements FaqAnswerPort {
 
   private final RestTemplate restTemplate;
 

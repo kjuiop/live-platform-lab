@@ -44,9 +44,7 @@ public class ViewerSessionAdapter implements ViewerSessionPort {
 
   @Override
   public Optional<ViewerContext> getAndRemoveViewer(String sessionId) {
-    return viewerRedisRepository
-        .getAndRemoveViewer(sessionId)
-        .map(rc -> new ViewerContext(rc.sessionId(), rc.roomId(), rc.userId(), rc.joinAt()));
+    return viewerRedisRepository.getAndRemoveViewer(sessionId);
   }
 
   @Override

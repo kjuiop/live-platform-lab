@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.application.port.persistence.ViewerContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
@@ -149,6 +150,4 @@ public class ViewerRedisRepository {
   private String sessionKey(String sessionId) {
     return String.format(SESSION_KEY, sessionId);
   }
-
-  public record ViewerContext(String sessionId, String roomId, String userId, Instant joinAt) {}
 }

@@ -1,11 +1,13 @@
 package org.giglab.live.application.service;
 
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.port.persistence.BroadcastPort;
+import org.giglab.live.application.port.persistence.ViewerContext;
 import org.giglab.live.application.port.persistence.ViewerSessionPort;
 import org.springframework.stereotype.Service;
 
@@ -34,13 +36,15 @@ public class ViewerSessionService {
   }
 
   public void onDisconnect(String sessionId) {
-    viewerSessionPort
-        .getAndRemoveViewer(sessionId)
-        .ifPresent(
-            ctx -> {
-              viewerSessionPort.saveSession(ctx);
-              broadcastViewerCount(ctx.roomId());
-            });
+    Optional<ViewerContext> findContext = viewerSessionPort.getAndRemoveViewer(sessionId);
+    if (findContext.isEmpty()) {
+      log.debug("세션 정보 없음 - TTL 만료 또는 중복 disconnect: sessionId={}", sessionId);
+      return;
+    }
+    ViewerContext ctx = findContext.get();
+    viewerSessionPort.saveSession(ctx);
+    broadcastViewerCount(ctx.roomId());
+    log.debug("시청자 퇴장 - sessionId={}, roomId={}", sessionId, ctx.roomId());
   }
 
   private void broadcastViewerCount(String roomId) {

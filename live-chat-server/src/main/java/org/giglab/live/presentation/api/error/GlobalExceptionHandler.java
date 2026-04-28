@@ -3,6 +3,7 @@ package org.giglab.live.presentation.api.error;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.global.exception.DomainException;
 import org.giglab.live.presentation.api.error.exception.NotFoundException;
 import org.giglab.live.presentation.api.response.ErrorResponse;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(DomainException.class)
+  public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
+    return ResponseEntity.status(e.getErrorCode().getHttpStatus())
+        .body(new ErrorResponse(e.getErrorCode().getCode(), e.getMessage()));
+  }
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<ErrorResponse> handleEntityNotFoundException(NotFoundException e) {

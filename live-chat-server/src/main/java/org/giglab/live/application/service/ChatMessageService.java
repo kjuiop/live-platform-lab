@@ -8,8 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.ChatMessageResponse;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.port.persistence.ChatMessagePort;
 import org.giglab.live.domain.model.ChatMessage;
-import org.giglab.live.domain.repository.ChatMessageRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,7 @@ public class ChatMessageService {
           ActionType.FAQ_ANSWER.getKey(),
           ActionType.FAQ_ERROR.getKey());
 
-  private final ChatMessageRepository chatMessageRepository;
+  private final ChatMessagePort chatMessagePort;
 
   @Async("chatAsyncExecutor")
   public void saveIfNeeded(ActionResponse res) {
@@ -35,7 +35,16 @@ public class ChatMessageService {
       return;
     }
     try {
-      chatMessageRepository.save(ChatMessage.from(res));
+      ChatMessage message =
+          ChatMessage.create(
+              res.roomId(),
+              res.action(),
+              res.actor() != null ? res.actor().userId() : null,
+              res.actor() != null ? res.actor().sender() : null,
+              res.payload(),
+              res.sentAt());
+
+      chatMessagePort.save(message);
     } catch (Exception e) {
       log.warn("채팅 메시지 MongoDB 저장 실패 - roomId={}, action={}", res.roomId(), res.action(), e);
     }
@@ -43,7 +52,7 @@ public class ChatMessageService {
 
   public List<ChatMessageResponse> getRecentMessages(String roomId, int limit) {
     List<ChatMessage> messages =
-        chatMessageRepository.findRecentByRoomId(roomId, Math.min(Math.max(1, limit), MAX_LIMIT));
+        chatMessagePort.findRecentByRoomId(roomId, Math.min(Math.max(1, limit), MAX_LIMIT));
     Collections.reverse(messages);
     return messages.stream().map(ChatMessageResponse::from).toList();
   }

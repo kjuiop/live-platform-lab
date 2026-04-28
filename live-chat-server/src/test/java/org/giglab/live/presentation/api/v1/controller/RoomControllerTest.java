@@ -17,11 +17,8 @@ import java.util.List;
 import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
-import org.giglab.live.application.dto.stats.ChatStats;
-import org.giglab.live.application.dto.stats.ViewerStats;
+import org.giglab.live.application.dto.stats.RoomStatsResponse;
 import org.giglab.live.application.service.RoomService;
-import org.giglab.live.infrastructure.mongo.aggregator.ChatMessageAggregator;
-import org.giglab.live.infrastructure.mongo.aggregator.ViewerSessionAggregator;
 import org.giglab.live.presentation.api.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,8 +43,6 @@ class RoomControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @MockitoBean private RoomService roomService;
-  @MockitoBean private ChatMessageAggregator chatMessageAggregator;
-  @MockitoBean private ViewerSessionAggregator viewerSessionAggregator;
 
   @Test
   @DisplayName("채팅방 생성 성공 - 201 CREATED")
@@ -222,11 +217,9 @@ class RoomControllerTest {
   void getRoomStatsReturnsAggregatedData() throws Exception {
     // given
     String roomId = "ROOM_123456789ABC";
-    ViewerStats viewerStats = new ViewerStats(50, 20, 142L);
-    ChatStats chatStats = new ChatStats(100, 15, 12, List.of());
+    RoomStatsResponse stats = new RoomStatsResponse(50, 20, 142L, 100, 15, 12);
 
-    given(viewerSessionAggregator.aggregate(roomId)).willReturn(viewerStats);
-    given(chatMessageAggregator.aggregate(roomId)).willReturn(chatStats);
+    given(roomService.getStats(roomId)).willReturn(stats);
 
     // when & then
     mockMvc
@@ -246,11 +239,9 @@ class RoomControllerTest {
   void getRoomStatsReturnsZeroWhenNoData() throws Exception {
     // given
     String roomId = "ROOM_EMPTY00000000";
-    ViewerStats viewerStats = new ViewerStats(0, 0, 0L);
-    ChatStats chatStats = new ChatStats(0, 0, 0, List.of());
+    RoomStatsResponse stats = new RoomStatsResponse(0, 0, 0L, 0, 0, 0);
 
-    given(viewerSessionAggregator.aggregate(roomId)).willReturn(viewerStats);
-    given(chatMessageAggregator.aggregate(roomId)).willReturn(chatStats);
+    given(roomService.getStats(roomId)).willReturn(stats);
 
     // when & then
     mockMvc

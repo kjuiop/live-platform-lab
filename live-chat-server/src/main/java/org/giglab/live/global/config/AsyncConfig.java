@@ -1,4 +1,4 @@
-package org.giglab.live.config;
+package org.giglab.live.global.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;

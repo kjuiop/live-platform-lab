@@ -6,15 +6,13 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.application.port.persistence.RoomQueryPort;
-import org.giglab.live.application.port.persistence.RoomStorePort;
+import org.giglab.live.application.port.persistence.RoomPort;
 import org.giglab.live.domain.model.Room;
 import org.giglab.live.infrastructure.redis.exception.RedisOperationException;
 import org.springframework.dao.DataAccessException;
@@ -26,7 +24,7 @@ import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
-public class RedisRoomRepository implements RoomQueryPort, RoomStorePort {
+public class RedisRoomRepository implements RoomPort {
 
   private static final String ROOM_KEY_PREFIX = "LIVE:ROOM";
   private static final String ROOM_INDEX_KEY = "LIVE:ROOM:INDEX";
@@ -154,24 +152,6 @@ public class RedisRoomRepository implements RoomQueryPort, RoomStorePort {
     } catch (Exception e) {
       log.error("Failed to get rooms: roomId={}, error={}", roomIds, e.getMessage(), e);
       throw new RedisOperationException("FIND_BY_IDS", ROOM_KEY_PREFIX, e.getMessage(), e);
-    }
-  }
-
-  @Override
-  public Optional<Room> findById(String roomId) {
-    String roomKey = String.format("%s:%s", ROOM_KEY_PREFIX, roomId);
-
-    try {
-      Room room = (Room) redisTemplate.opsForValue().get(roomKey);
-      return Optional.ofNullable(room);
-    } catch (Exception e) {
-      log.error(
-          "Failed to find room by id: roomId={}, key={}, error={}",
-          roomId,
-          roomKey,
-          e.getMessage(),
-          e);
-      throw new RedisOperationException("FIND_BY_ID", roomId, e.getMessage(), e);
     }
   }
 

@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.application.port.persistence.ViewerSessionPort;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class ViewerRedisRepository implements ViewerSessionPort {
+public class ViewerRedisRepository {
 
   private static final String VIEWERS_KEY = "LIVE:ROOM:%s:VIEWERS";
   private static final String SESSION_KEY = "LIVE:VIEWER:%s";

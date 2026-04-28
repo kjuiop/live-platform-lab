@@ -8,9 +8,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.Map;
+import org.giglab.live.application.RoomActionFacade;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.Actor;
-import org.giglab.live.application.facade.RoomActionFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +31,7 @@ class RoomActionControllerTest {
   void setUp() {
     controller = new RoomActionController(roomActionFacade);
     headerAccessor = Mockito.mock(SimpMessageHeaderAccessor.class);
-    Mockito.doReturn("test-session-id").when(headerAccessor).getSessionId();
+    Mockito.lenient().doReturn("test-session-id").when(headerAccessor).getSessionId();
   }
 
   @Test

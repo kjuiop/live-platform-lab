@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.giglab.live.application.dto.ChatMessageResponse;
+import org.giglab.live.application.port.persistence.ChatMessageQueryPort;
 import org.giglab.live.domain.model.ChatMessage;
-import org.giglab.live.domain.repository.ChatMessageRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,21 +21,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ChatMessageServiceTest {
 
-  @Mock private ChatMessageRepository chatMessageRepository;
+  @Mock private ChatMessageQueryPort chatMessageQueryPort;
 
   @InjectMocks private ChatMessageService chatMessageService;
 
   @Test
   void getRecentMessages_limitExceedsMax_clampsTo200() {
     // Given
-    when(chatMessageRepository.findRecentByRoomId("ROOM_1", 200)).thenReturn(List.of());
+    when(chatMessageQueryPort.findRecentByRoomId("ROOM_1", 200)).thenReturn(List.of());
 
     // When
     chatMessageService.getRecentMessages("ROOM_1", 999);
 
     // Then
     ArgumentCaptor<Integer> limitCaptor = ArgumentCaptor.forClass(Integer.class);
-    verify(chatMessageRepository)
+    verify(chatMessageQueryPort)
         .findRecentByRoomId(org.mockito.ArgumentMatchers.eq("ROOM_1"), limitCaptor.capture());
     assertThat(limitCaptor.getValue()).isEqualTo(200);
   }
@@ -43,14 +43,14 @@ class ChatMessageServiceTest {
   @Test
   void getRecentMessages_limitZero_clampsTo1() {
     // Given
-    when(chatMessageRepository.findRecentByRoomId("ROOM_1", 1)).thenReturn(List.of());
+    when(chatMessageQueryPort.findRecentByRoomId("ROOM_1", 1)).thenReturn(List.of());
 
     // When
     chatMessageService.getRecentMessages("ROOM_1", 0);
 
     // Then
     ArgumentCaptor<Integer> limitCaptor = ArgumentCaptor.forClass(Integer.class);
-    verify(chatMessageRepository)
+    verify(chatMessageQueryPort)
         .findRecentByRoomId(org.mockito.ArgumentMatchers.eq("ROOM_1"), limitCaptor.capture());
     assertThat(limitCaptor.getValue()).isEqualTo(1);
   }
@@ -58,14 +58,14 @@ class ChatMessageServiceTest {
   @Test
   void getRecentMessages_negativeLimit_clampsTo1() {
     // Given
-    when(chatMessageRepository.findRecentByRoomId("ROOM_1", 1)).thenReturn(List.of());
+    when(chatMessageQueryPort.findRecentByRoomId("ROOM_1", 1)).thenReturn(List.of());
 
     // When
     chatMessageService.getRecentMessages("ROOM_1", -10);
 
     // Then
     ArgumentCaptor<Integer> limitCaptor = ArgumentCaptor.forClass(Integer.class);
-    verify(chatMessageRepository)
+    verify(chatMessageQueryPort)
         .findRecentByRoomId(org.mockito.ArgumentMatchers.eq("ROOM_1"), limitCaptor.capture());
     assertThat(limitCaptor.getValue()).isEqualTo(1);
   }
@@ -79,7 +79,7 @@ class ChatMessageServiceTest {
     List<ChatMessage> descResult = new ArrayList<>();
     descResult.add(buildMessage("msg2", "ROOM_1", newer));
     descResult.add(buildMessage("msg1", "ROOM_1", older));
-    when(chatMessageRepository.findRecentByRoomId("ROOM_1", 2)).thenReturn(descResult);
+    when(chatMessageQueryPort.findRecentByRoomId("ROOM_1", 2)).thenReturn(descResult);
 
     // When
     List<ChatMessageResponse> result = chatMessageService.getRecentMessages("ROOM_1", 2);
@@ -93,13 +93,13 @@ class ChatMessageServiceTest {
   @Test
   void getRecentMessages_passesRoomIdToRepository() {
     // Given
-    when(chatMessageRepository.findRecentByRoomId("ROOM_XYZ", 10)).thenReturn(List.of());
+    when(chatMessageQueryPort.findRecentByRoomId("ROOM_XYZ", 10)).thenReturn(List.of());
 
     // When
     chatMessageService.getRecentMessages("ROOM_XYZ", 10);
 
     // Then
-    verify(chatMessageRepository).findRecentByRoomId("ROOM_XYZ", 10);
+    verify(chatMessageQueryPort).findRecentByRoomId("ROOM_XYZ", 10);
   }
 
   private ChatMessage buildMessage(String id, String roomId, Instant sentAt) {

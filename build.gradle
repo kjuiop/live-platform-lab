@@ -1,0 +1,81 @@
+// 루트 프로젝트: 공통 설정만
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id "com.diffplug.spotless" version "8.1.0"
+}
+
+allprojects {
+    group = 'org.giglab'
+    version = '0.0.1-SNAPSHOT'
+    
+    repositories {
+        mavenCentral()
+        maven { url 'https://repo.spring.io/milestone' }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'checkstyle'
+    apply plugin: 'com.diffplug.spotless'
+    
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    checkstyle {
+        toolVersion = '13.0.0'
+        maxWarnings = 0 // 경고가 0개 이상이라면 빌드 시에 에러 발생
+        configFile = file("$rootDir/config/checkstyle/google_checks.xml") // rule 적용
+        ignoreFailures = false // 위반 시 실패(강제)
+    }
+
+    tasks.withType(Checkstyle).configureEach {
+        // 리포트 출력
+        reports {
+            xml.required = false
+            html.required = true
+        }
+    }
+
+    spotless {
+        java {
+            target 'src/**/*.java'
+            googleJavaFormat("1.33.0")
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+
+        format 'misc', {
+            target '*.md', '.gitignore'
+            trimTrailingWhitespace()
+            indentWithSpaces(4)
+            endWithNewline()
+        }
+
+        // Gradle 파일은 최소한의 포맷팅만 적용
+        format 'gradle', {
+            target '*.gradle'
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+    }
+    
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+
+    tasks.named('check') {
+        dependsOn 'spotlessCheck', 'checkstyleMain', 'checkstyleTest'
+    }
+    
+    // 빌드 시 코드 품질 체크 (체크 실패 시 빌드 실패)
+    tasks.named('build') {
+        dependsOn 'spotlessCheck'
+        dependsOn 'checkstyleMain'
+    }
+}

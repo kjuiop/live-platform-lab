@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: local
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+commerce-core:
+  http:
+    connect-timeout: 3000   # ms
+    read-timeout: 30000     # ms
+    max-connections: 50     # 전체 커넥션 풀 크기
+    max-connections-per-route: 20  # 단일 호스트 최대 연결 수
+
+async:
+  faq:
+    core-pool-size: 5
+    max-pool-size: 20
+    queue-capacity: 100
+  chat:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 500
+
+logging:
+  level:
+    org.giglab.live: INFO

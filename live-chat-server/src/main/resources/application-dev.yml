@@ -1,0 +1,31 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  data:
+    mongodb:
+      auto-index-creation: true
+    redis:
+      host: redis
+      port: 6379
+      password:
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+cors:
+  allowed-origins: https://your-domain.com
+
+scheduling:
+  enabled: true
+
+logging:
+  level:
+    org.giglab.live: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.web.socket.messaging: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.messaging.simp.stomp: DEBUG

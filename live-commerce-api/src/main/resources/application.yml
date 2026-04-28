@@ -1,0 +1,33 @@
+server:
+  port: 8090
+  servlet:
+    session:
+      timeout: 1d
+
+spring:
+  profiles:
+    default: local
+  servlet:
+    encoding:
+      charset: UTF-8
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      embedding:
+        options:
+          model: text-embedding-3-small
+      chat:
+        options:
+          model: gpt-5.2
+    vectorstore:
+      elasticsearch:
+        index-name: product-documents
+        dimensions: 1536
+        initialize-schema: true  # 인덱스 없으면 자동 생성
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+  packages-to-scan: org.giglab.live.commerce.api.controller

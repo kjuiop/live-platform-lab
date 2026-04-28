@@ -1,0 +1,45 @@
+cors:
+  allowed-origins: http://localhost:3000
+
+chat:
+  server:
+    url: ${CHAT_SERVER_URL:http://localhost:8080}
+
+http:
+  client:
+    connect-timeout: ${HTTP_CLIENT_CONNECT_TIMEOUT:3000}
+    read-timeout: ${HTTP_CLIENT_READ_TIMEOUT:5000}
+
+app:
+  upload:
+    base-path: uploads
+
+spring:
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+  config:
+    import: optional:file:.env
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/live?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 500
+        format_sql: false

@@ -1,0 +1,51 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/livechat
+      auto-index-creation: true
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+cors:
+  allowed-origins: http://localhost:3000
+
+commerce-core:
+  url: http://localhost:8090
+  base-path: /api/v1
+  http:
+    connect-timeout: 3000
+    read-timeout: 30000
+    max-connections: 10
+    max-connections-per-route: 10
+
+async:
+  faq:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 20
+  chat:
+    core-pool-size: 1
+    max-pool-size: 2
+    queue-capacity: 100
+
+scheduling:
+  enabled: true
+
+logging:
+  level:
+    org.giglab.live: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.web.socket.messaging: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.messaging.simp.stomp: DEBUG

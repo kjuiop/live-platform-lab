@@ -1,0 +1,5 @@
+rootProject.name = 'live-platform-lab'
+
+include 'live-chat-server'
+include 'live-commerce-api'
+include 'live-commerce-core'

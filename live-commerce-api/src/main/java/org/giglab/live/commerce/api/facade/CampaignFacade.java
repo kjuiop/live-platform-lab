@@ -1,0 +1,66 @@
+package org.giglab.live.commerce.api.facade;
+
+import lombok.RequiredArgsConstructor;
+import org.giglab.live.commerce.api.dto.campaign.BroadcastStatusResponse;
+import org.giglab.live.commerce.api.dto.campaign.CreateCampaignReportRequest;
+import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
+import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignReportResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
+import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
+import org.giglab.live.commerce.core.campaign.application.CampaignService;
+import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
+import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CampaignFacade {
+
+  private final CampaignMapper campaignMapper;
+  private final CampaignService campaignService;
+
+  public GetCampaignListResponse getList(GetCampaignListRequest request) {
+    GetCampaignListResult result =
+        campaignService.getList(campaignMapper.toCampaignListQuery(request));
+    return campaignMapper.toGetCampaignListResponse(result);
+  }
+
+  public GetCampaignResponse getDetail(Long campaignId) {
+    GetCampaignResult result = campaignService.getDetail(campaignId);
+    return campaignMapper.toGetCampaignResponse(result);
+  }
+
+  public CreateCampaignResponse create(CreateCampaignRequest request) {
+    CreateCampaignCommand command = campaignMapper.toCreateCampaignCommand(request);
+    CreateCampaignResult result = campaignService.create(command);
+    return campaignMapper.toCreateCampaignResponse(result);
+  }
+
+  public BroadcastStatusResponse start(Long campaignId) {
+    BroadcastStatusResult result = campaignService.start(campaignId);
+    return campaignMapper.toBroadcastStatusResponse(result);
+  }
+
+  public BroadcastStatusResponse end(Long campaignId) {
+    BroadcastStatusResult result = campaignService.end(campaignId);
+    return campaignMapper.toBroadcastStatusResponse(result);
+  }
+
+  public void saveCampaignReport(Long campaignId, CreateCampaignReportRequest request) {
+    CreateCampaignReportCommand command = campaignMapper.toSaveCampaignReportCommand(request);
+    campaignService.saveCampaignReport(campaignId, command);
+  }
+
+  public GetCampaignReportResponse getCampaignReport(Long campaignId) {
+    GetCampaignReportResult result = campaignService.getCampaignReport(campaignId);
+    return GetCampaignReportResponse.from(result);
+  }
+}

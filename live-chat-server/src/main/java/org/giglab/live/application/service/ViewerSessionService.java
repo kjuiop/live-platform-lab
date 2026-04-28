@@ -42,7 +42,11 @@ public class ViewerSessionService {
       return;
     }
     ViewerContext ctx = findContext.get();
-    viewerSessionPort.saveSession(ctx);
+    try {
+      viewerSessionPort.saveSession(ctx);
+    } catch (Exception e) {
+      log.warn("시청 기록 저장 실패 - sessionId={}, roomId={}", sessionId, ctx.roomId(), e);
+    }
     broadcastViewerCount(ctx.roomId());
     log.debug("시청자 퇴장 - sessionId={}, roomId={}", sessionId, ctx.roomId());
   }

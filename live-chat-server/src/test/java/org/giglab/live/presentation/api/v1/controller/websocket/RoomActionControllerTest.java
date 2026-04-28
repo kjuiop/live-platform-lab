@@ -9,12 +9,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.Objects;
 import org.giglab.live.application.command.ActionDispatcher;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.service.ChatMessageService;
 import org.giglab.live.application.service.ViewerSessionService;
+import org.giglab.live.infrastructure.redis.pubsub.RoomBroadcastPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,14 +24,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 @ExtendWith(MockitoExtension.class)
 class RoomActionControllerTest {
 
   @Mock private ActionDispatcher dispatcher;
 
-  @Mock private SimpMessageSendingOperations messaging;
+  @Mock private RoomBroadcastPublisher publisher;
 
   @Mock private ChatMessageService chatMessageService;
 
@@ -41,9 +42,11 @@ class RoomActionControllerTest {
   @BeforeEach
   void setUp() {
     controller =
-        new RoomActionController(dispatcher, messaging, chatMessageService, viewerSessionService);
+        new RoomActionController(dispatcher, publisher, chatMessageService, viewerSessionService);
     headerAccessor = Mockito.mock(SimpMessageHeaderAccessor.class);
-    Mockito.lenient().when(headerAccessor.getSessionId()).thenReturn("test-session-id");
+    Mockito.lenient()
+        .when(Objects.requireNonNull(headerAccessor.getSessionId()))
+        .thenReturn("test-session-id");
   }
 
   @Test
@@ -59,7 +62,7 @@ class RoomActionControllerTest {
 
     // Then
     verify(dispatcher).dispatch(request);
-    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+    verify(publisher).publish(eq("ROOM_1"), any(ActionResponse.class));
   }
 
   @Test
@@ -75,7 +78,7 @@ class RoomActionControllerTest {
     controller.handle(request, headerAccessor);
 
     // Then
-    verify(messaging).convertAndSend(eq("/sub/room/" + roomId), any(ActionResponse.class));
+    verify(publisher).publish(eq(roomId), any(ActionResponse.class));
   }
 
   @Test
@@ -90,7 +93,7 @@ class RoomActionControllerTest {
     // 단위 테스트에서 직접 handle() 호출 시 예외가 전파됨
     // 실제 Spring STOMP 인프라에서는 @MessageExceptionHandler 가 이를 가로채 세션을 유지함
     assertThrows(IllegalArgumentException.class, () -> controller.handle(request, headerAccessor));
-    verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
+    verify(publisher, never()).publish(anyString(), any(ActionResponse.class));
   }
 
   @Test
@@ -103,8 +106,7 @@ class RoomActionControllerTest {
     controller.handleException(exception);
 
     // Then
-    verify(messaging, never()).convertAndSend(anyString(), any(ActionResponse.class));
-    verify(messaging, never()).convertAndSendToUser(anyString(), anyString(), any(Object.class));
+    verify(publisher, never()).publish(anyString(), any(ActionResponse.class));
   }
 
   @Test
@@ -119,7 +121,7 @@ class RoomActionControllerTest {
     controller.handle(request, headerAccessor);
 
     // Then
-    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+    verify(publisher).publish(eq("ROOM_1"), any(ActionResponse.class));
   }
 
   @Test
@@ -134,7 +136,7 @@ class RoomActionControllerTest {
     controller.handle(request, headerAccessor);
 
     // Then
-    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+    verify(publisher).publish(eq("ROOM_1"), any(ActionResponse.class));
   }
 
   @Test
@@ -149,7 +151,7 @@ class RoomActionControllerTest {
     controller.handle(request, headerAccessor);
 
     // Then
-    verify(messaging).convertAndSend(eq("/sub/room/ROOM_1"), any(ActionResponse.class));
+    verify(publisher).publish(eq("ROOM_1"), any(ActionResponse.class));
   }
 
   // Helper methods

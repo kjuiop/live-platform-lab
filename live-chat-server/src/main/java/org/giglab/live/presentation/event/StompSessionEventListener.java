@@ -13,8 +13,8 @@ import org.giglab.live.infrastructure.mongo.MongoPeakViewerSnapshotRepository;
 import org.giglab.live.infrastructure.mongo.MongoViewerSessionRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository;
 import org.giglab.live.infrastructure.redis.ViewerRedisRepository.ViewerContext;
+import org.giglab.live.infrastructure.redis.pubsub.RoomBroadcastPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -25,12 +25,13 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 @RequiredArgsConstructor
 public class StompSessionEventListener {
 
+  // /sub/room/{roomId} 만 처리, /sub/room/{roomId}/host 등 하위 경로 제외
   private static final String ROOM_DESTINATION_PREFIX = "/sub/room/";
 
   private final ViewerRedisRepository viewerRedisRepository;
   private final MongoViewerSessionRepository viewerSessionRepository;
   private final MongoPeakViewerSnapshotRepository peakViewerSnapshotRepository;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final RoomBroadcastPublisher publisher;
 
   @EventListener
   public void onSubscribe(SessionSubscribeEvent event) {
@@ -108,11 +109,10 @@ public class StompSessionEventListener {
             "action", ActionType.VIEWER_COUNT.getKey(),
             "roomId", roomId,
             "payload", Map.of("count", count));
-    messagingTemplate.convertAndSend(ROOM_DESTINATION_PREFIX + roomId, (Object) message);
+    publisher.publish(roomId, message);
     log.debug("시청자 수 브로드캐스트 - roomId={}, count={}", roomId, count);
   }
 
-  // /sub/room/{roomId} 만 처리, /sub/room/{roomId}/host 등 하위 경로 제외
   private boolean isRoomDestination(String destination) {
     if (!destination.startsWith(ROOM_DESTINATION_PREFIX)) {
       return false;

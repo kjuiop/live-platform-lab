@@ -35,7 +35,16 @@ public class ChatMessageService {
       return;
     }
     try {
-      chatMessageRepository.save(ChatMessage.from(res));
+      ChatMessage message =
+          ChatMessage.create(
+              res.roomId(),
+              res.action(),
+              res.actor() != null ? res.actor().userId() : null,
+              res.actor() != null ? res.actor().sender() : null,
+              res.payload(),
+              res.sentAt());
+
+      chatMessageRepository.save(message);
     } catch (Exception e) {
       log.warn("채팅 메시지 MongoDB 저장 실패 - roomId={}, action={}", res.roomId(), res.action(), e);
     }

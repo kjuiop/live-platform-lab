@@ -1,4 +1,4 @@
-package org.giglab.live.application.port.persistence;
+package org.giglab.live.application.port.messaging;
 
 public interface BroadcastPort {
 

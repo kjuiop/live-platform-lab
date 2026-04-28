@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(DomainException.class)
   public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
-    return ResponseEntity.badRequest()
+    return ResponseEntity.status(e.getErrorCode().getHttpStatus())
         .body(new ErrorResponse(e.getErrorCode().getCode(), e.getMessage()));
   }
 

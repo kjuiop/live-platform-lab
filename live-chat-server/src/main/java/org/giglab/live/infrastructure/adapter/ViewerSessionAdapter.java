@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.application.port.persistence.ViewerContext;
+import org.giglab.live.application.dto.viewer.ViewerContext;
 import org.giglab.live.application.port.persistence.ViewerSessionPort;
 import org.giglab.live.domain.model.PeakViewerSnapshot;
 import org.giglab.live.domain.model.ViewerSession;

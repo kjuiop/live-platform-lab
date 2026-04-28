@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
-import org.giglab.live.application.port.persistence.BroadcastPort;
-import org.giglab.live.application.port.persistence.ViewerContext;
+import org.giglab.live.application.dto.viewer.ViewerContext;
+import org.giglab.live.application.port.messaging.BroadcastPort;
 import org.giglab.live.application.port.persistence.ViewerSessionPort;
 import org.springframework.stereotype.Service;
 

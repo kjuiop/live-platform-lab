@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionDispatcher;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
-import org.giglab.live.application.port.persistence.BroadcastPort;
+import org.giglab.live.application.port.messaging.BroadcastPort;
 import org.giglab.live.application.service.ChatMessageService;
 import org.giglab.live.application.service.ViewerSessionService;
 import org.springframework.stereotype.Service;

@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.commerce.core.product.application.dto.ai.SimulationMessagesResult;
 import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentPort;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -57,9 +57,10 @@ public class GenerateSimulationMessagesUseCase {
   private final ChatClient chatClient;
 
   public GenerateSimulationMessagesUseCase(
-      SearchDocumentPort searchDocumentPort, ChatModel chatModel) {
+      SearchDocumentPort searchDocumentPort,
+      @Qualifier("simulationChatClient") ChatClient chatClient) {
     this.searchDocumentPort = searchDocumentPort;
-    this.chatClient = ChatClient.create(chatModel);
+    this.chatClient = chatClient;
   }
 
   public SimulationMessagesResult execute(Long productId) {

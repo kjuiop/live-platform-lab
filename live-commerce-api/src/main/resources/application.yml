@@ -25,6 +25,13 @@ spring:
         dimensions: 1536
         initialize-schema: true  # 인덱스 없으면 자동 생성
 
+ai:
+  temperature:
+    classifier: 0.0   # 결정론적 분류·추출 (ChatSentimentClassifier, ParseProductPdfUseCase)
+    faq: 0.2          # 사실 기반 FAQ 답변 (AskProductQuestionUseCase)
+    report: 0.3       # 분석 리포트·사전 FAQ 생성 (GenerateAiReportUseCase, GenerateProductFaqSamplesUseCase)
+    simulation: 0.8   # 창의적 시뮬레이션 메시지 생성 (GenerateSimulationMessagesUseCase)
+
 springdoc:
   api-docs:
     path: /v3/api-docs

@@ -16,6 +16,13 @@ public class ChatInsightPromptBuilder {
     sb.append("- 단, 채팅에 없는 키워드를 언급하거나, 제공되지 않은 수치·사건을 사실처럼 서술하지 마세요.\n");
     sb.append("- 샘플이 없는 항목은 수치 데이터만으로 분석하고, 그마저 없으면 해당 없음으로 표기하세요.\n\n");
 
+    sb.append("## 분석 절차 (순서대로 수행 후 리포트 작성)\n");
+    sb.append("1. 방송 지표(총 시청자, 최고 동시 시청자, 평균 시청 시간, 채팅·FAQ 수)를 확인하고 방송 참여도를 파악한다.\n");
+    sb.append("2. 채팅 샘플에서 반복 등장하는 키워드와 주제를 파악한다.\n");
+    sb.append("3. 긍정/부정 채팅의 비율과 패턴을 확인하고 구매 신호를 식별한다.\n");
+    sb.append("4. 미답변 질문 목록에서 공통 주제와 우선순위를 판단한다.\n");
+    sb.append("5. 위 분석을 종합해 아래 리포트 형식으로 작성한다.\n\n");
+
     sb.append("## 방송 지표\n");
     sb.append(String.format("- 총 시청자: %d명%n", insight.totalViewers()));
     sb.append(String.format("- 최고 동시 시청자: %d명%n", insight.peakConcurrent()));
@@ -50,11 +57,6 @@ public class ChatInsightPromptBuilder {
       sb.append("\n");
     }
 
-    sb.append("## 분석 절차 (순서대로 수행 후 리포트 작성)\n");
-    sb.append("1. 채팅 샘플에서 반복 등장하는 키워드와 주제를 파악한다.\n");
-    sb.append("2. 긍정/부정 채팅의 비율과 패턴을 확인하고 구매 신호를 식별한다.\n");
-    sb.append("3. 미답변 질문 목록에서 공통 주제와 우선순위를 판단한다.\n");
-    sb.append("4. 위 분석을 종합해 아래 리포트 형식으로 작성한다.\n\n");
     sb.append("## 리포트 형식 (다음 항목을 포함해 한국어로 작성)\n");
     sb.append("1. 핵심 관심사 Top 5 (채팅 샘플에 등장한 키워드 중심으로, 각 키워드가 어떤 맥락에서 언급됐는지 설명)\n");
     sb.append("2. 구매 의도 신호 분석 (채팅에서 읽히는 구매 관심도와 그 근거)\n");

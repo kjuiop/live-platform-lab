@@ -1,4 +1,4 @@
-package org.giglab.live.infrastructure.redis.pubsub;
+package org.giglab.live.presentation.subscriber;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.service.ChatMessageService;
+import org.giglab.live.infrastructure.redis.pubsub.RedisPubSubChannel;
 import org.giglab.live.presentation.StompDestination;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;

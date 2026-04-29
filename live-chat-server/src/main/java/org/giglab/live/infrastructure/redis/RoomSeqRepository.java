@@ -1,9 +1,11 @@
 package org.giglab.live.infrastructure.redis;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class RoomSeqRepository {
@@ -14,7 +16,11 @@ public class RoomSeqRepository {
 
   public long nextSeq(String roomId) {
     Long seq = redisTemplate.opsForValue().increment(seqKey(roomId));
-    return seq != null ? seq : 1L;
+    if (seq == null) {
+      log.error("Redis INCR returned null - roomId={}", roomId);
+      throw new IllegalStateException("Redis seq 발급 실패 - roomId: " + roomId);
+    }
+    return seq;
   }
 
   private String seqKey(String roomId) {

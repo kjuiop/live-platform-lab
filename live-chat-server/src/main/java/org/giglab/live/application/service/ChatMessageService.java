@@ -49,6 +49,10 @@ public class ChatMessageService {
     if (!isSaveable(res.action())) {
       return;
     }
+    if (res.seq() == 0) {
+      log.warn("seq 미할당 상태로 저장 시도 - roomId={}, action={}", res.roomId(), res.action());
+      return;
+    }
     try {
       ChatMessage message =
           ChatMessage.create(

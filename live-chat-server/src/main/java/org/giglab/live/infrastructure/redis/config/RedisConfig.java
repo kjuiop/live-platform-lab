@@ -1,7 +1,7 @@
 package org.giglab.live.infrastructure.redis.config;
 
 import org.giglab.live.infrastructure.redis.pubsub.RedisPubSubChannel;
-import org.giglab.live.infrastructure.redis.pubsub.RoomBroadcastSubscriber;
+import org.giglab.live.presentation.subscriber.RoomBroadcastSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

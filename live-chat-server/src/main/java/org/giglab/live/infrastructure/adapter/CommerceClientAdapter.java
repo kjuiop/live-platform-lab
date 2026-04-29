@@ -9,7 +9,9 @@ import org.giglab.live.infrastructure.adapter.exception.CommerceClientException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -29,10 +31,16 @@ public class CommerceClientAdapter implements FaqAnswerPort {
   public String ask(Long productId, String question) {
     String url = commerceCoreUrl + commerceCoreBasePath + "/products/" + productId + "/ai/ask";
     Map<String, String> body = Map.of("question", question);
-    var res =
-        restTemplate.exchange(
-            RequestEntity.post(URI.create(url)).body(body),
-            new ParameterizedTypeReference<Map<String, Object>>() {});
+
+    final ResponseEntity<Map<String, Object>> res;
+    try {
+      res =
+          restTemplate.exchange(
+              RequestEntity.post(URI.create(url)).body(body),
+              new ParameterizedTypeReference<>() {});
+    } catch (RestClientException e) {
+      throw new CommerceClientException("commerce-core 호출 실패", e);
+    }
 
     Map<String, Object> responseBody = res.getBody();
     if (responseBody == null) {

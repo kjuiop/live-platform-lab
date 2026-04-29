@@ -9,8 +9,6 @@ import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.port.external.FaqAnswerPort;
 import org.giglab.live.application.port.messaging.BroadcastPort;
-import org.giglab.live.domain.exception.FaqDomainException;
-import org.giglab.live.domain.exception.FaqErrorCode;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -27,20 +25,9 @@ public class FaqAnswerService {
 
   @Async("faqAsyncExecutor")
   public void generateAndBroadcast(ActionRequest req) {
-    String question = null;
+    String question = (String) req.payload().get("question");
+    Long productId = ((Number) req.payload().get("productId")).longValue();
     try {
-      Object rawQuestion = req.payload() == null ? null : req.payload().get("question");
-      if (!(rawQuestion instanceof String q) || q.isBlank()) {
-        throw new FaqDomainException(FaqErrorCode.EMPTY_QUESTION);
-      }
-      question = q;
-
-      Object rawProductId = req.payload().get("productId");
-      if (!(rawProductId instanceof Number)) {
-        throw new FaqDomainException(FaqErrorCode.INVALID_PRODUCT_ID);
-      }
-      Long productId = ((Number) rawProductId).longValue();
-
       String rawAnswer = faqAnswerPort.ask(productId, question);
       String answer = (rawAnswer != null && !rawAnswer.isBlank()) ? rawAnswer : "답변을 생성할 수 없습니다.";
       ActionResponse res =
@@ -55,12 +42,12 @@ public class FaqAnswerService {
       log.info("FAQ 답변 브로드캐스트 - roomId={}, productId={}", req.roomId(), productId);
     } catch (Exception e) {
       log.warn("FAQ 답변 생성 실패 - roomId={}", req.roomId(), e);
-      Map<String, Object> errPayload =
-          question != null
-              ? Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", "question", question)
-              : Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
       ActionResponse errRes =
-          ActionResponse.of(req.roomId(), ActionType.FAQ_ERROR.getKey(), AI_ACTOR, errPayload);
+          ActionResponse.of(
+              req.roomId(),
+              ActionType.FAQ_ERROR.getKey(),
+              AI_ACTOR,
+              Map.of("message", "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", "question", question));
       ActionResponse errResWithSeq = chatMessageService.assignSeq(errRes);
       broadcastPort.publish(req.roomId(), errResWithSeq);
       chatMessageService.saveIfNeeded(errResWithSeq);

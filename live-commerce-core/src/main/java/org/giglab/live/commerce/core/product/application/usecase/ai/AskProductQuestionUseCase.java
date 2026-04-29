@@ -7,6 +7,7 @@ import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentP
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -48,6 +49,7 @@ public class AskProductQuestionUseCase {
             .prompt()
             .system(SYSTEM_PROMPT.replace("{context}", context))
             .user(question)
+            .options(OpenAiChatOptions.builder().temperature(0.2).build())
             .call()
             .content();
 

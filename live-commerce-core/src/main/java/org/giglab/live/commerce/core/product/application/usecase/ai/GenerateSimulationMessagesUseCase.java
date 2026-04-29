@@ -11,6 +11,7 @@ import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentP
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -78,6 +79,7 @@ public class GenerateSimulationMessagesUseCase {
             .prompt()
             .system(SYSTEM_PROMPT.replace("{context}", context))
             .user(USER_PROMPT)
+            .options(OpenAiChatOptions.builder().temperature(0.8).build())
             .call()
             .content();
 

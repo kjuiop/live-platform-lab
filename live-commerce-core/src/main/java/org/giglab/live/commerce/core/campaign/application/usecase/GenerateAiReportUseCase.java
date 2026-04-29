@@ -18,6 +18,7 @@ import org.giglab.live.commerce.core.campaign.infrastructure.ai.ChatSentimentCla
 import org.giglab.live.commerce.core.campaign.infrastructure.client.RestChatServerClient;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -94,7 +95,13 @@ public class GenerateAiReportUseCase {
 
       // 7. 프롬프트 생성 후 LLM 호출
       String prompt = promptBuilder.build(insight);
-      String aiReportText = chatClient.prompt().user(prompt).call().content();
+      String aiReportText =
+          chatClient
+              .prompt()
+              .user(prompt)
+              .options(OpenAiChatOptions.builder().temperature(0.3).build())
+              .call()
+              .content();
 
       if (!StringUtils.hasText(aiReportText)) {
         aiReportText = "AI 리포트를 생성할 수 없습니다.";

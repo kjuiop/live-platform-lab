@@ -12,6 +12,7 @@ import org.giglab.live.commerce.core.product.domain.exception.ProductErrorCode;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,6 +91,7 @@ public class ParseProductPdfUseCase {
         .prompt()
         .system(SYSTEM_PROMPT)
         .user("다음 텍스트에서 상품 정보를 추출해주세요:\n\n" + text)
+        .options(OpenAiChatOptions.builder().temperature(0.0).build())
         .call()
         .entity(LlmParsedFields.class);
   }

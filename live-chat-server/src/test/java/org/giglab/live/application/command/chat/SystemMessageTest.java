@@ -8,6 +8,8 @@ import java.util.Map;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.domain.exception.ChatDomainException;
+import org.giglab.live.domain.exception.ChatErrorCode;
 import org.junit.jupiter.api.Test;
 
 class SystemMessageTest {
@@ -42,8 +44,11 @@ class SystemMessageTest {
 
     // When & Then
     assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+        .isInstanceOf(ChatDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((ChatDomainException) e).getErrorCode())
+                    .isEqualTo(ChatErrorCode.EMPTY_MESSAGE));
   }
 
   @Test
@@ -53,8 +58,11 @@ class SystemMessageTest {
 
     // When & Then
     assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+        .isInstanceOf(ChatDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((ChatDomainException) e).getErrorCode())
+                    .isEqualTo(ChatErrorCode.EMPTY_MESSAGE));
   }
 
   @Test
@@ -66,7 +74,10 @@ class SystemMessageTest {
 
     // When & Then
     assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+        .isInstanceOf(ChatDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((ChatDomainException) e).getErrorCode())
+                    .isEqualTo(ChatErrorCode.EMPTY_MESSAGE));
   }
 }

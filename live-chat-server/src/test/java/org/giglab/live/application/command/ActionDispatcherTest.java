@@ -5,9 +5,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
+import org.giglab.live.domain.exception.ActionErrorCode;
+import org.giglab.live.domain.exception.ActionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,8 +35,12 @@ class ActionDispatcherTest {
     ActionRequest req = new ActionRequest("ROOM_1", "UNKNOWN.ACTION", actor(), Map.of());
 
     assertThatThrownBy(() -> dispatcher.dispatch(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Unsupported action");
+        .isInstanceOf(ActionException.class)
+        .hasMessageContaining("Unsupported action")
+        .satisfies(
+            e ->
+                Assertions.assertThat(((ActionException) e).getErrorCode())
+                    .isEqualTo(ActionErrorCode.UNSUPPORTED_ACTION));
   }
 
   private Actor actor() {

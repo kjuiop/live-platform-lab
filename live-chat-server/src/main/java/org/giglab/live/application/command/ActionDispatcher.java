@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.domain.exception.ActionErrorCode;
+import org.giglab.live.domain.exception.ActionException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,7 +25,8 @@ public class ActionDispatcher {
   public ActionResponse dispatch(ActionRequest req) {
     ActionHandler<ActionRequest, ActionResponse> handler = handlers.get(req.action());
     if (handler == null) {
-      throw new IllegalArgumentException("Unsupported action: " + req.action());
+      throw new ActionException(
+          ActionErrorCode.UNSUPPORTED_ACTION, "Unsupported action: " + req.action());
     }
     return handler.execute(req);
   }

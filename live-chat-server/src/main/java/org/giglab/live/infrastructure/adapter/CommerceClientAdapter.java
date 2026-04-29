@@ -5,10 +5,13 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.port.external.FaqAnswerPort;
+import org.giglab.live.infrastructure.adapter.exception.CommerceClientException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -28,19 +31,25 @@ public class CommerceClientAdapter implements FaqAnswerPort {
   public String ask(Long productId, String question) {
     String url = commerceCoreUrl + commerceCoreBasePath + "/products/" + productId + "/ai/ask";
     Map<String, String> body = Map.of("question", question);
-    var res =
-        restTemplate.exchange(
-            RequestEntity.post(URI.create(url)).body(body),
-            new ParameterizedTypeReference<Map<String, Object>>() {});
+
+    final ResponseEntity<Map<String, Object>> res;
+    try {
+      res =
+          restTemplate.exchange(
+              RequestEntity.post(URI.create(url)).body(body),
+              new ParameterizedTypeReference<>() {});
+    } catch (RestClientException e) {
+      throw new CommerceClientException("commerce-core 호출 실패", e);
+    }
 
     Map<String, Object> responseBody = res.getBody();
     if (responseBody == null) {
-      throw new IllegalStateException("commerce-core 응답 body가 비어 있습니다.");
+      throw new CommerceClientException("commerce-core 응답 body가 비어 있습니다.");
     }
 
     Object dataField = responseBody.get("data");
     if (!(dataField instanceof Map)) {
-      throw new IllegalStateException(
+      throw new CommerceClientException(
           "commerce-core 응답에서 data 필드를 찾을 수 없습니다. error=" + responseBody.get("error"));
     }
 
@@ -48,7 +57,7 @@ public class CommerceClientAdapter implements FaqAnswerPort {
     Map<String, Object> data = (Map<String, Object>) dataField;
     Object answer = data.get("answer");
     if (!(answer instanceof String)) {
-      throw new IllegalStateException("commerce-core 응답에서 answer 필드를 찾을 수 없습니다.");
+      throw new CommerceClientException("commerce-core 응답에서 answer 필드를 찾을 수 없습니다.");
     }
 
     return (String) answer;

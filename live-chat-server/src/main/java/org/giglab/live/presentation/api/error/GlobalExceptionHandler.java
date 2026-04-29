@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(DomainException.class)
   public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
     HttpStatus status = DomainHttpStatusResolver.resolve(e.getErrorCode());
-    logByStatus(status, e.getErrorCode().getCode(), e.getMessage());
+    logByStatus(status, e.getErrorCode().getCode(), e.getMessage(), e);
     return ResponseEntity.status(status)
         .body(new ErrorResponse(e.getErrorCode().getCode(), e.getErrorCode().getMessage()));
   }
@@ -46,11 +46,11 @@ public class GlobalExceptionHandler {
                 CommonErrorCode.UNEXPECTED_ERROR.getMessage()));
   }
 
-  private void logByStatus(HttpStatus status, String code, String message) {
+  private void logByStatus(HttpStatus status, String code, String message, Throwable ex) {
     if (status.is4xxClientError()) {
       log.warn("DomainException client error, code={}, message={}", code, message);
     } else {
-      log.error("DomainException server error, code={}, message={}", code, message);
+      log.error("DomainException server error, code={}, message={}", code, message, ex);
     }
   }
 }

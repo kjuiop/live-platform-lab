@@ -37,7 +37,7 @@ public class RoomBroadcastSubscriber implements MessageListener {
     String roomId = RedisPubSubChannel.extractRoomId(channel);
 
     try {
-      // Json 에서 특정 필드 값만 추출이 필요하므로 역질렬화 없이 JsonNode 형태로 파싱
+      // Json 에서 특정 필드 값만 추출이 필요하므로 역직렬화 없이 JsonNode 형태로 파싱
       JsonNode payload = objectMapper.readTree(body);
       long seq = payload.path("seq").asLong(0);
 

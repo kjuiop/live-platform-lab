@@ -9,6 +9,7 @@ import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.domain.exception.ChatDomainException;
+import org.giglab.live.domain.exception.ChatErrorCode;
 import org.junit.jupiter.api.Test;
 
 class SendMessageTest {
@@ -44,7 +45,12 @@ class SendMessageTest {
     ActionRequest req = new ActionRequest("ROOM_1", "CHAT.MESSAGE", actor, null);
 
     // When & Then
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(ChatDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(ChatDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((ChatDomainException) e).getErrorCode())
+                    .isEqualTo(ChatErrorCode.EMPTY_MESSAGE));
   }
 
   @Test
@@ -54,6 +60,11 @@ class SendMessageTest {
     ActionRequest req = new ActionRequest("ROOM_1", "CHAT.MESSAGE", actor, Map.of("message", "  "));
 
     // When & Then
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(ChatDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(ChatDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((ChatDomainException) e).getErrorCode())
+                    .isEqualTo(ChatErrorCode.EMPTY_MESSAGE));
   }
 }

@@ -5,9 +5,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
+import org.giglab.live.domain.exception.ActionErrorCode;
 import org.giglab.live.domain.exception.ActionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +36,11 @@ class ActionDispatcherTest {
 
     assertThatThrownBy(() -> dispatcher.dispatch(req))
         .isInstanceOf(ActionException.class)
-        .hasMessageContaining("Unsupported action");
+        .hasMessageContaining("Unsupported action")
+        .satisfies(
+            e ->
+                Assertions.assertThat(((ActionException) e).getErrorCode())
+                    .isEqualTo(ActionErrorCode.UNSUPPORTED_ACTION));
   }
 
   private Actor actor() {

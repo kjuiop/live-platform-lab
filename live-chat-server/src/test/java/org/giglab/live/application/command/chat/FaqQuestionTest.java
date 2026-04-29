@@ -11,6 +11,7 @@ import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.service.FaqAnswerService;
 import org.giglab.live.domain.exception.FaqDomainException;
+import org.giglab.live.domain.exception.FaqErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -54,7 +55,12 @@ class FaqQuestionTest {
   void executeShouldThrowWhenPayloadIsNull() {
     ActionRequest req = new ActionRequest("ROOM_1", "FAQ.QUESTION", actor, null);
 
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(FaqDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(FaqDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((FaqDomainException) e).getErrorCode())
+                    .isEqualTo(FaqErrorCode.EMPTY_QUESTION));
   }
 
   @Test
@@ -63,7 +69,12 @@ class FaqQuestionTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "   ", "productId", 1));
 
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(FaqDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(FaqDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((FaqDomainException) e).getErrorCode())
+                    .isEqualTo(FaqErrorCode.EMPTY_QUESTION));
   }
 
   @Test
@@ -71,7 +82,12 @@ class FaqQuestionTest {
     ActionRequest req =
         new ActionRequest("ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "색상이 뭐예요?"));
 
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(FaqDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(FaqDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((FaqDomainException) e).getErrorCode())
+                    .isEqualTo(FaqErrorCode.INVALID_PRODUCT_ID));
   }
 
   @Test
@@ -80,7 +96,12 @@ class FaqQuestionTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "색상이 뭐예요?", "productId", "abc"));
 
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(FaqDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(FaqDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((FaqDomainException) e).getErrorCode())
+                    .isEqualTo(FaqErrorCode.INVALID_PRODUCT_ID));
   }
 
   @Test
@@ -89,6 +110,11 @@ class FaqQuestionTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "색상이 뭐예요?", "productId", 0));
 
-    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(FaqDomainException.class);
+    assertThatThrownBy(() -> handler.execute(req))
+        .isInstanceOf(FaqDomainException.class)
+        .satisfies(
+            e ->
+                assertThat(((FaqDomainException) e).getErrorCode())
+                    .isEqualTo(FaqErrorCode.INVALID_PRODUCT_ID));
   }
 }

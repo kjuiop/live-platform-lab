@@ -70,6 +70,7 @@ public class RoomBroadcastSubscriber implements MessageListener {
 
     List<ActionResponse> recovered = chatMessageService.getRecoveryMessages(roomId, lastSeq, seq);
     if (recovered.isEmpty()) {
+      log.warn("gap 복구 실패 - roomId={}, lastSeq={}, seq={} - 해당 구간 메시지 유실 가능", roomId, lastSeq, seq);
       return;
     }
 

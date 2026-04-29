@@ -8,9 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.ChatMessageResponse;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.port.persistence.ChatMessagePort;
+import org.giglab.live.application.port.persistence.RoomSeqPort;
 import org.giglab.live.domain.model.ChatMessage;
-import org.giglab.live.infrastructure.redis.RoomSeqRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class ChatMessageService {
 
   private static final int MAX_LIMIT = 200;
+  private static final int MAX_RECOVERY_COUNT = 10;
 
   private static final Set<String> SAVEABLE_ACTIONS =
       Set.of(
@@ -29,7 +31,7 @@ public class ChatMessageService {
           ActionType.FAQ_ERROR.getKey());
 
   private final ChatMessagePort chatMessagePort;
-  private final RoomSeqRepository roomSeqRepository;
+  private final RoomSeqPort roomSeqPort;
 
   public static boolean isSaveable(String action) {
     return SAVEABLE_ACTIONS.contains(action);
@@ -39,7 +41,7 @@ public class ChatMessageService {
     if (!isSaveable(res.action())) {
       return res;
     }
-    return res.withSeq(roomSeqRepository.nextSeq(res.roomId()));
+    return res.withSeq(roomSeqPort.nextSeq(res.roomId()));
   }
 
   @Async("chatAsyncExecutor")
@@ -64,8 +66,30 @@ public class ChatMessageService {
     }
   }
 
-  public List<ChatMessage> findMissedMessages(String roomId, long fromSeq, long toSeq) {
-    return chatMessagePort.findByRoomIdAndSeqBetween(roomId, fromSeq, toSeq);
+  public List<ActionResponse> getRecoveryMessages(String roomId, long lastSeq, long seq) {
+    long gapSize = seq - lastSeq - 1;
+    if (gapSize > MAX_RECOVERY_COUNT) {
+      log.warn(
+          "복구 건수 초과로 스킵 - roomId={}, gapSize={}, limit={}", roomId, gapSize, MAX_RECOVERY_COUNT);
+      return List.of();
+    }
+
+    List<ChatMessage> missed = chatMessagePort.findByRoomIdAndSeqBetween(roomId, lastSeq, seq);
+    if (missed.isEmpty()) {
+      log.warn("복구 대상 없음 - roomId={}, lastSeq={}, seq={}", roomId, lastSeq, seq);
+      return List.of();
+    }
+
+    return missed.stream().map(this::toActionResponse).toList();
+  }
+
+  private ActionResponse toActionResponse(ChatMessage msg) {
+    Actor actor =
+        msg.getSenderUserId() != null
+            ? new Actor(msg.getSenderUserId(), msg.getSenderNickname(), msg.getSenderNickname())
+            : null;
+    return new ActionResponse(
+        msg.getRoomId(), msg.getAction(), actor, msg.getPayload(), msg.getSentAt(), msg.getSeq());
   }
 
   public List<ChatMessageResponse> getRecentMessages(String roomId, int limit) {

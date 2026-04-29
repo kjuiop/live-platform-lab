@@ -15,19 +15,19 @@ import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.port.external.FaqAnswerPort;
+import org.giglab.live.application.port.messaging.BroadcastPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class FaqAnswerServiceTest {
 
   @Mock private FaqAnswerPort faqAnswerPort;
-  @Mock private SimpMessagingTemplate operations;
+  @Mock private BroadcastPort broadcastPort;
   @Mock private ChatMessageService chatMessageService;
 
   @InjectMocks private FaqAnswerService service;
@@ -41,13 +41,14 @@ class FaqAnswerServiceTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "배송 얼마나 걸려요?", "productId", 10));
     when(faqAnswerPort.ask(10L, "배송 얼마나 걸려요?")).thenReturn("보통 2~3일 소요됩니다.");
+    when(chatMessageService.assignSeq(any())).thenAnswer(inv -> inv.getArgument(0));
 
     // When
     service.generateAndBroadcast(req);
 
     // Then
     ArgumentCaptor<ActionResponse> captor = ArgumentCaptor.forClass(ActionResponse.class);
-    verify(operations).convertAndSend(eq("/sub/room/ROOM_1"), captor.capture());
+    verify(broadcastPort).publish(eq("ROOM_1"), captor.capture());
 
     ActionResponse res = captor.getValue();
     assertThat(res.action()).isEqualTo(ActionType.FAQ_ANSWER.getKey());
@@ -63,13 +64,14 @@ class FaqAnswerServiceTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "성분이 뭐예요?", "productId", 10));
     when(faqAnswerPort.ask(anyLong(), anyString())).thenReturn(null);
+    when(chatMessageService.assignSeq(any())).thenAnswer(inv -> inv.getArgument(0));
 
     // When
     service.generateAndBroadcast(req);
 
     // Then
     ArgumentCaptor<ActionResponse> captor = ArgumentCaptor.forClass(ActionResponse.class);
-    verify(operations).convertAndSend(eq("/sub/room/ROOM_1"), captor.capture());
+    verify(broadcastPort).publish(eq("ROOM_1"), captor.capture());
 
     ActionResponse res = captor.getValue();
     assertThat(res.action()).isEqualTo(ActionType.FAQ_ANSWER.getKey());
@@ -83,13 +85,14 @@ class FaqAnswerServiceTest {
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "색상이 뭐예요?", "productId", 10));
     when(faqAnswerPort.ask(anyLong(), anyString())).thenThrow(new RuntimeException("AI 서버 오류"));
+    when(chatMessageService.assignSeq(any())).thenAnswer(inv -> inv.getArgument(0));
 
     // When
     service.generateAndBroadcast(req);
 
     // Then
     ArgumentCaptor<ActionResponse> captor = ArgumentCaptor.forClass(ActionResponse.class);
-    verify(operations).convertAndSend(eq("/sub/room/ROOM_1"), captor.capture());
+    verify(broadcastPort).publish(eq("ROOM_1"), captor.capture());
 
     ActionResponse res = captor.getValue();
     assertThat(res.action()).isEqualTo(ActionType.FAQ_ERROR.getKey());
@@ -101,13 +104,14 @@ class FaqAnswerServiceTest {
   void shouldBroadcastFaqErrorWhenQuestionIsInvalid() {
     // Given — payload is null, so question validation fails inside try-catch
     ActionRequest req = new ActionRequest("ROOM_1", "FAQ.QUESTION", actor, null);
+    when(chatMessageService.assignSeq(any())).thenAnswer(inv -> inv.getArgument(0));
 
     // When
     service.generateAndBroadcast(req);
 
     // Then
     ArgumentCaptor<ActionResponse> captor = ArgumentCaptor.forClass(ActionResponse.class);
-    verify(operations).convertAndSend(eq("/sub/room/ROOM_1"), captor.capture());
+    verify(broadcastPort).publish(eq("ROOM_1"), captor.capture());
 
     ActionResponse res = captor.getValue();
     assertThat(res.action()).isEqualTo(ActionType.FAQ_ERROR.getKey());
@@ -121,13 +125,14 @@ class FaqAnswerServiceTest {
     ActionRequest req =
         new ActionRequest(
             "ROOM_1", "FAQ.QUESTION", actor, Map.of("question", "가격이 얼마예요?", "productId", "wrong"));
+    when(chatMessageService.assignSeq(any())).thenAnswer(inv -> inv.getArgument(0));
 
     // When
     service.generateAndBroadcast(req);
 
     // Then
     ArgumentCaptor<ActionResponse> captor = ArgumentCaptor.forClass(ActionResponse.class);
-    verify(operations).convertAndSend(eq("/sub/room/ROOM_1"), captor.capture());
+    verify(broadcastPort).publish(eq("ROOM_1"), captor.capture());
 
     ActionResponse res = captor.getValue();
     assertThat(res.action()).isEqualTo(ActionType.FAQ_ERROR.getKey());

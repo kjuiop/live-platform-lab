@@ -8,9 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.giglab.live.application.dto.ChatMessageResponse;
+import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.service.ChatMessageService;
-import org.giglab.live.domain.model.ChatMessage;
 import org.giglab.live.presentation.StompDestination;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -25,8 +24,6 @@ public class RoomBroadcastSubscriber implements MessageListener {
   private final SimpMessagingTemplate messagingTemplate;
   private final ObjectMapper objectMapper;
   private final ChatMessageService chatMessageService;
-
-  private static final int MAX_RECOVERY_COUNT = 10;
 
   private final ConcurrentHashMap<String, AtomicLong> lastSeqByRoom = new ConcurrentHashMap<>();
 
@@ -64,31 +61,21 @@ public class RoomBroadcastSubscriber implements MessageListener {
       return;
     }
 
-    long gapSize = seq - lastSeq - 1;
     log.info(
         "메시지 gap 감지 - roomId={}, lastSeq={}, receivedSeq={}, gapSize={}",
         roomId,
         lastSeq,
         seq,
-        gapSize);
+        seq - lastSeq - 1);
 
-    if (gapSize > MAX_RECOVERY_COUNT) {
-      log.warn(
-          "복구 건수 초과로 스킵 - roomId={}, gapSize={}, limit={}", roomId, gapSize, MAX_RECOVERY_COUNT);
+    List<ActionResponse> recovered = chatMessageService.getRecoveryMessages(roomId, lastSeq, seq);
+    if (recovered.isEmpty()) {
       return;
     }
 
-    List<ChatMessage> missed = chatMessageService.findMissedMessages(roomId, lastSeq, seq);
-
-    if (missed.isEmpty()) {
-      log.warn("복구 대상 없음 - roomId={}, lastSeq={}, seq={}", roomId, lastSeq, seq);
-      return;
-    }
-
-    log.info("누락 메시지 복구 브로드캐스트 - roomId={}, count={}", roomId, missed.size());
-    for (ChatMessage msg : missed) {
-      messagingTemplate.convertAndSend(
-          StompDestination.ROOM_PREFIX + roomId, ChatMessageResponse.from(msg));
+    log.info("누락 메시지 복구 브로드캐스트 - roomId={}, count={}", roomId, recovered.size());
+    for (ActionResponse msg : recovered) {
+      messagingTemplate.convertAndSend(StompDestination.ROOM_PREFIX + roomId, msg);
     }
   }
 }

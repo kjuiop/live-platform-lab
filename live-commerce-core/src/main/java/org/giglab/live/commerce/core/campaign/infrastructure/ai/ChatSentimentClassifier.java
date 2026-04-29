@@ -64,7 +64,11 @@ public class ChatSentimentClassifier {
   private String buildPrompt(List<String> messages) {
     StringBuilder sb = new StringBuilder();
     sb.append("다음은 라이브 커머스 방송의 채팅 메시지입니다.\n");
-    sb.append("각 메시지를 POSITIVE, NEGATIVE, NEUTRAL 중 하나로만 분류하세요.\n");
+    sb.append("각 메시지를 아래 기준으로 POSITIVE, NEGATIVE, NEUTRAL 중 하나로 분류하세요.\n\n");
+    sb.append("[분류 기준]\n");
+    sb.append("- POSITIVE: 구매 의향, 칭찬, 기대감, 재구매 언급\n");
+    sb.append("- NEGATIVE: 가격 불만, 효과 의심, 배송 불만, 부정적 비교\n");
+    sb.append("- NEUTRAL: 단순 질문, 정보 요청, 감정이 없는 반응\n\n");
     sb.append("출력 형식: 인덱스:레이블 (예: 0:POSITIVE) — 한 줄에 하나씩, 다른 설명 없이.\n\n");
     for (int i = 0; i < messages.size(); i++) {
       sb.append(i).append(". ").append(messages.get(i)).append("\n");

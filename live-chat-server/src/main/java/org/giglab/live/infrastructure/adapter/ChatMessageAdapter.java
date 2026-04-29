@@ -22,4 +22,9 @@ public class ChatMessageAdapter implements ChatMessagePort {
   public List<ChatMessage> findRecentByRoomId(String roomId, int limit) {
     return mongoChatMessageRepository.findRecentByRoomId(roomId, limit);
   }
+
+  @Override
+  public List<ChatMessage> findByRoomIdAndSeqBetween(String roomId, long fromSeq, long toSeq) {
+    return mongoChatMessageRepository.findByRoomIdAndSeqBetween(roomId, fromSeq, toSeq);
+  }
 }

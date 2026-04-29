@@ -10,6 +10,7 @@ import org.giglab.live.application.dto.ChatMessageResponse;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.port.persistence.ChatMessagePort;
 import org.giglab.live.domain.model.ChatMessage;
+import org.giglab.live.infrastructure.redis.RoomSeqRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -28,10 +29,22 @@ public class ChatMessageService {
           ActionType.FAQ_ERROR.getKey());
 
   private final ChatMessagePort chatMessagePort;
+  private final RoomSeqRepository roomSeqRepository;
+
+  public static boolean isSaveable(String action) {
+    return SAVEABLE_ACTIONS.contains(action);
+  }
+
+  public ActionResponse assignSeq(ActionResponse res) {
+    if (!isSaveable(res.action())) {
+      return res;
+    }
+    return res.withSeq(roomSeqRepository.nextSeq(res.roomId()));
+  }
 
   @Async("chatAsyncExecutor")
   public void saveIfNeeded(ActionResponse res) {
-    if (!SAVEABLE_ACTIONS.contains(res.action())) {
+    if (!isSaveable(res.action())) {
       return;
     }
     try {
@@ -42,12 +55,17 @@ public class ChatMessageService {
               res.actor() != null ? res.actor().userId() : null,
               res.actor() != null ? res.actor().sender() : null,
               res.payload(),
-              res.sentAt());
+              res.sentAt(),
+              res.seq());
 
       chatMessagePort.save(message);
     } catch (Exception e) {
       log.warn("채팅 메시지 MongoDB 저장 실패 - roomId={}, action={}", res.roomId(), res.action(), e);
     }
+  }
+
+  public List<ChatMessage> findMissedMessages(String roomId, long fromSeq, long toSeq) {
+    return chatMessagePort.findByRoomIdAndSeqBetween(roomId, fromSeq, toSeq);
   }
 
   public List<ChatMessageResponse> getRecentMessages(String roomId, int limit) {

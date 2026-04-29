@@ -43,7 +43,8 @@ class ChatMessageControllerTest {
                 "u1",
                 "사용자1",
                 Map.of("message", "안녕하세요"),
-                Instant.parse("2024-01-01T10:00:00Z")),
+                Instant.parse("2024-01-01T10:00:00Z"),
+                1L),
             new ChatMessageResponse(
                 "id2",
                 roomId,
@@ -51,7 +52,8 @@ class ChatMessageControllerTest {
                 "u2",
                 "사용자2",
                 Map.of("message", "반갑습니다"),
-                Instant.parse("2024-01-01T10:01:00Z")));
+                Instant.parse("2024-01-01T10:01:00Z"),
+                2L));
     given(chatMessageService.getRecentMessages(roomId, 50)).willReturn(messages);
 
     // when & then
@@ -115,7 +117,8 @@ class ChatMessageControllerTest {
                 "ai",
                 "AI 어시스턴트",
                 Map.of("answer", "2~3일 소요"),
-                Instant.parse("2024-01-01T10:00:00Z")));
+                Instant.parse("2024-01-01T10:00:00Z"),
+                1L));
     given(chatMessageService.getRecentMessages(roomId, 100)).willReturn(messages);
 
     // when & then

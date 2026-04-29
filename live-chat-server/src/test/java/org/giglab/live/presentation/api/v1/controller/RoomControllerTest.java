@@ -89,7 +89,7 @@ class RoomControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("E003"))
+        .andExpect(jsonPath("$.code").value("COMMON-4001"))
         .andExpect(jsonPath("$.message").exists());
   }
 
@@ -108,7 +108,7 @@ class RoomControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("E003"))
+        .andExpect(jsonPath("$.code").value("COMMON-4001"))
         .andExpect(
             jsonPath("$.message")
                 .value(org.hamcrest.Matchers.containsString("채팅방 이름은 50자를 초과할 수 없습니다.")));
@@ -129,7 +129,7 @@ class RoomControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("E003"));
+        .andExpect(jsonPath("$.code").value("COMMON-4001"));
   }
 
   @Test
@@ -147,7 +147,7 @@ class RoomControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andDo(print())
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("E003"));
+        .andExpect(jsonPath("$.code").value("COMMON-4001"));
   }
 
   @Test

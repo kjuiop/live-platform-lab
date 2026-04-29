@@ -3,6 +3,7 @@ package org.giglab.live.infrastructure.redis;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.giglab.live.infrastructure.redis.exception.RedisException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -20,7 +21,7 @@ public class RoomSeqRepository {
     Long seq = redisTemplate.opsForValue().increment(seqKey(roomId));
     if (seq == null) {
       log.error("Redis INCR returned null - roomId={}", roomId);
-      throw new IllegalStateException("Redis seq 발급 실패 - roomId: " + roomId);
+      throw new RedisException("Redis seq 발급 실패 - roomId: " + roomId);
     }
     if (seq == 1L) {
       redisTemplate.expire(seqKey(roomId), SEQ_TTL);

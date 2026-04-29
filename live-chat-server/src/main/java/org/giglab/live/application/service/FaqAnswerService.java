@@ -9,6 +9,8 @@ import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
 import org.giglab.live.application.port.external.FaqAnswerPort;
 import org.giglab.live.application.port.messaging.BroadcastPort;
+import org.giglab.live.domain.exception.FaqDomainException;
+import org.giglab.live.domain.exception.FaqErrorCode;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +31,13 @@ public class FaqAnswerService {
     try {
       Object rawQuestion = req.payload() == null ? null : req.payload().get("question");
       if (!(rawQuestion instanceof String q) || q.isBlank()) {
-        throw new IllegalArgumentException("payload.question은 비어있을 수 없습니다.");
+        throw new FaqDomainException(FaqErrorCode.EMPTY_QUESTION);
       }
       question = q;
 
       Object rawProductId = req.payload().get("productId");
       if (!(rawProductId instanceof Number)) {
-        throw new IllegalArgumentException("payload.productId가 올바르지 않습니다.");
+        throw new FaqDomainException(FaqErrorCode.INVALID_PRODUCT_ID);
       }
       Long productId = ((Number) rawProductId).longValue();
 

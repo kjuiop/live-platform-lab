@@ -8,6 +8,7 @@ import java.util.Map;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.domain.exception.ChatDomainException;
 import org.junit.jupiter.api.Test;
 
 class SystemMessageTest {
@@ -41,9 +42,7 @@ class SystemMessageTest {
     ActionRequest req = new ActionRequest("ROOM_1", "CHAT.SYSTEM", null, null);
 
     // When & Then
-    assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(ChatDomainException.class);
   }
 
   @Test
@@ -52,9 +51,7 @@ class SystemMessageTest {
     ActionRequest req = new ActionRequest("ROOM_1", "CHAT.SYSTEM", null, Map.of("message", "  "));
 
     // When & Then
-    assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(ChatDomainException.class);
   }
 
   @Test
@@ -65,8 +62,6 @@ class SystemMessageTest {
     ActionRequest req = new ActionRequest("ROOM_1", "CHAT.SYSTEM", null, payload);
 
     // When & Then
-    assertThatThrownBy(() -> handler.execute(req))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("message is required");
+    assertThatThrownBy(() -> handler.execute(req)).isInstanceOf(ChatDomainException.class);
   }
 }

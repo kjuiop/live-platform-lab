@@ -6,6 +6,8 @@ import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.service.FaqAnswerService;
+import org.giglab.live.domain.exception.FaqDomainException;
+import org.giglab.live.domain.exception.FaqErrorCode;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,11 +25,11 @@ public class FaqQuestion implements ActionHandler<ActionRequest, ActionResponse>
   public ActionResponse execute(ActionRequest req) {
     Object question = req.payload() == null ? null : req.payload().get("question");
     if (!(question instanceof String s) || s.isBlank()) {
-      throw new IllegalArgumentException("payload.question is required");
+      throw new FaqDomainException(FaqErrorCode.EMPTY_QUESTION);
     }
     Object productId = req.payload().get("productId");
     if (!(productId instanceof Number n) || n.longValue() <= 0) {
-      throw new IllegalArgumentException("payload.productId must be a positive number");
+      throw new FaqDomainException(FaqErrorCode.INVALID_PRODUCT_ID);
     }
 
     // 1) 질문 echo — 채팅방 전체에 즉시 브로드캐스트 (controller가 처리)

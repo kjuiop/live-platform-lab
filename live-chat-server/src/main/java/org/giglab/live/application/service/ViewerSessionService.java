@@ -9,6 +9,7 @@ import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.viewer.ViewerContext;
 import org.giglab.live.application.port.messaging.BroadcastPort;
 import org.giglab.live.application.port.persistence.ViewerSessionPort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -19,6 +20,7 @@ public class ViewerSessionService {
   private final ViewerSessionPort viewerSessionPort;
   private final BroadcastPort broadcastPort;
 
+  @Async("chatAsyncExecutor")
   public void saveUserIdIfJoin(ActionRequest req, String sessionId) {
     if (!ActionType.CHAT_JOIN.getKey().equals(req.action())) {
       return;

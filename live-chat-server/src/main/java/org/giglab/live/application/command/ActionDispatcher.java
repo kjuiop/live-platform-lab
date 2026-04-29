@@ -17,16 +17,7 @@ public class ActionDispatcher {
   // JoinRoom, LeaveRoom, SendMessage 등 ActionHandler 구현체들을 주입받아 action key -> handler 매핑을 생성
   // 따라서 list 로 받는다.
   public ActionDispatcher(List<ActionHandler<ActionRequest, ActionResponse>> list) {
-    this.handlers =
-        list.stream()
-            .collect(
-                Collectors.toMap(
-                    h -> h.action().getKey(),
-                    h -> h,
-                    (a, b) -> {
-                      throw new IllegalStateException(
-                          "Duplicate handler for action: " + a.action().getKey());
-                    }));
+    this.handlers = list.stream().collect(Collectors.toMap(h -> h.action().getKey(), h -> h));
   }
 
   public ActionResponse dispatch(ActionRequest req) {

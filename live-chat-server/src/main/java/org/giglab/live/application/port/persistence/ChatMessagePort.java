@@ -8,4 +8,6 @@ public interface ChatMessagePort {
   List<ChatMessage> findRecentByRoomId(String roomId, int limit);
 
   void save(ChatMessage chatMessage);
+
+  List<ChatMessage> findByRoomIdAndSeqBetween(String roomId, long fromSeq, long toSeq);
 }

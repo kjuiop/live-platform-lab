@@ -11,7 +11,8 @@ public record ChatMessageResponse(
     String senderUserId,
     String senderNickname,
     Map<String, Object> payload,
-    Instant sentAt) {
+    Instant sentAt,
+    long seq) {
 
   public static ChatMessageResponse from(ChatMessage msg) {
     return new ChatMessageResponse(
@@ -21,6 +22,7 @@ public record ChatMessageResponse(
         msg.getSenderUserId(),
         msg.getSenderNickname(),
         msg.getPayload(),
-        msg.getSentAt());
+        msg.getSentAt(),
+        msg.getSeq());
   }
 }

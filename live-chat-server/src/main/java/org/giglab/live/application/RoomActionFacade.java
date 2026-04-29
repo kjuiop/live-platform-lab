@@ -22,8 +22,9 @@ public class RoomActionFacade {
 
   public void handle(ActionRequest req, String sessionId) {
     ActionResponse res = dispatcher.dispatch(req);
-    broadcastPort.publish(req.roomId(), res);
-    chatMessageService.saveIfNeeded(res);
+    ActionResponse resWithSeq = chatMessageService.assignSeq(res);
+    broadcastPort.publish(req.roomId(), resWithSeq);
+    chatMessageService.saveIfNeeded(resWithSeq);
     viewerSessionService.saveUserIdIfJoin(req, sessionId);
   }
 }

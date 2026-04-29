@@ -20,7 +20,7 @@ public class ChatMessageController {
 
   @GetMapping
   public ApiResponse<List<ChatMessageResponse>> getRecentMessages(
-      @PathVariable String roomId, @RequestParam(defaultValue = "100") int limit) {
+      @PathVariable String roomId, @RequestParam(defaultValue = "50") int limit) {
     return ApiResponse.success(chatMessageService.getRecentMessages(roomId, limit));
   }
 }

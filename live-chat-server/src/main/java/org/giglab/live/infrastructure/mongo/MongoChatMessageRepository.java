@@ -28,4 +28,11 @@ public class MongoChatMessageRepository {
             .limit(limit);
     return mongoTemplate.find(query, ChatMessage.class);
   }
+
+  public List<ChatMessage> findByRoomIdAndSeqBetween(String roomId, long fromSeq, long toSeq) {
+    Query query =
+        new Query(Criteria.where("roomId").is(roomId).and("seq").gt(fromSeq).lt(toSeq))
+            .with(Sort.by(Sort.Direction.ASC, "seq"));
+    return mongoTemplate.find(query, ChatMessage.class);
+  }
 }

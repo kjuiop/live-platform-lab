@@ -43,7 +43,8 @@ class ChatMessageControllerTest {
                 "u1",
                 "사용자1",
                 Map.of("message", "안녕하세요"),
-                Instant.parse("2024-01-01T10:00:00Z")),
+                Instant.parse("2024-01-01T10:00:00Z"),
+                1L),
             new ChatMessageResponse(
                 "id2",
                 roomId,
@@ -51,7 +52,8 @@ class ChatMessageControllerTest {
                 "u2",
                 "사용자2",
                 Map.of("message", "반갑습니다"),
-                Instant.parse("2024-01-01T10:01:00Z")));
+                Instant.parse("2024-01-01T10:01:00Z"),
+                2L));
     given(chatMessageService.getRecentMessages(roomId, 50)).willReturn(messages);
 
     // when & then
@@ -70,11 +72,11 @@ class ChatMessageControllerTest {
   }
 
   @Test
-  @DisplayName("최근 메시지 조회 - limit 기본값 100 적용")
-  void getRecentMessages_defaultLimit100() throws Exception {
+  @DisplayName("최근 메시지 조회 - limit 기본값 50 적용")
+  void getRecentMessages_defaultLimit50() throws Exception {
     // given
     String roomId = "ROOM_DEF";
-    given(chatMessageService.getRecentMessages(roomId, 100)).willReturn(List.of());
+    given(chatMessageService.getRecentMessages(roomId, 50)).willReturn(List.of());
 
     // when & then
     mockMvc
@@ -83,7 +85,7 @@ class ChatMessageControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data").isArray());
 
-    verify(chatMessageService).getRecentMessages(roomId, 100);
+    verify(chatMessageService).getRecentMessages(roomId, 50);
   }
 
   @Test
@@ -115,8 +117,9 @@ class ChatMessageControllerTest {
                 "ai",
                 "AI 어시스턴트",
                 Map.of("answer", "2~3일 소요"),
-                Instant.parse("2024-01-01T10:00:00Z")));
-    given(chatMessageService.getRecentMessages(roomId, 100)).willReturn(messages);
+                Instant.parse("2024-01-01T10:00:00Z"),
+                1L));
+    given(chatMessageService.getRecentMessages(roomId, 50)).willReturn(messages);
 
     // when & then
     mockMvc

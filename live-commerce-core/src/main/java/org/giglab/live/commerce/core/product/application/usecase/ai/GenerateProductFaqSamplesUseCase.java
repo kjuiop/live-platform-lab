@@ -10,9 +10,8 @@ import org.giglab.live.commerce.core.product.application.dto.ai.FaqSampleItem;
 import org.giglab.live.commerce.core.product.application.dto.ai.GenerateProductFaqSamplesResult;
 import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentPort;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -52,9 +51,9 @@ public class GenerateProductFaqSamplesUseCase {
   private final ChatClient chatClient;
 
   public GenerateProductFaqSamplesUseCase(
-      SearchDocumentPort searchDocumentPort, ChatModel chatModel) {
+      SearchDocumentPort searchDocumentPort, @Qualifier("reportChatClient") ChatClient chatClient) {
     this.searchDocumentPort = searchDocumentPort;
-    this.chatClient = ChatClient.create(chatModel);
+    this.chatClient = chatClient;
   }
 
   public GenerateProductFaqSamplesResult execute(Long productId) {
@@ -73,7 +72,6 @@ public class GenerateProductFaqSamplesUseCase {
             .prompt()
             .system(SYSTEM_PROMPT.replace("{context}", context))
             .user(USER_PROMPT)
-            .options(OpenAiChatOptions.builder().temperature(0.3).build())
             .call()
             .content();
 

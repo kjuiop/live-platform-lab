@@ -6,8 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -18,8 +17,8 @@ public class ChatSentimentClassifier {
 
   private final ChatClient chatClient;
 
-  public ChatSentimentClassifier(ChatModel chatModel) {
-    this.chatClient = ChatClient.create(chatModel);
+  public ChatSentimentClassifier(@Qualifier("classifierChatClient") ChatClient chatClient) {
+    this.chatClient = chatClient;
   }
 
   /**
@@ -39,13 +38,7 @@ public class ChatSentimentClassifier {
     }
 
     try {
-      String response =
-          chatClient
-              .prompt()
-              .options(OpenAiChatOptions.builder().temperature(0.0).build())
-              .user(buildPrompt(messages))
-              .call()
-              .content();
+      String response = chatClient.prompt().user(buildPrompt(messages)).call().content();
       parseResponse(messages, response, result);
     } catch (Exception e) {
       log.warn("채팅 감성 분류 실패, 전체 NEUTRAL 처리 - size={}", messages.size(), e);

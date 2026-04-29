@@ -5,9 +5,8 @@ import java.util.stream.Collectors;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.port.ai.SearchDocumentPort;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -39,9 +38,10 @@ public class AskProductQuestionUseCase {
   private final SearchDocumentPort searchDocumentPort;
   private final ChatClient chatClient;
 
-  public AskProductQuestionUseCase(SearchDocumentPort searchDocumentPort, ChatModel chatModel) {
+  public AskProductQuestionUseCase(
+      SearchDocumentPort searchDocumentPort, @Qualifier("faqChatClient") ChatClient chatClient) {
     this.searchDocumentPort = searchDocumentPort;
-    this.chatClient = ChatClient.create(chatModel);
+    this.chatClient = chatClient;
   }
 
   public AskProductQuestionResult execute(Long productId, String question) {
@@ -59,7 +59,6 @@ public class AskProductQuestionUseCase {
             .prompt()
             .system(SYSTEM_PROMPT.replace("{context}", context))
             .user(question)
-            .options(OpenAiChatOptions.builder().temperature(0.2).build())
             .call()
             .content();
 

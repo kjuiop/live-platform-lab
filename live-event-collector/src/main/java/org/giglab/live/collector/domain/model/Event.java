@@ -3,7 +3,10 @@ package org.giglab.live.collector.domain.model;
 import java.time.Instant;
 import java.util.Map;
 import org.giglab.live.collector.presentation.dto.EventRequest;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.annotation.JsonNaming;
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record Event(
     String eventId,
     String eventType,

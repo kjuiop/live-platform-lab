@@ -22,7 +22,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_NUM_PARTITIONS: 3
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -60,9 +60,8 @@ services:
     ports:
       - "8123:8123"
       - "9000:9000"
+    env_file: .env
     environment:
-      CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: clickhouse
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     volumes:
       - clickhouse_data:/var/lib/clickhouse
@@ -82,6 +81,7 @@ services:
   vector:
     image: timberio/vector:0.38.0-alpine
     container_name: live-platform-vector
+    env_file: .env
     volumes:
       - ./config/vector/vector.toml:/etc/vector/vector.toml:ro
       - vector_buffer:/var/lib/vector

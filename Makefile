@@ -29,6 +29,15 @@ infra-up:
 infra-down:
 	@docker-compose -f docker-compose.infra.yml down
 
+network-create:
+	@docker network inspect live-platform-network >/dev/null 2>&1 || docker network create live-platform-network
+
+collector-up: network-create
+	@docker-compose -f docker-compose.collector.yml up -d
+
+collector-down:
+	@docker-compose -f docker-compose.collector.yml down
+
 docker-mysql-up:
 	@docker-compose -f docker-compose.infra.yml up -d mysql
 

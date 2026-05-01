@@ -1,0 +1,37 @@
+[sources.kafka_live_events]
+type = "kafka"
+bootstrap_servers = "kafka:9092"
+topics = ["live-events"]
+group_id = "vector-clickhouse-group"
+auto_offset_reset = "earliest"
+
+[transforms.parse_event]
+type = "remap"
+inputs = ["kafka_live_events"]
+source = '''
+  parsed = parse_json!(.message)
+  .event_id    = parsed.event_id
+  .event_type  = parsed.event_type
+  .occurred_at = parsed.occurred_at
+  .session_id  = parsed.session_id
+  .user_id     = parsed.user_id
+  .room_id     = parsed.room_id
+  .properties  = encode_json(parsed.properties)
+'''
+
+[sinks.clickhouse_events]
+type = "clickhouse"
+inputs = ["parse_event"]
+endpoint = "http://clickhouse:8123"
+database = "analytics"
+table = "events"
+skip_unknown_fields = true
+
+[sinks.clickhouse_events.batch]
+max_bytes = 10485760
+timeout_secs = 5
+
+[sinks.clickhouse_events.buffer]
+type = "disk"
+max_size = 268435456
+when_full = "block"

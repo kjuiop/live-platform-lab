@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS analytics.events
     -- 기본 식별자
     event_id        String,
     event_type      LowCardinality(String),
-    occurred_at     DateTime64(3, 'UTC'),
+    occurred_at     DateTime64(6, 'UTC'),
 
     -- 세션 / 사용자
     session_id      String,

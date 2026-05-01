@@ -37,6 +37,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 5
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -69,7 +70,7 @@ services:
     networks:
       - live-platform-network
     healthcheck:
-      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      test: ["CMD-SHELL", "clickhouse-client --user $${CLICKHOUSE_USER} --password $${CLICKHOUSE_PASSWORD} --query 'SELECT 1'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -77,6 +78,7 @@ services:
       nofile:
         soft: 262144
         hard: 262144
+    restart: unless-stopped
 
   vector:
     image: timberio/vector:0.38.0-alpine

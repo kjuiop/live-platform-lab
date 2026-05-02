@@ -10,14 +10,21 @@ type = "remap"
 inputs = ["kafka_live_events"]
 source = '''
   parsed = parse_json!(.message)
-  .event_id       = parsed.event_id
-  .event_type     = parsed.event_type
-  .occurred_at    = parsed.occurred_at
-  .occurred_at_ms = to_unix_timestamp_millis!(parse_timestamp!(parsed.occurred_at, format: "%+"))
-  .session_id     = parsed.session_id
-  .user_id        = parsed.user_id
-  .room_id        = parsed.room_id
-  .properties     = encode_json(parsed.properties)
+  .event_id     = parsed.event_id
+  .event_type   = parsed.event_type
+  .occurred_at  = parsed.occurred_at
+  .session_id   = parsed.session_id
+  .user_id      = parsed.user_id
+  .user_name    = parsed.user_name
+  .device_id    = parsed.device_id
+  .room_id      = parsed.room_id
+  .os_type      = parsed.os_type || ""
+  .app_version  = parsed.app_version
+  .utm_source   = parsed.utm_source
+  .utm_campaign = parsed.utm_campaign
+  .utm_medium   = parsed.utm_medium
+  .ip           = parsed.ip || ""
+  .properties   = encode_json(parsed.properties || {})
 '''
 
 [sinks.clickhouse_events]
@@ -39,5 +46,5 @@ timeout_secs = 5
 
 [sinks.clickhouse_events.buffer]
 type = "disk"
-max_size = 268435456
+max_size = 268435456  # 256MiB
 when_full = "block"

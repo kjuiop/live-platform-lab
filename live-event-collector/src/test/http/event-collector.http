@@ -1,0 +1,138 @@
+### stream.join — 방송 입장
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "stream.join",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "userName": "jake",
+  "deviceId": "device-uuid-abc",
+  "roomId": "room-001",
+  "osType": "android",
+  "appVersion": "1.2.0",
+  "utmSource": "instagram",
+  "utmCampaign": "spring_sale",
+  "utmMedium": "social",
+  "properties": {
+    "referrer": "https://instagram.com"
+  }
+}
+
+###
+
+### stream.leave — 방송 이탈
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "stream.leave",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "roomId": "room-001",
+  "osType": "android",
+  "properties": {}
+}
+
+###
+
+### stream.heartbeat — 시청 중 ping
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "stream.heartbeat",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "roomId": "room-001",
+  "osType": "ios",
+  "properties": {
+    "live_video_delay": 1.5,
+    "muted": false,
+    "background": false
+  }
+}
+
+###
+
+### product.click — 상품 클릭
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "product.click",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "roomId": "room-001",
+  "osType": "android",
+  "properties": {
+    "product_id": "P001",
+    "product_name": "무선 이어폰",
+    "price": 49000
+  }
+}
+
+###
+
+### product.purchase — 구매 완료
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "product.purchase",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "roomId": "room-001",
+  "osType": "android",
+  "properties": {
+    "product_id": "P001",
+    "product_name": "무선 이어폰",
+    "price": 49000,
+    "quantity": 1,
+    "total_amount": 49000,
+    "order_id": "ORD-20260501-001"
+  }
+}
+
+###
+
+### chat.sent — 채팅 전송
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "chat.sent",
+  "sessionId": "sess-test-001",
+  "userId": "user-001",
+  "roomId": "room-001",
+  "osType": "web",
+  "properties": {
+    "message_length": 12
+  }
+}
+
+###
+
+### validation 실패 케이스 — eventType 없음
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "sessionId": "sess-test-001",
+  "roomId": "room-001"
+}
+
+###
+
+### 비로그인 유저 — userId 없음
+POST http://localhost:8070/api/v1/events
+Content-Type: application/json
+
+{
+  "eventType": "stream.join",
+  "sessionId": "sess-guest-001",
+  "deviceId": "device-uuid-guest",
+  "roomId": "room-001",
+  "osType": "web",
+  "properties": {}
+}

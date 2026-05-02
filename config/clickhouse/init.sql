@@ -36,6 +36,6 @@ CREATE TABLE IF NOT EXISTS analytics.events
     -- 이벤트별 가변 데이터
     properties      String                          DEFAULT '{}'
 )
-ENGINE = ReplacingMergeTree(occurred_at)
+ENGINE = MergeTree()
 PARTITION BY toYYYYMM(occurred_at)
 ORDER BY (room_id, event_type, occurred_at, event_id);

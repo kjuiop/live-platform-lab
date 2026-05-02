@@ -1,11 +1,13 @@
 package org.giglab.live.collector.infrastructure.kafka;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.giglab.live.collector.domain.model.Event;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EventKafkaPublisher {
@@ -16,11 +18,14 @@ public class EventKafkaPublisher {
   private final ObjectMapper objectMapper;
 
   public void publish(Event event) {
-    try {
-      String payload = objectMapper.writeValueAsString(event);
-      kafkaTemplate.send(TOPIC, event.eventId(), payload);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to publish event to Kafka", e);
-    }
+    String payload = objectMapper.writeValueAsString(event);
+    kafkaTemplate
+        .send(TOPIC, event.eventId(), payload)
+        .whenComplete(
+            (result, ex) -> {
+              if (ex != null) {
+                log.error("Kafka send failed: topic={}, eventId={}", TOPIC, event.eventId(), ex);
+              }
+            });
   }
 }

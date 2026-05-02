@@ -9,20 +9,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Map;
 import org.giglab.live.collector.application.EventService;
-import org.giglab.live.collector.global.config.JacksonConfig;
 import org.giglab.live.collector.presentation.dto.EventRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(EventController.class)
-@Import(JacksonConfig.class)
 class EventControllerTest {
 
   @Autowired private MockMvc mockMvc;

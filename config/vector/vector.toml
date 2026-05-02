@@ -46,5 +46,5 @@ timeout_secs = 5
 
 [sinks.clickhouse_events.buffer]
 type = "disk"
-max_size = 268435488
+max_size = 268435456  # 256MiB
 when_full = "block"

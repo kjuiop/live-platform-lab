@@ -36,6 +36,15 @@ public class KafkaConfig {
     // 메시지를 배치로 묶어서 전송하는 지연 시간 설정 (ms 단위)
     // 이 값이 크면 메시지를 더 많이 배치로 묶어서 자원을 효율적으로 쓰지만 지연이 발생할 수 있음
     config.put(ProducerConfig.LINGER_MS_CONFIG, 5);
+    // 기본 16kb 배치 사이즈를 32kb로 늘려서 네트워크 효율성 향상
+    // 이벤트 크기 420bytes, kafka-ui 에서 확인
+    // 32 * 1024 = 32768 bytes, 32768 / 420 ≈ 78.02
+    // 32kb 배치 사이즈면 평균적으로 80개 이상의 이벤트를 한 번에 전송 가능
+    config.put(ProducerConfig.BATCH_SIZE_CONFIG, 32 * 1024);
+    // 메시지 압축 설정
+    // snappy: 압축률 중간 → CPU 낮음 → 처리량 유지
+    // gzip: 압축률 높음 → CPU 높음 → 처리량 감소 가능
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
     return new DefaultKafkaProducerFactory<>(config);
   }
 

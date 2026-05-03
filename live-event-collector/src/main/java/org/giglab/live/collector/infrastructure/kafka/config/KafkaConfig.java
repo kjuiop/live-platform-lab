@@ -23,13 +23,15 @@ public class KafkaConfig {
     config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    // 모든 레플리카 복제되었는지 확인 후에 ACK 를 받도록 설정하여 데이터 손실 방지
-    config.put(ProducerConfig.ACKS_CONFIG, "all");
-    config.put(ProducerConfig.RETRIES_CONFIG, 3);
-    // 전송 타임아웃
-    config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
-    // 중복 전송 방지
-    config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+    // 리더 레플리카만 확인 후 ACK 수신 (이벤트 컬렉터 특성상 일부 유실 허용, 처리량 우선)
+    config.put(ProducerConfig.ACKS_CONFIG, "1");
+    // 재시도 없음 — 재시도 시 idempotence=false + max.in.flight=5 조합에서 순서 역전 및 중복 발생 가능
+    // 이벤트 컬렉터 특성상 일부 유실 허용, 중복/순서 문제 방지 우선
+    config.put(ProducerConfig.RETRIES_CONFIG, 0);
+    // 재시도 포함 전송 타임아웃 (request.timeout.ms 기본값 30000 + linger.ms 5 이상이어야 함)
+    config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 35000);
+    // ACKS=1 에서는 idempotence 불필요
+    config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
     // 최대 5개의 요청이 동시에 처리될 수 있도록 설정
     // 한 번에 많이 보내면 성능은 향상되지만 순서 보장 및 안정성에서 문제가 발생할 수 있기 때문에 낮은 값 선호
     config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
@@ -45,6 +47,8 @@ public class KafkaConfig {
     // snappy: 압축률 중간 → CPU 낮음 → 처리량 유지
     // gzip: 압축률 높음 → CPU 높음 → 처리량 감소 가능
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    // 버퍼 포화 시 send() 최대 대기 시간 설정 (ms 단위)
+    config.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
     return new DefaultKafkaProducerFactory<>(config);
   }
 

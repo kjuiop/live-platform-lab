@@ -4,6 +4,7 @@ bootstrap_servers = "kafka:9092"
 topics = ["live-events"]
 group_id = "vector-clickhouse-group"
 auto_offset_reset = "earliest"
+acknowledgements.enabled = true  # sink 전달 완료 후 offset commit → 데이터 유실 방지
 
 [transforms.parse_event]
 type = "remap"

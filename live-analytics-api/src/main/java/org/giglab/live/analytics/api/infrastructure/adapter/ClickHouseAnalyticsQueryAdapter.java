@@ -1,0 +1,40 @@
+package org.giglab.live.analytics.api.infrastructure.adapter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.giglab.live.analytics.api.application.dto.GetFunnelResult;
+import org.giglab.live.analytics.api.application.dto.GetUtmResult;
+import org.giglab.live.analytics.api.application.dto.GetViewerResult;
+import org.giglab.live.analytics.api.application.port.persistence.AnalyticsQueryPort;
+import org.giglab.live.analytics.api.infrastructure.clickhouse.FunnelClickHouseRepository;
+import org.giglab.live.analytics.api.infrastructure.clickhouse.UtmClickHouseRepository;
+import org.giglab.live.analytics.api.infrastructure.clickhouse.ViewerClickHouseRepository;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class ClickHouseAnalyticsQueryAdapter implements AnalyticsQueryPort {
+
+  private final FunnelClickHouseRepository funnelRepository;
+  private final ViewerClickHouseRepository viewerRepository;
+  private final UtmClickHouseRepository utmRepository;
+
+  @Override
+  public GetFunnelResult getFunnelByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return funnelRepository.getFunnelByRoomId(roomId, startAt, endAt);
+  }
+
+  @Override
+  public GetViewerResult getViewerByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return viewerRepository.getViewerByRoomId(roomId, startAt, endAt);
+  }
+
+  @Override
+  public List<GetUtmResult> getUtmByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return utmRepository.getUtmByRoomId(roomId, startAt, endAt);
+  }
+}

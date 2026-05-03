@@ -1,5 +1,6 @@
 package org.giglab.live.analytics.api.infrastructure.adapter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.analytics.api.application.dto.GetFunnelResult;
@@ -20,17 +21,20 @@ public class ClickHouseAnalyticsQueryAdapter implements AnalyticsQueryPort {
   private final UtmClickHouseRepository utmRepository;
 
   @Override
-  public GetFunnelResult getFunnelByRoomId(String roomId) {
-    return funnelRepository.getFunnelByRoomId(roomId);
+  public GetFunnelResult getFunnelByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return funnelRepository.getFunnelByRoomId(roomId, startAt, endAt);
   }
 
   @Override
-  public GetViewerResult getViewerByRoomId(String roomId) {
-    return viewerRepository.getViewerByRoomId(roomId);
+  public GetViewerResult getViewerByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return viewerRepository.getViewerByRoomId(roomId, startAt, endAt);
   }
 
   @Override
-  public List<GetUtmResult> getUtmByRoomId(String roomId) {
-    return utmRepository.getUtmByRoomId(roomId);
+  public List<GetUtmResult> getUtmByRoomId(
+      String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return utmRepository.getUtmByRoomId(roomId, startAt, endAt);
   }
 }

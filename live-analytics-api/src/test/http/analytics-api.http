@@ -1,5 +1,10 @@
-### CVR 퍼널 분석 — room-001
+### CVR 퍼널 분석 — room-001 (기본: 최근 30일)
 GET http://localhost:8060/api/v1/analytics/rooms/room-001/funnel
+
+###
+
+### CVR 퍼널 분석 — room-001 (기간 지정)
+GET http://localhost:8060/api/v1/analytics/rooms/room-001/funnel?startAt=2026-01-01T00:00:00&endAt=2026-12-31T23:59:59
 
 ###
 
@@ -8,8 +13,13 @@ GET http://localhost:8060/api/v1/analytics/rooms/room-999/funnel
 
 ###
 
-### 누적 시청자 — room-001
+### 누적 시청자 — room-001 (기본: 최근 30일)
 GET http://localhost:8060/api/v1/analytics/rooms/room-001/viewers
+
+###
+
+### 누적 시청자 — room-001 (기간 지정)
+GET http://localhost:8060/api/v1/analytics/rooms/room-001/viewers?startAt=2026-01-01T00:00:00&endAt=2026-12-31T23:59:59
 
 ###
 
@@ -18,8 +28,13 @@ GET http://localhost:8060/api/v1/analytics/rooms/room-999/viewers
 
 ###
 
-### UTM 유입 채널 분석 — room-001
+### UTM 유입 채널 분석 — room-001 (기본: 최근 30일)
 GET http://localhost:8060/api/v1/analytics/rooms/room-001/utm
+
+###
+
+### UTM 유입 채널 분석 — room-001 (기간 지정)
+GET http://localhost:8060/api/v1/analytics/rooms/room-001/utm?startAt=2026-01-01T00:00:00&endAt=2026-12-31T23:59:59
 
 ###
 

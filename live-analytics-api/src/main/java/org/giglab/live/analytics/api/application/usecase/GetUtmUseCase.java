@@ -1,5 +1,6 @@
 package org.giglab.live.analytics.api.application.usecase;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.analytics.api.application.dto.GetUtmResult;
@@ -14,7 +15,7 @@ public class GetUtmUseCase {
 
   private final AnalyticsQueryPort analyticsQueryPort;
 
-  public List<GetUtmResult> execute(String roomId) {
-    return analyticsQueryPort.getUtmByRoomId(roomId);
+  public List<GetUtmResult> execute(String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return analyticsQueryPort.getUtmByRoomId(roomId, startAt, endAt);
   }
 }

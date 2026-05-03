@@ -1,5 +1,6 @@
 package org.giglab.live.analytics.api.application;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.analytics.api.application.dto.GetFunnelResult;
@@ -18,15 +19,15 @@ public class AnalyticsService {
   private final GetViewerUseCase getViewerUseCase;
   private final GetUtmUseCase getUtmUseCase;
 
-  public GetFunnelResult getFunnel(String roomId) {
-    return getFunnelUseCase.execute(roomId);
+  public GetFunnelResult getFunnel(String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return getFunnelUseCase.execute(roomId, startAt, endAt);
   }
 
-  public GetViewerResult getViewer(String roomId) {
-    return getViewerUseCase.execute(roomId);
+  public GetViewerResult getViewer(String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return getViewerUseCase.execute(roomId, startAt, endAt);
   }
 
-  public List<GetUtmResult> getUtm(String roomId) {
-    return getUtmUseCase.execute(roomId);
+  public List<GetUtmResult> getUtm(String roomId, LocalDateTime startAt, LocalDateTime endAt) {
+    return getUtmUseCase.execute(roomId, startAt, endAt);
   }
 }

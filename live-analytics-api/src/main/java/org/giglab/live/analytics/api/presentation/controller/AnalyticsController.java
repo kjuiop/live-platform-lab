@@ -32,9 +32,7 @@ public class AnalyticsController {
           LocalDateTime startAt,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime endAt) {
-    LocalDateTime resolvedStart = startAt != null ? startAt : LocalDateTime.now().minusDays(30);
-    LocalDateTime resolvedEnd = endAt != null ? endAt : LocalDateTime.now();
-    GetFunnelResult result = analyticsService.getFunnel(roomId, resolvedStart, resolvedEnd);
+    GetFunnelResult result = analyticsService.getFunnel(roomId, startAt, endAt);
     FunnelResponse response = FunnelResponse.from(result);
     return ApiResponse.success(response);
   }
@@ -46,9 +44,7 @@ public class AnalyticsController {
           LocalDateTime startAt,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime endAt) {
-    LocalDateTime resolvedStart = startAt != null ? startAt : LocalDateTime.now().minusDays(30);
-    LocalDateTime resolvedEnd = endAt != null ? endAt : LocalDateTime.now();
-    GetViewerResult result = analyticsService.getViewer(roomId, resolvedStart, resolvedEnd);
+    GetViewerResult result = analyticsService.getViewer(roomId, startAt, endAt);
     ViewerResponse response = ViewerResponse.from(result);
     return ApiResponse.success(response);
   }
@@ -60,9 +56,7 @@ public class AnalyticsController {
           LocalDateTime startAt,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime endAt) {
-    LocalDateTime resolvedStart = startAt != null ? startAt : LocalDateTime.now().minusDays(30);
-    LocalDateTime resolvedEnd = endAt != null ? endAt : LocalDateTime.now();
-    List<GetUtmResult> results = analyticsService.getUtm(roomId, resolvedStart, resolvedEnd);
+    List<GetUtmResult> results = analyticsService.getUtm(roomId, startAt, endAt);
     List<UtmResponse> response = results.stream().map(UtmResponse::from).toList();
     return ApiResponse.success(response);
   }

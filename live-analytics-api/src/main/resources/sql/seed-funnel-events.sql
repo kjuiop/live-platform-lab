@@ -86,6 +86,49 @@ SELECT
     concat('{"product_id":"P001","amount":', toString(29900 + (rand() % 10) * 1000), '}') AS properties
 FROM numbers(3);
 
+-- stream.join 80건 (sess-001 ~ sess-080, 중복 없는 80명)
+-- 기대 결과: total_viewers = 80
+INSERT INTO analytics.events
+SELECT
+    generateUUIDv4()                                                AS event_id,
+    'stream.join'                                                   AS event_type,
+    now() - toIntervalSecond(rand() % 3600)                        AS occurred_at,
+    concat('sess-', leftPad(toString(number + 1), 3, '0'))         AS session_id,
+    concat('user-', leftPad(toString(number + 1), 3, '0'))         AS user_id,
+    arrayElement(['Alice','Bob','Charlie','Dave','Eve','Frank',
+                  'Grace','Heidi','Ivan','Judy'], (number % 10) + 1) AS user_name,
+    concat('dev-', leftPad(toString(number + 1), 3, '0'))          AS device_id,
+    'room-001'                                                      AS room_id,
+    arrayElement(['iOS', 'Android'], (number % 2) + 1)             AS os_type,
+    arrayElement(['2.0.0', '1.9.0'], (number % 5 = 0) + 1)        AS app_version,
+    arrayElement(['google', 'facebook', 'kakao'], (number % 3) + 1) AS utm_source,
+    arrayElement(['summer_sale', 'black_friday'], (number % 2) + 1) AS utm_campaign,
+    arrayElement(['banner', 'feed'], (number % 2) + 1)             AS utm_medium,
+    concat('1.1.1.', toString(number + 1))                         AS ip,
+    '{}'                                                            AS properties
+FROM numbers(80);
+
+-- stream.leave 60건 (sess-001 ~ sess-060, 입장 후 퇴장한 세션)
+INSERT INTO analytics.events
+SELECT
+    generateUUIDv4()                                                AS event_id,
+    'stream.leave'                                                  AS event_type,
+    now() - toIntervalSecond(rand() % 1800)                        AS occurred_at,
+    concat('sess-', leftPad(toString(number + 1), 3, '0'))         AS session_id,
+    concat('user-', leftPad(toString(number + 1), 3, '0'))         AS user_id,
+    arrayElement(['Alice','Bob','Charlie','Dave','Eve','Frank',
+                  'Grace','Heidi','Ivan','Judy'], (number % 10) + 1) AS user_name,
+    concat('dev-', leftPad(toString(number + 1), 3, '0'))          AS device_id,
+    'room-001'                                                      AS room_id,
+    arrayElement(['iOS', 'Android'], (number % 2) + 1)             AS os_type,
+    arrayElement(['2.0.0', '1.9.0'], (number % 5 = 0) + 1)        AS app_version,
+    arrayElement(['google', 'facebook', 'kakao'], (number % 3) + 1) AS utm_source,
+    arrayElement(['summer_sale', 'black_friday'], (number % 2) + 1) AS utm_campaign,
+    arrayElement(['banner', 'feed'], (number % 2) + 1)             AS utm_medium,
+    concat('1.1.1.', toString(number + 1))                         AS ip,
+    '{}'                                                            AS properties
+FROM numbers(60);
+
 -- 검증
 -- SELECT
 --   countIf(event_type = 'product.impression') AS impression,  -- 기대값: 100
@@ -97,3 +140,8 @@ FROM numbers(3);
 -- FROM analytics.events
 -- WHERE room_id = 'room-001'
 --   AND event_type IN ('product.impression','product.click','product.add_cart','product.purchase');
+
+-- SELECT COUNT(DISTINCT session_id) AS total_viewers  -- 기대값: 80
+-- FROM analytics.events
+-- WHERE room_id = 'room-001'
+--   AND event_type = 'stream.join';

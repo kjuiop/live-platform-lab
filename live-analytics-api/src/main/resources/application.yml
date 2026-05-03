@@ -1,0 +1,10 @@
+server:
+  port: 8060
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: jdbc:ch://${CLICKHOUSE_HOST:localhost}:8123/analytics
+    username: ${CLICKHOUSE_USER:default}
+    password: ${CLICKHOUSE_PASSWORD:}
+    driver-class-name: com.clickhouse.jdbc.ClickHouseDriver

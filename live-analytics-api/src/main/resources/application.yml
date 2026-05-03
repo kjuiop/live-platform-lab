@@ -4,7 +4,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:ch://${CLICKHOUSE_HOST:localhost}:8123/analytics
+    url: jdbc:ch://${CLICKHOUSE_HOST:localhost}:8123/analytics?compress=0
     username: ${CLICKHOUSE_USER:default}
     password: ${CLICKHOUSE_PASSWORD:}
     driver-class-name: com.clickhouse.jdbc.ClickHouseDriver

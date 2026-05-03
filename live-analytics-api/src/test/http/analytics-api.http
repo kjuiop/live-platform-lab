@@ -1,0 +1,9 @@
+### CVR 퍼널 분석 — room-001
+GET http://localhost:8060/api/v1/analytics/rooms/room-001/funnel
+
+###
+
+### CVR 퍼널 분석 — 존재하지 않는 방 (데이터 없음)
+GET http://localhost:8060/api/v1/analytics/rooms/room-999/funnel
+
+###

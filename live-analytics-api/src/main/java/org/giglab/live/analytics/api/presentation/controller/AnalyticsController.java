@@ -1,10 +1,13 @@
 package org.giglab.live.analytics.api.presentation.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.analytics.api.application.AnalyticsService;
 import org.giglab.live.analytics.api.application.dto.GetFunnelResult;
+import org.giglab.live.analytics.api.application.dto.GetUtmResult;
 import org.giglab.live.analytics.api.application.dto.GetViewerResult;
 import org.giglab.live.analytics.api.presentation.dto.FunnelResponse;
+import org.giglab.live.analytics.api.presentation.dto.UtmResponse;
 import org.giglab.live.analytics.api.presentation.dto.ViewerResponse;
 import org.giglab.live.analytics.api.presentation.response.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +33,13 @@ public class AnalyticsController {
   public ApiResponse<ViewerResponse> getViewers(@PathVariable String roomId) {
     GetViewerResult result = analyticsService.getViewer(roomId);
     ViewerResponse response = ViewerResponse.from(result);
+    return ApiResponse.success(response);
+  }
+
+  @GetMapping("/utm")
+  public ApiResponse<List<UtmResponse>> getUtm(@PathVariable String roomId) {
+    List<GetUtmResult> results = analyticsService.getUtm(roomId);
+    List<UtmResponse> response = results.stream().map(UtmResponse::from).toList();
     return ApiResponse.success(response);
   }
 }

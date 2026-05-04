@@ -25,18 +25,4 @@ public class RedisConfig {
     template.afterPropertiesSet();
     return template;
   }
-
-  // redis pub/sub 은 String 직렬화로 통일 (채널명과 메시지 모두)
-  @Bean
-  public RedisTemplate<String, String> stringRedisTemplate(
-      RedisConnectionFactory connectionFactory) {
-    RedisTemplate<String, String> template = new RedisTemplate<>();
-    template.setConnectionFactory(connectionFactory);
-    template.setKeySerializer(RedisSerializer.string());
-    template.setValueSerializer(RedisSerializer.string());
-    template.setHashKeySerializer(RedisSerializer.string());
-    template.setHashValueSerializer(RedisSerializer.string());
-    template.afterPropertiesSet();
-    return template;
-  }
 }

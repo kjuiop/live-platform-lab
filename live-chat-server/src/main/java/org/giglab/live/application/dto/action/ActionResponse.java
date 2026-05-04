@@ -1,22 +1,38 @@
 package org.giglab.live.application.dto.action;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.Instant;
 import java.util.Map;
 
-public record ActionResponse(
-    String roomId,
-    String action,
-    Actor actor,
-    Map<String, Object> payload,
-    Instant sentAt,
-    long seq) {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "action", visible = true)
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "CHAT.MESSAGE"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "CHAT.JOIN"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "CHAT.LEAVE"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "CHAT.SYSTEM"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "FAQ.QUESTION"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "FAQ.ANSWER"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "FAQ.ERROR"),
+  @JsonSubTypes.Type(value = DefaultActionResponse.class, name = "VIEWER.COUNT"),
+  // PRODUCT.BANNER_ON, PRODUCT.BANNER_OFF — Step 3에서 추가
+})
+public abstract class ActionResponse {
 
-  public static ActionResponse of(
-      String roomId, String action, Actor actor, Map<String, Object> payload) {
-    return new ActionResponse(roomId, action, actor, payload, Instant.now(), 0L);
-  }
+  public abstract String roomId();
 
-  public ActionResponse withSeq(long seq) {
-    return new ActionResponse(roomId, action, actor, payload, sentAt, seq);
+  public abstract String action();
+
+  public abstract Actor actor();
+
+  public abstract Instant sentAt();
+
+  public abstract long seq();
+
+  public abstract ActionResponse withSeq(long seq);
+
+  // DefaultActionResponse 외 서브클래스에서 payload가 없는 경우 null 반환
+  public Map<String, Object> payload() {
+    return null;
   }
 }

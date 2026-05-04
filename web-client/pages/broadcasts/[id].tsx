@@ -1274,9 +1274,10 @@ export default function BroadcastDetail() {
         .product-banner { position:absolute; bottom:0; left:0; right:0; padding:16px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); animation:bannerIn 0.3s ease; }
         @keyframes bannerIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .product-banner-inner { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px 16px; }
-        .product-banner-tag { font-size:10px; font-weight:700; color:#fcd34d; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap; }
-        .product-banner-name { flex:1; font-size:14px; font-weight:700; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .product-banner-cta { padding:7px 16px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+        .product-banner-left { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
+        .product-banner-tag { font-size:10px; font-weight:700; color:#fcd34d; letter-spacing:0.06em; text-transform:uppercase; }
+        .product-banner-name { font-size:16px; font-weight:800; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .product-banner-cta { padding:8px 18px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; }
         .product-banner-cta:hover { opacity:0.85; }
 
         .banner-toggle { width:36px; height:20px; border-radius:999px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.15); cursor:pointer; position:relative; transition:background 0.2s, border-color 0.2s; flex-shrink:0; }
@@ -1346,8 +1347,10 @@ export default function BroadcastDetail() {
                 return (
                   <div className="product-banner">
                     <div className="product-banner-inner">
-                      <div className="product-banner-tag">지금 이 상품</div>
-                      <div className="product-banner-name">{bp.name}</div>
+                      <div className="product-banner-left">
+                        <div className="product-banner-tag">🏷️ 지금 이 상품</div>
+                        <div className="product-banner-name">{bp.name}</div>
+                      </div>
                       <button className="product-banner-cta">구매하기 →</button>
                     </div>
                   </div>

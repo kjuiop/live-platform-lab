@@ -7,6 +7,7 @@ import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
+import org.giglab.live.application.dto.action.DefaultActionResponse;
 import org.giglab.live.application.port.external.FaqAnswerPort;
 import org.giglab.live.application.port.messaging.BroadcastPort;
 import org.springframework.scheduling.annotation.Async;
@@ -31,7 +32,7 @@ public class FaqAnswerService {
       String rawAnswer = faqAnswerPort.ask(productId, question);
       String answer = (rawAnswer != null && !rawAnswer.isBlank()) ? rawAnswer : "답변을 생성할 수 없습니다.";
       ActionResponse res =
-          ActionResponse.of(
+          DefaultActionResponse.of(
               req.roomId(),
               ActionType.FAQ_ANSWER.getKey(),
               AI_ACTOR,
@@ -43,7 +44,7 @@ public class FaqAnswerService {
     } catch (Exception e) {
       log.warn("FAQ 답변 생성 실패 - roomId={}", req.roomId(), e);
       ActionResponse errRes =
-          ActionResponse.of(
+          DefaultActionResponse.of(
               req.roomId(),
               ActionType.FAQ_ERROR.getKey(),
               AI_ACTOR,

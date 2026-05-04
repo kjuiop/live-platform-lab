@@ -5,6 +5,7 @@ import org.giglab.live.application.command.ActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.dto.action.DefaultActionResponse;
 import org.giglab.live.application.service.FaqAnswerService;
 import org.giglab.live.domain.exception.FaqDomainException;
 import org.giglab.live.domain.exception.FaqErrorCode;
@@ -36,6 +37,6 @@ public class FaqQuestion implements ActionHandler<ActionRequest, ActionResponse>
     // 2) AI 호출 + FAQ.ANSWER 브로드캐스트 — 비동기
     faqAnswerService.generateAndBroadcast(req);
 
-    return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
+    return DefaultActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
   }
 }

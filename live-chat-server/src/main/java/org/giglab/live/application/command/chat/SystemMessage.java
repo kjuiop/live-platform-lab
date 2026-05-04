@@ -4,6 +4,7 @@ import org.giglab.live.application.command.ActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.dto.action.DefaultActionResponse;
 import org.giglab.live.domain.exception.ChatDomainException;
 import org.giglab.live.domain.exception.ChatErrorCode;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,6 @@ public class SystemMessage implements ActionHandler<ActionRequest, ActionRespons
     if (!(msg instanceof String s) || s.isBlank()) {
       throw new ChatDomainException(ChatErrorCode.EMPTY_MESSAGE);
     }
-    return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
+    return DefaultActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
   }
 }

@@ -1,16 +1,20 @@
 package org.giglab.live.application.command.banner;
 
+import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.command.AbstractActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
-import org.giglab.live.application.dto.action.ActionResponse;
-import org.giglab.live.application.dto.action.DefaultActionResponse;
+import org.giglab.live.application.dto.action.ShowBannerResponse;
+import org.giglab.live.application.port.persistence.BannerStatePort;
 import org.giglab.live.domain.exception.BannerDomainException;
 import org.giglab.live.domain.exception.BannerErrorCode;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ProductBannerOn extends AbstractActionHandler<ActionRequest, ActionResponse> {
+@RequiredArgsConstructor
+public class ProductBannerOn extends AbstractActionHandler<ActionRequest, ShowBannerResponse> {
+
+  private final BannerStatePort bannerStatePort;
 
   @Override
   public ActionType action() {
@@ -23,10 +27,18 @@ public class ProductBannerOn extends AbstractActionHandler<ActionRequest, Action
         req.payload(),
         "productId",
         () -> new BannerDomainException(BannerErrorCode.INVALID_PRODUCT_ID));
+    requireString(
+        req.payload(),
+        "productName",
+        () -> new BannerDomainException(BannerErrorCode.INVALID_PRODUCT_NAME));
   }
 
   @Override
-  protected ActionResponse process(ActionRequest req) {
-    return DefaultActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
+  protected ShowBannerResponse process(ActionRequest req) {
+    Long productId = ((Number) req.payload().get("productId")).longValue();
+    String productName = (String) req.payload().get("productName");
+    ShowBannerResponse response = ShowBannerResponse.of(req, productId, productName);
+    bannerStatePort.save(req.roomId(), response);
+    return response;
   }
 }

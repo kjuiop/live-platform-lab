@@ -793,12 +793,18 @@ export default function BroadcastDetail() {
         setViewerCount(p.payload?.count ?? 0);
         return;
       }
-      if (p.action === 'PRODUCT.BANNER_ON') {
-        setActiveBannerProductId(p.payload?.productId ?? null);
+      if (p.action === 'PRODUCT.BANNER.ON') {
+        setActiveBannerProductId(p.productId ?? null);
         return;
       }
-      if (p.action === 'PRODUCT.BANNER_OFF') {
+      if (p.action === 'PRODUCT.BANNER.OFF') {
         setActiveBannerProductId(null);
+        return;
+      }
+      if (p.action === 'CHAT.JOIN') {
+        if (p.activeBanner != null) {
+          setActiveBannerProductId(p.activeBanner.productId ?? null);
+        }
         return;
       }
     } catch {

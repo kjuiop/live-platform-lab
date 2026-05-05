@@ -1,18 +1,28 @@
-package org.giglab.live.application.command.chat;
+package org.giglab.live.application.command.banner;
 
 import org.giglab.live.application.command.AbstractActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.DefaultActionResponse;
+import org.giglab.live.domain.exception.BannerDomainException;
+import org.giglab.live.domain.exception.BannerErrorCode;
 import org.springframework.stereotype.Service;
 
 @Service
-public class JoinRoom extends AbstractActionHandler<ActionRequest, ActionResponse> {
+public class ProductBannerOff extends AbstractActionHandler<ActionRequest, ActionResponse> {
 
   @Override
   public ActionType action() {
-    return ActionType.CHAT_JOIN;
+    return ActionType.PRODUCT_BANNER_OFF;
+  }
+
+  @Override
+  protected void validate(ActionRequest req) {
+    requirePositiveLong(
+        req.payload(),
+        "productId",
+        () -> new BannerDomainException(BannerErrorCode.INVALID_PRODUCT_ID));
   }
 
   @Override

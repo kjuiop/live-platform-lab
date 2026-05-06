@@ -7,8 +7,6 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
-import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageRequest;
-import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignReportResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.api.mapper.campaign.CampaignMapper;
@@ -17,7 +15,6 @@ import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusRes
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
-import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignPageResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
@@ -31,15 +28,13 @@ public class CampaignFacade {
   private final CampaignService campaignService;
 
   public GetCampaignListResponse getList(GetCampaignListRequest request) {
-    GetCampaignListResult result =
-        campaignService.getList(campaignMapper.toCampaignListQuery(request));
-    return campaignMapper.toGetCampaignListResponse(result);
-  }
-
-  public GetCampaignPageResponse getPage(GetCampaignPageRequest request) {
-    GetCampaignPageResult result =
-        campaignService.getPage(campaignMapper.toCampaignPageQuery(request));
-    return campaignMapper.toGetCampaignPageResponse(result);
+    if (request.isOffsetMode()) {
+      GetCampaignPageResult result =
+          campaignService.getPage(campaignMapper.toCampaignPageQuery(request));
+      return campaignMapper.toGetCampaignListResponseFromPage(result);
+    }
+    return campaignMapper.toGetCampaignListResponseFromCursor(
+        campaignService.getList(campaignMapper.toCampaignListQuery(request)));
   }
 
   public GetCampaignResponse getDetail(Long campaignId) {

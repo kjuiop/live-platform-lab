@@ -1,5 +1,6 @@
 package org.giglab.live.commerce.api.mapper.product;
 
+import java.util.List;
 import org.giglab.live.commerce.api.dto.product.AskProductQuestionResponse;
 import org.giglab.live.commerce.api.dto.product.CreateProductRequest;
 import org.giglab.live.commerce.api.dto.product.CreateProductResponse;
@@ -13,8 +14,6 @@ import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
-import org.giglab.live.commerce.api.dto.product.GetProductPageRequest;
-import org.giglab.live.commerce.api.dto.product.GetProductPageResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.dto.product.LinkedCampaignItem;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
@@ -53,16 +52,25 @@ public interface ProductMapper {
   @Mapping(target = "embeddingStatus", expression = "java(productSummary.embeddingStatus().name())")
   ProductSummaryItem toProductSummaryItem(ProductSummary productSummary);
 
-  GetProductListResponse toGetProductListResponse(GetProductListResult result);
-
-  @Mapping(target = "status", ignore = true)
+  @Mapping(target = "size", expression = "java(request.sizeOrDefault())")
   ProductListQuery toProductListQuery(GetProductListRequest request);
 
   @Mapping(target = "page", expression = "java(request.pageOrDefault())")
   @Mapping(target = "size", expression = "java(request.sizeOrDefault())")
-  ProductPageQuery toProductPageQuery(GetProductPageRequest request);
+  ProductPageQuery toProductPageQuery(GetProductListRequest request);
 
-  GetProductPageResponse toGetProductPageResponse(GetProductPageResult result);
+  default GetProductListResponse toGetProductListResponseFromCursor(GetProductListResult result) {
+    List<ProductSummaryItem> items =
+        result.items().stream().map(this::toProductSummaryItem).toList();
+    return GetProductListResponse.ofCursor(items, result.nextCursor(), result.hasNext());
+  }
+
+  default GetProductListResponse toGetProductListResponseFromPage(GetProductPageResult result) {
+    List<ProductSummaryItem> items =
+        result.items().stream().map(this::toProductSummaryItem).toList();
+    return GetProductListResponse.ofOffset(
+        items, result.page(), result.totalPages(), result.totalCount());
+  }
 
   @Mapping(target = "status", expression = "java(result.status().name())")
   @Mapping(target = "embeddingStatus", expression = "java(result.embeddingStatus().name())")

@@ -9,6 +9,7 @@ import org.giglab.live.application.dto.room.CreateRoomRequest;
 import org.giglab.live.application.dto.room.CreateRoomResponse;
 import org.giglab.live.application.dto.room.GetRoomResponse;
 import org.giglab.live.application.dto.stats.RoomStatsResponse;
+import org.giglab.live.application.port.persistence.BannerStatePort;
 import org.giglab.live.application.port.persistence.RoomInsightPort;
 import org.giglab.live.application.port.persistence.RoomPort;
 import org.giglab.live.domain.model.Room;
@@ -20,6 +21,7 @@ public class RoomService {
 
   private static final int MAX_SIZE = 20;
 
+  private final BannerStatePort bannerStatePort;
   private final RoomInsightPort roomInsightPort;
   private final RoomPort roomPort;
 
@@ -31,6 +33,7 @@ public class RoomService {
   }
 
   public void deleteRoom(String roomId) {
+    bannerStatePort.clear(roomId);
     roomPort.deleteById(roomId);
   }
 

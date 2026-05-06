@@ -867,6 +867,32 @@ export default function BroadcastDetail() {
     }
   };
 
+  const publishBannerOn = (productId: number, productName: string) => {
+    if (!clientRef.current || !campaign?.chatRoomId) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'PRODUCT.BANNER.ON',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: { productId, productName },
+      }));
+    } catch { /* 무시 */ }
+  };
+
+  const publishBannerOff = () => {
+    if (!clientRef.current || !campaign?.chatRoomId) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'PRODUCT.BANNER.OFF',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: {},
+      }));
+    } catch { /* 무시 */ }
+  };
+
   const SIM_VIEWER_NAMES = ['하나', '두리', '세리', '네모', '다솜', '여섯', '일곱', '여덟'];
 
   const runSimulation = async () => {
@@ -1430,7 +1456,13 @@ export default function BroadcastDetail() {
                             {isLive && (
                               <div
                                 className={`banner-toggle ${activeBannerProductId === pid ? 'on' : ''}`}
-                                onClick={() => setActiveBannerProductId((prev) => prev === pid ? null : pid)}
+                                onClick={() => {
+                                  if (activeBannerProductId === pid) {
+                                    publishBannerOff();
+                                  } else {
+                                    publishBannerOn(p.productId, p.name);
+                                  }
+                                }}
                                 title={activeBannerProductId === pid ? '배너 끄기' : '배너 켜기'}
                               >
                                 <div className="banner-toggle-knob" />

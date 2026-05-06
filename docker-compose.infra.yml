@@ -93,3 +93,4 @@ volumes:
 networks:
   live-platform-network:
     driver: bridge
+    name: live-platform-network

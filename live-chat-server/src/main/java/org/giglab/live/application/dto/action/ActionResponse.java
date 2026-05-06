@@ -18,22 +18,22 @@ import java.util.Map;
   @JsonSubTypes.Type(value = ShowBannerResponse.class, name = "PRODUCT.BANNER.ON"),
   @JsonSubTypes.Type(value = HideBannerResponse.class, name = "PRODUCT.BANNER.OFF"),
 })
-public abstract class ActionResponse {
+public interface ActionResponse {
 
-  public abstract String roomId();
+  String roomId();
 
-  public abstract String action();
+  String action();
 
-  public abstract Actor actor();
+  Actor actor();
 
-  public abstract Instant sentAt();
+  Instant sentAt();
 
-  public abstract long seq();
+  long seq();
 
-  public abstract ActionResponse withSeq(long seq);
+  ActionResponse withSeq(long seq);
 
   // DefaultActionResponse 외 서브클래스에서 payload가 없는 경우 null 반환
-  public Map<String, Object> payload() {
+  default Map<String, Object> payload() {
     return null;
   }
 }

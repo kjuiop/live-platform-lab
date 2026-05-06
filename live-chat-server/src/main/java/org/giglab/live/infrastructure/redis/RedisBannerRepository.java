@@ -1,6 +1,7 @@
 package org.giglab.live.infrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 public class RedisBannerRepository {
 
   private static final String BANNER_KEY = "LIVE:ROOM:%s:BANNER";
+  private static final Duration BANNER_TTL = Duration.ofDays(7);
 
   private final RedisTemplate<String, Object> redisTemplate;
   private final ObjectMapper objectMapper;
@@ -22,7 +24,7 @@ public class RedisBannerRepository {
   public void save(String roomId, ActiveBanner banner) {
     String key = bannerKey(roomId);
     try {
-      redisTemplate.opsForValue().set(key, banner);
+      redisTemplate.opsForValue().set(key, banner, BANNER_TTL);
     } catch (Exception e) {
       log.error("배너 상태 저장 실패 - roomId={}", roomId, e);
       throw new RedisException("배너 상태 저장 실패 - roomId: " + roomId);

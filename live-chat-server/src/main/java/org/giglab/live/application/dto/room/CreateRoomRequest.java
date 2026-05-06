@@ -2,14 +2,6 @@ package org.giglab.live.application.dto.room;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
-public class CreateRoomRequest {
-
-  @NotBlank
-  @Size(max = 50, message = "채팅방 이름은 50자를 초과할 수 없습니다.")
-  private String title;
-}
+public record CreateRoomRequest(
+    @NotBlank @Size(max = 50, message = "채팅방 이름은 50자를 초과할 수 없습니다.") String title) {}

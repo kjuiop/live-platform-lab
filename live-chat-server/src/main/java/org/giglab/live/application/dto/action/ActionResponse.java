@@ -18,7 +18,8 @@ import java.util.Map;
   @JsonSubTypes.Type(value = ShowBannerResponse.class, name = "PRODUCT.BANNER.ON"),
   @JsonSubTypes.Type(value = HideBannerResponse.class, name = "PRODUCT.BANNER.OFF"),
 })
-public interface ActionResponse {
+public sealed interface ActionResponse
+    permits DefaultActionResponse, JoinRoomResponse, ShowBannerResponse, HideBannerResponse {
 
   String roomId();
 

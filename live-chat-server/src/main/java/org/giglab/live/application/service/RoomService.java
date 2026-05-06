@@ -28,7 +28,7 @@ public class RoomService {
   private final RoomPort roomPort;
 
   public CreateRoomResponse createRoom(CreateRoomRequest request) {
-    Room room = Room.create(request.getTitle());
+    Room room = Room.create(request.title());
     Room saved = roomPort.save(room);
     return new CreateRoomResponse(
         saved.getRoomId(), saved.getTitle(), saved.getCreatedAt(), saved.getUpdatedAt());

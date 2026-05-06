@@ -1,4 +1,4 @@
-FROM gradle:8.14-jdk21 AS build
+FROM gradle:8.14-jdk25 AS build
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN gradle :live-chat-server:bootJar --no-daemon
 
 RUN test -f live-chat-server/build/libs/*.jar || (echo "JAR file not found" && exit 1)
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 RUN addgroup -S live && adduser -S live -G live
 

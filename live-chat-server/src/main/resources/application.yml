@@ -7,6 +7,9 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
+  threads:
+    virtual:
+      enabled: true
 
 management:
   endpoints:
@@ -25,15 +28,6 @@ commerce-core:
     max-connections: 50     # 전체 커넥션 풀 크기
     max-connections-per-route: 20  # 단일 호스트 최대 연결 수
 
-async:
-  faq:
-    core-pool-size: 5
-    max-pool-size: 20
-    queue-capacity: 100
-  chat:
-    core-pool-size: 2
-    max-pool-size: 5
-    queue-capacity: 500
 
 logging:
   level:

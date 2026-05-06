@@ -7,6 +7,9 @@ server:
 spring:
   profiles:
     default: local
+  threads:
+    virtual:
+      enabled: true
   servlet:
     encoding:
       charset: UTF-8

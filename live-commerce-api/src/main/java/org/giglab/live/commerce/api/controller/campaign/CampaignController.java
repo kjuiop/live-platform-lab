@@ -29,7 +29,9 @@ public class CampaignController {
 
   private final CampaignFacade campaignFacade;
 
-  @Operation(summary = "캠페인 목록 조회", description = "커서 기반 페이지네이션으로 캠페인 목록을 조회합니다.")
+  @Operation(
+      summary = "캠페인 목록 조회",
+      description = "캠페인 목록을 조회합니다. page 파라미터가 있으면 오프셋 기반, 없으면 커서 기반 페이지네이션으로 동작합니다.")
   @GetMapping
   public ApiResponse<GetCampaignListResponse> getList(@Valid GetCampaignListRequest request) {
     return ApiResponse.success(campaignFacade.getList(request));

@@ -15,7 +15,7 @@ import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusRes
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
-import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignPageResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignReportResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.springframework.stereotype.Service;
@@ -28,9 +28,13 @@ public class CampaignFacade {
   private final CampaignService campaignService;
 
   public GetCampaignListResponse getList(GetCampaignListRequest request) {
-    GetCampaignListResult result =
-        campaignService.getList(campaignMapper.toCampaignListQuery(request));
-    return campaignMapper.toGetCampaignListResponse(result);
+    if (request.isOffsetMode()) {
+      GetCampaignPageResult result =
+          campaignService.getPage(campaignMapper.toCampaignPageQuery(request));
+      return campaignMapper.toGetCampaignListResponseFromPage(result);
+    }
+    return campaignMapper.toGetCampaignListResponseFromCursor(
+        campaignService.getList(campaignMapper.toCampaignListQuery(request)));
   }
 
   public GetCampaignResponse getDetail(Long campaignId) {

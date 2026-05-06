@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignPageQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignProductDto;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
@@ -50,7 +51,7 @@ public class CampaignQueryRepository {
                 campaign.description,
                 campaign.status,
                 campaign.scheduledAt,
-                campaignProduct.count().intValue()))
+                campaignProduct.count()))
         .from(campaign)
         .leftJoin(campaignProduct)
         .on(campaignProduct.campaign.id.eq(campaign.id))
@@ -125,6 +126,64 @@ public class CampaignQueryRepository {
         .orderBy(campaign.scheduledAt.desc())
         .fetch();
   }
+
+  // ── 페이지 번호 기반 조회 (커버링 인덱스 2단계 전략) ──────────────────────────
+
+  public List<CampaignSummary> findPage(CampaignPageQuery query) {
+    List<Long> ids = findIdsByPage(query);
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                CampaignSummary.class,
+                campaign.id,
+                campaign.title,
+                campaign.description,
+                campaign.status,
+                campaign.scheduledAt,
+                campaignProduct.count()))
+        .from(campaign)
+        .leftJoin(campaignProduct)
+        .on(campaignProduct.campaign.id.eq(campaign.id))
+        .where(campaign.id.in(ids))
+        .groupBy(campaign.id)
+        .orderBy(campaign.id.desc())
+        .fetch();
+  }
+
+  public long countPage(CampaignPageQuery query) {
+    BooleanBuilder builder = pageCondition(query);
+    Long count = queryFactory.select(campaign.count()).from(campaign).where(builder).fetchOne();
+    return count != null ? count : 0L;
+  }
+
+  private List<Long> findIdsByPage(CampaignPageQuery query) {
+    return queryFactory
+        .select(campaign.id)
+        .from(campaign)
+        .where(pageCondition(query))
+        .orderBy(campaign.id.desc())
+        .offset(query.offset())
+        .limit(query.size())
+        .fetch();
+  }
+
+  private BooleanBuilder pageCondition(CampaignPageQuery query) {
+    BooleanBuilder builder = new BooleanBuilder();
+    builder.and(campaign.deleteYn.eq(YnType.N));
+    if (query.status() != null) {
+      builder.and(campaign.status.eq(query.status()));
+    }
+    if (StringUtils.hasText(query.keyword())) {
+      builder.and(campaign.title.containsIgnoreCase(query.keyword()));
+    }
+    return builder;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   private BooleanExpression defaultCondition() {
     return campaign.deleteYn.eq(YnType.N);

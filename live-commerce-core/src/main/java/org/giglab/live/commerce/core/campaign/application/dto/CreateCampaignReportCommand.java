@@ -14,4 +14,9 @@ public record CreateCampaignReportCommand(
     String aiReportText,
     LocalDateTime startedAt,
     LocalDateTime endedAt,
-    List<String> unansweredQuestions) {}
+    List<String> unansweredQuestions) {
+
+  public CreateCampaignReportCommand {
+    unansweredQuestions = unansweredQuestions != null ? unansweredQuestions : List.of();
+  }
+}

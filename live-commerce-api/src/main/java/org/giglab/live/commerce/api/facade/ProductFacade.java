@@ -25,9 +25,8 @@ import org.giglab.live.commerce.core.product.application.ProductService;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductCommand;
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
-import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductPageResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
-import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedProductInfoResult;
@@ -49,9 +48,13 @@ public class ProductFacade {
   private final ProductService productService;
 
   public GetProductListResponse getList(GetProductListRequest request) {
-    ProductListQuery query = productMapper.toProductListQuery(request);
-    GetProductListResult result = productService.getList(query);
-    return productMapper.toGetProductListResponse(result);
+    if (request.isOffsetMode()) {
+      GetProductPageResult result =
+          productService.getPage(productMapper.toProductPageQuery(request));
+      return productMapper.toGetProductListResponseFromPage(result);
+    }
+    return productMapper.toGetProductListResponseFromCursor(
+        productService.getList(productMapper.toProductListQuery(request)));
   }
 
   public CreateProductResponse create(CreateProductRequest request) {

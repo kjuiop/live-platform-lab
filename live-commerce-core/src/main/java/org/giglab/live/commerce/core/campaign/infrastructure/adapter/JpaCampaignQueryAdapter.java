@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignPageQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignSummary;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.port.persistence.CampaignQueryPort;
@@ -20,6 +21,16 @@ public class JpaCampaignQueryAdapter implements CampaignQueryPort {
   @Override
   public List<CampaignSummary> findList(CampaignListQuery query) {
     return queryRepository.findList(query);
+  }
+
+  @Override
+  public List<CampaignSummary> findPage(CampaignPageQuery query) {
+    return queryRepository.findPage(query);
+  }
+
+  @Override
+  public long countPage(CampaignPageQuery query) {
+    return queryRepository.countPage(query);
   }
 
   @Override

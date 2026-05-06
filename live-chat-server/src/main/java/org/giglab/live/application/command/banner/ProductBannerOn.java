@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.giglab.live.application.command.AbstractActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
+import org.giglab.live.application.dto.action.ActiveBanner;
 import org.giglab.live.application.dto.action.ShowBannerResponse;
 import org.giglab.live.application.port.persistence.BannerStatePort;
 import org.giglab.live.domain.exception.BannerDomainException;
@@ -38,7 +39,7 @@ public class ProductBannerOn extends AbstractActionHandler<ActionRequest, ShowBa
     Long productId = ((Number) req.payload().get("productId")).longValue();
     String productName = (String) req.payload().get("productName");
     ShowBannerResponse response = ShowBannerResponse.of(req, productId, productName);
-    bannerStatePort.save(req.roomId(), response);
+    bannerStatePort.save(req.roomId(), new ActiveBanner(productId, productName));
     return response;
   }
 }

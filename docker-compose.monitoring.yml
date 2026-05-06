@@ -8,6 +8,7 @@ services:
       - "9121:9121"
     command:
       - '--redis.addr=redis://redis:6379'
+    restart: unless-stopped
     networks:
       - live-platform-network
 

@@ -868,7 +868,7 @@ export default function BroadcastDetail() {
   };
 
   const publishBannerOn = (productId: number, productName: string) => {
-    if (!clientRef.current || !campaign?.chatRoomId) return;
+    if (!clientRef.current || !campaign?.chatRoomId || !wsConnected) return;
     const nick = nickname.trim() || '시청자';
     try {
       clientRef.current.send('/send/room.action', {}, JSON.stringify({
@@ -881,7 +881,7 @@ export default function BroadcastDetail() {
   };
 
   const publishBannerOff = () => {
-    if (!clientRef.current || !campaign?.chatRoomId) return;
+    if (!clientRef.current || !campaign?.chatRoomId || !wsConnected) return;
     const nick = nickname.trim() || '시청자';
     try {
       clientRef.current.send('/send/room.action', {}, JSON.stringify({

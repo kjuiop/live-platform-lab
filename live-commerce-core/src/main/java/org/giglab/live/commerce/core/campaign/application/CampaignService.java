@@ -24,6 +24,8 @@ import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignPag
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignReportUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.GetCampaignUseCase;
 import org.giglab.live.commerce.core.campaign.application.usecase.StartCampaignUseCase;
+import org.giglab.live.commerce.core.campaign.domain.exception.CampaignDomainException;
+import org.giglab.live.commerce.core.campaign.domain.exception.CampaignErrorCode;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -59,8 +61,14 @@ public class CampaignService {
     // 캠페인 제목 조회 (TX 외부 — 읽기 전용)
     String title = getCampaignUseCase.execute(campaignId).title();
 
-    // HTTP: 채팅방 생성 — 실패 시 예외 전파, 방송 시작 중단
-    String roomId = chatRoomCreatePort.createRoom(title);
+    // HTTP: 채팅방 생성 — 실패 시 도메인 예외로 변환해 방송 시작 중단
+    String roomId;
+    try {
+      roomId = chatRoomCreatePort.createRoom(title);
+    } catch (Exception e) {
+      log.error("채팅방 생성 실패 - campaignId={}", campaignId, e);
+      throw new CampaignDomainException(CampaignErrorCode.CHAT_ROOM_CREATE_FAILED, e.getMessage());
+    }
 
     // TX: 방송 시작 + chatRoomId 저장 — 하나의 커밋
     return startCampaignUseCase.execute(campaignId, roomId);

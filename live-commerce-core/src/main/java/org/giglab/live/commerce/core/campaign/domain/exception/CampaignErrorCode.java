@@ -9,7 +9,8 @@ import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 public enum CampaignErrorCode implements DomainErrorCode {
   INVALID_STATUS_CHANGE("CAMPAIGN-4201", "유효하지 않은 방송 상태 변경입니다."),
   INVALID_PAGE_SIZE("CAMPAIGN-4001", "페이지 크기는 1 이상이어야 합니다."),
-  NOT_FOUND("CAMPAIGN-4401", "존재하지 않는 캠페인입니다.");
+  NOT_FOUND("CAMPAIGN-4401", "존재하지 않는 캠페인입니다."),
+  CHAT_ROOM_CREATE_FAILED("CAMPAIGN-5001", "채팅방 생성에 실패했습니다. 방송을 시작할 수 없습니다.");
 
   private final String code;
   private final String message;

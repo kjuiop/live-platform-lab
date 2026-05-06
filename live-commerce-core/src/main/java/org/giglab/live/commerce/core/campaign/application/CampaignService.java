@@ -58,7 +58,7 @@ public class CampaignService {
   }
 
   public BroadcastStatusResult start(Long campaignId) {
-    // 캠페인 제목 조회 (TX 외부 — 읽기 전용)
+    // 캠페인 제목 조회
     String title = getCampaignUseCase.execute(campaignId).title();
 
     // HTTP: 채팅방 생성 — 실패 시 도메인 예외로 변환해 방송 시작 중단
@@ -67,7 +67,7 @@ public class CampaignService {
       roomId = chatRoomCreatePort.createRoom(title);
     } catch (Exception e) {
       log.error("채팅방 생성 실패 - campaignId={}", campaignId, e);
-      throw new CampaignDomainException(CampaignErrorCode.CHAT_ROOM_CREATE_FAILED, e.getMessage());
+      throw new CampaignDomainException(CampaignErrorCode.CHAT_ROOM_CREATE_FAILED, e);
     }
 
     // TX: 방송 시작 + chatRoomId 저장 — 하나의 커밋

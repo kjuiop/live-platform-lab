@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
-const PAGE_SIZE = 20;
 
 interface Product {
   id: number;
@@ -21,21 +20,20 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
 
-  const fetchProducts = async (p: number) => {
-    setLoading(true);
+  const fetchProducts = async (cursor?: number) => {
     try {
-      const params = new URLSearchParams({ page: String(p), size: String(PAGE_SIZE) });
-      const res = await fetch(`${API_BASE}/products/page?${params}`);
+      const params = new URLSearchParams({ size: '20' });
+      if (cursor != null) params.set('cursor', String(cursor));
+      const res = await fetch(`${API_BASE}/products?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      const { items, totalPages: tp, totalCount: tc } = json.data;
-      setProducts(items);
-      setTotalPages(tp);
-      setTotalCount(tc);
+      const { items, nextCursor: nc, hasNext: hn } = json.data;
+      setProducts((prev) => cursor != null ? [...prev, ...items] : items);
+      setNextCursor(nc ?? null);
+      setHasNext(hn);
     } catch {
       setError('상품을 불러오는 데 실패했습니다.');
     } finally {
@@ -43,7 +41,7 @@ export default function Products() {
     }
   };
 
-  useEffect(() => { fetchProducts(page); }, [page]);
+  useEffect(() => { fetchProducts(); }, []);
 
   return (
     <>
@@ -64,6 +62,7 @@ export default function Products() {
         .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
         .card-name { font-size: 17px; font-weight: 700; color: #f1f5f9; line-height: 1.3; }
         .badge-category { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .card-desc { font-size: 13px; color: #64748b; line-height: 1.65; margin-bottom: 20px; }
         .card-divider { height: 1px; background: rgba(255,255,255,0.07); margin-bottom: 16px; }
         .card-bottom { display: flex; align-items: center; justify-content: space-between; }
         .card-ai { margin-top: 14px; border-radius: 10px; padding: 9px 14px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
@@ -82,13 +81,9 @@ export default function Products() {
         .badge-embed { font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; }
         .embed-none { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
         .loading { text-align: center; color: #475569; padding: 60px 0; font-size: 14px; }
+        .btn-more { display: block; margin: 28px auto 0; padding: 10px 28px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-more:hover { background: rgba(255,255,255,0.1); }
         .error-msg { text-align: center; color: #f87171; padding: 60px 0; font-size: 14px; }
-        .total-count { font-size: 13px; color: #475569; margin-bottom: 16px; }
-        .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 32px; }
-        .page-info { font-size: 13px; color: #64748b; margin: 0 8px; }
-        .btn-page { padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .btn-page:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: #e2e8f0; }
-        .btn-page:disabled { opacity: 0.35; cursor: not-allowed; }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -110,7 +105,6 @@ export default function Products() {
           <div className="error-msg">{error}</div>
         ) : (
           <>
-            <div className="total-count">전체 {totalCount.toLocaleString()}개</div>
             <div className="grid">
               {products.map((p) => (
                 <div key={p.id} className="card" onClick={() => router.push(`/products/${p.id}`)}>
@@ -142,18 +136,15 @@ export default function Products() {
                 </div>
               ))}
             </div>
-            {totalPages > 1 && (
-              <div className="pagination">
-                <button className="btn-page" onClick={() => setPage(1)} disabled={page === 1}>처음</button>
-                <button className="btn-page" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>이전</button>
-                <span className="page-info">{page} / {totalPages}</span>
-                <button className="btn-page" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>다음</button>
-                <button className="btn-page" onClick={() => setPage(totalPages)} disabled={page === totalPages}>마지막</button>
-              </div>
+            {hasNext && (
+              <button className="btn-more" onClick={() => fetchProducts(nextCursor!)}>
+                더 보기
+              </button>
             )}
           </>
         )}
       </div>
+
     </>
   );
 }

@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,9 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 @Getter
 @Builder
 @Entity
-@Table(name = "product_documents")
+@Table(
+    name = "product_documents",
+    indexes = {@Index(name = "idx_product_documents_product_id", columnList = "product_id")})
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class ProductDocument extends AuditedEntity {

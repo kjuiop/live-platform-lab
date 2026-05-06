@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,7 +23,13 @@ import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 @Entity
 @Table(
     name = "campaign_products",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"campaign_id", "product_id"})})
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"campaign_id", "product_id"})},
+    indexes = {
+      @Index(
+          name = "idx_campaign_products_campaign_id_display_order",
+          columnList = "campaign_id, display_order"),
+      @Index(name = "idx_campaign_products_product_id", columnList = "product_id")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignProduct extends AuditedEntity {

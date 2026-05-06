@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,7 +23,12 @@ import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 @Entity
 @Table(
     name = "product_categories",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"product_id", "category_id"})})
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"product_id", "category_id"})},
+    indexes = {
+      @Index(
+          name = "idx_product_categories_product_id_sort_order_name",
+          columnList = "product_id, sort_order, category_name")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductCategory extends AuditedEntity {

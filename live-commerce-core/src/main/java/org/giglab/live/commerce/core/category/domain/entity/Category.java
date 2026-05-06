@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -26,7 +27,14 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 @Getter
 @Builder
 @Entity
-@Table(name = "categories")
+@Table(
+    name = "categories",
+    indexes = {
+      // findAllActive / findAllByIdsIn: delete_yn + active_yn 필터 + level/sort_order 정렬
+      @Index(
+          name = "idx_categories_delete_yn_active_yn_level_sort_order",
+          columnList = "delete_yn, active_yn, level, sort_order")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category extends AuditedEntity {

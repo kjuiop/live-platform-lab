@@ -51,7 +51,7 @@ public class CampaignQueryRepository {
                 campaign.description,
                 campaign.status,
                 campaign.scheduledAt,
-                campaignProduct.count().intValue()))
+                campaignProduct.count()))
         .from(campaign)
         .leftJoin(campaignProduct)
         .on(campaignProduct.campaign.id.eq(campaign.id))
@@ -144,7 +144,7 @@ public class CampaignQueryRepository {
                 campaign.description,
                 campaign.status,
                 campaign.scheduledAt,
-                campaignProduct.count().intValue()))
+                campaignProduct.count()))
         .from(campaign)
         .leftJoin(campaignProduct)
         .on(campaignProduct.campaign.id.eq(campaign.id))

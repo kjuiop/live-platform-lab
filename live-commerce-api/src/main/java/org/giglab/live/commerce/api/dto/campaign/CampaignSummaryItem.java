@@ -8,4 +8,4 @@ public record CampaignSummaryItem(
     String description,
     String status,
     LocalDateTime scheduledAt,
-    int productCount) {}
+    long productCount) {}

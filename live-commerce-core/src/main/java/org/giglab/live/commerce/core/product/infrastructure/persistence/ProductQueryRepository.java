@@ -8,7 +8,9 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
@@ -74,25 +76,49 @@ public class ProductQueryRepository {
       return List.of();
     }
 
-    return queryFactory
-        .select(
-            Projections.constructor(
-                ProductSummary.class,
+    // Query 1: 상품 기본 정보 조회 (상관 서브쿼리 없이)
+    var rows =
+        queryFactory
+            .select(
                 product.id,
                 product.name,
                 product.status,
                 product.price,
                 product.stockQuantity,
-                JPAExpressions.select(productCategory.categoryName)
-                    .from(productCategory)
-                    .where(productCategory.product.id.eq(product.id))
-                    .orderBy(productCategory.sortOrder.asc())
-                    .limit(1),
-                product.embeddingStatus))
-        .from(product)
-        .where(product.id.in(ids))
-        .orderBy(product.id.desc())
-        .fetch();
+                product.embeddingStatus)
+            .from(product)
+            .where(product.id.in(ids))
+            .orderBy(product.id.desc())
+            .fetch();
+
+    // Query 2: 대표 카테고리 일괄 조회 (sortOrder 최솟값 기준) — 상관 서브쿼리 제거
+    Map<Long, String> categoryMap = new HashMap<>();
+    queryFactory
+        .select(productCategory.product.id, productCategory.categoryName)
+        .from(productCategory)
+        .where(productCategory.product.id.in(ids))
+        .orderBy(productCategory.product.id.asc(), productCategory.sortOrder.asc())
+        .fetch()
+        .forEach(
+            t -> {
+              Long productId = t.get(productCategory.product.id);
+              if (productId != null) {
+                categoryMap.putIfAbsent(productId, t.get(productCategory.categoryName));
+              }
+            });
+
+    return rows.stream()
+        .map(
+            row ->
+                new ProductSummary(
+                    row.get(product.id),
+                    row.get(product.name),
+                    row.get(product.status),
+                    row.get(product.price),
+                    row.get(product.stockQuantity),
+                    categoryMap.get(row.get(product.id)),
+                    row.get(product.embeddingStatus)))
+        .toList();
   }
 
   public long countPage(ProductPageQuery query) {

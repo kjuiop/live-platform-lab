@@ -7,6 +7,7 @@ import org.giglab.live.commerce.core.global.exception.DomainErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum ProductErrorCode implements DomainErrorCode {
+  INVALID_PAGE_SIZE("PRODUCT-4002", "페이지 크기는 1 이상이어야 합니다."),
   PRODUCT_ALREADY_EMBEDDED("PRODUCT-4001", "이미 임베딩된 상품입니다."),
   PRODUCT_NOT_FOUND("PRODUCT-4401", "존재하지 않는 상품입니다."),
   PDF_NOT_FOUND("PRODUCT-4402", "PDF 파일이 존재하지 않습니다."),

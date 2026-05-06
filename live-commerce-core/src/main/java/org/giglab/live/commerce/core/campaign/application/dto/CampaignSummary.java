@@ -9,4 +9,4 @@ public record CampaignSummary(
     String description,
     BroadcastStatusType status,
     LocalDateTime scheduledAt,
-    int productCount) {}
+    long productCount) {}

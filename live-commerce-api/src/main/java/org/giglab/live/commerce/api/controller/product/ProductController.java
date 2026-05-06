@@ -17,6 +17,8 @@ import org.giglab.live.commerce.api.dto.product.GetProductFaqSamplesResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductPageRequest;
+import org.giglab.live.commerce.api.dto.product.GetProductPageResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.dto.product.GetSimulationMessagesResponse;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
@@ -46,6 +48,14 @@ public class ProductController {
   public ResponseEntity<ApiResponse<GetProductListResponse>> getList(
       @Valid GetProductListRequest request) {
     GetProductListResponse response = productFacade.getList(request);
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  @Operation(summary = "상품 목록 조회 (페이지 번호)", description = "커버링 인덱스 기반 오프셋 페이지네이션으로 상품 목록을 조회합니다.")
+  @GetMapping("/page")
+  public ResponseEntity<ApiResponse<GetProductPageResponse>> getPage(
+      @Valid GetProductPageRequest request) {
+    GetProductPageResponse response = productFacade.getPage(request);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 

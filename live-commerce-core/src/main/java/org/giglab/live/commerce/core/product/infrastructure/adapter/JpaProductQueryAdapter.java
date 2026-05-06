@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.ProductPageQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.application.port.persistence.ProductQueryPort;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
@@ -19,6 +20,16 @@ public class JpaProductQueryAdapter implements ProductQueryPort {
   @Override
   public List<ProductSummary> findList(ProductListQuery query) {
     return queryRepository.findList(query);
+  }
+
+  @Override
+  public List<ProductSummary> findPage(ProductPageQuery query) {
+    return queryRepository.findPage(query);
+  }
+
+  @Override
+  public long countPage(ProductPageQuery query) {
+    return queryRepository.countPage(query);
   }
 
   @Override

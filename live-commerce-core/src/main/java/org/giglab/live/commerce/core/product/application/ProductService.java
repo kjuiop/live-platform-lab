@@ -6,8 +6,10 @@ import org.giglab.live.commerce.core.product.application.dto.CreateProductComman
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductPageResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.ProductPageQuery;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsContext;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
@@ -22,6 +24,7 @@ import org.giglab.live.commerce.core.product.application.dto.pdf.ParsedProductRe
 import org.giglab.live.commerce.core.product.application.usecase.CreateProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductLinkedCampaignsUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductListUseCase;
+import org.giglab.live.commerce.core.product.application.usecase.GetProductPageUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.GetProductUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.AskProductQuestionUseCase;
 import org.giglab.live.commerce.core.product.application.usecase.ai.CreateProductDocumentUseCase;
@@ -45,6 +48,7 @@ public class ProductService {
 
   private final GetProductUseCase getProductUseCase;
   private final GetProductListUseCase getProductListUseCase;
+  private final GetProductPageUseCase getProductPageUseCase;
   private final GetProductLinkedCampaignsUseCase getProductLinkedCampaignsUseCase;
   private final CreateProductUseCase createProductUseCase;
   private final ParseProductPdfUseCase parseProductPdfUseCase;
@@ -64,6 +68,10 @@ public class ProductService {
 
   public GetProductListResult getList(ProductListQuery query) {
     return getProductListUseCase.execute(query);
+  }
+
+  public GetProductPageResult getPage(ProductPageQuery query) {
+    return getProductPageUseCase.execute(query);
   }
 
   public GetProductResult getDetail(Long productId) {

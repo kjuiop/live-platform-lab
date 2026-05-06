@@ -13,6 +13,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.ProductPageQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.domain.entity.Product;
 import org.springframework.stereotype.Repository;
@@ -64,6 +65,66 @@ public class ProductQueryRepository {
     return Optional.ofNullable(
         queryFactory.selectFrom(product).where(defaultCondition(), product.id.eq(id)).fetchOne());
   }
+
+  // ── 페이지 번호 기반 조회 (커버링 인덱스 2단계 전략) ──────────────────────────
+
+  public List<ProductSummary> findPage(ProductPageQuery query) {
+    List<Long> ids = findIdsByPage(query);
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                ProductSummary.class,
+                product.id,
+                product.name,
+                product.status,
+                product.price,
+                product.stockQuantity,
+                JPAExpressions.select(productCategory.categoryName)
+                    .from(productCategory)
+                    .where(productCategory.product.id.eq(product.id))
+                    .orderBy(productCategory.sortOrder.asc())
+                    .limit(1),
+                product.embeddingStatus))
+        .from(product)
+        .where(product.id.in(ids))
+        .orderBy(product.id.desc())
+        .fetch();
+  }
+
+  public long countPage(ProductPageQuery query) {
+    Long count =
+        queryFactory.select(product.count()).from(product).where(pageCondition(query)).fetchOne();
+    return count != null ? count : 0L;
+  }
+
+  private List<Long> findIdsByPage(ProductPageQuery query) {
+    return queryFactory
+        .select(product.id)
+        .from(product)
+        .where(pageCondition(query))
+        .orderBy(product.id.desc())
+        .offset(query.offset())
+        .limit(query.size())
+        .fetch();
+  }
+
+  private BooleanBuilder pageCondition(ProductPageQuery query) {
+    BooleanBuilder builder = new BooleanBuilder();
+    builder.and(defaultCondition());
+    if (query.status() != null) {
+      builder.and(product.status.eq(query.status()));
+    }
+    if (StringUtils.hasText(query.keyword())) {
+      builder.and(product.name.containsIgnoreCase(query.keyword()));
+    }
+    return builder;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   private BooleanExpression defaultCondition() {
     return product.deleteYn.eq(YnType.N);

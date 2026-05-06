@@ -10,6 +10,8 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageRequest;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignReportResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.api.facade.CampaignFacade;
@@ -33,6 +35,12 @@ public class CampaignController {
   @GetMapping
   public ApiResponse<GetCampaignListResponse> getList(@Valid GetCampaignListRequest request) {
     return ApiResponse.success(campaignFacade.getList(request));
+  }
+
+  @Operation(summary = "캠페인 목록 조회 (페이지 번호)", description = "커버링 인덱스 기반 오프셋 페이지네이션으로 캠페인 목록을 조회합니다.")
+  @GetMapping("/page")
+  public ApiResponse<GetCampaignPageResponse> getPage(@Valid GetCampaignPageRequest request) {
+    return ApiResponse.success(campaignFacade.getPage(request));
   }
 
   @Operation(summary = "캠페인 상세 조회", description = "캠페인 ID로 캠페인 상세 정보를 조회합니다.")

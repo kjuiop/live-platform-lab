@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'}/api/v1`;
+const PAGE_SIZE = 20;
 
 interface Campaign {
   id: number;
@@ -31,37 +32,30 @@ export default function Broadcasts() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [hasNext, setHasNext] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchCampaigns = async (cursor?: number) => {
+  const fetchCampaigns = async (p: number) => {
+    setLoading(true);
     try {
-      const params = new URLSearchParams({ size: '20' });
-      if (cursor != null) params.set('cursor', String(cursor));
-      const res = await fetch(`${API_BASE}/campaigns?${params}`);
+      const params = new URLSearchParams({ page: String(p), size: String(PAGE_SIZE) });
+      const res = await fetch(`${API_BASE}/campaigns/page?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      const { items, nextCursor: nc, hasNext: hn } = json.data;
-      setCampaigns((prev) => cursor != null ? [...prev, ...items] : items);
-      setNextCursor(nc ?? null);
-      setHasNext(hn);
+      const { items, totalPages: tp, totalCount: tc } = json.data;
+      setCampaigns(items);
+      setTotalPages(tp);
+      setTotalCount(tc);
     } catch (err) {
       setError('방송 목록을 불러오는 데 실패했습니다.');
       console.error(err);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
 
-  useEffect(() => { fetchCampaigns(); }, []);
-
-  const handleLoadMore = () => {
-    if (nextCursor == null) return;
-    setLoadingMore(true);
-    fetchCampaigns(nextCursor);
-  };
+  useEffect(() => { fetchCampaigns(page); }, [page]);
 
   const formatDate = (iso: string) => {
     if (!iso) return '';
@@ -111,10 +105,12 @@ export default function Broadcasts() {
         .loading { text-align: center; padding: 60px; color: #475569; font-size: 14px; }
         .error-msg { text-align: center; padding: 60px; color: #f87171; font-size: 14px; }
         .empty { text-align: center; padding: 60px; color: #475569; font-size: 14px; }
-        .load-more { display: flex; justify-content: center; margin-top: 24px; }
-        .btn-more { padding: 10px 32px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .btn-more:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
-        .btn-more:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 32px; }
+        .page-info { font-size: 13px; color: #64748b; margin: 0 8px; }
+        .btn-page { padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-page:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+        .btn-page:disabled { opacity: 0.35; cursor: not-allowed; }
+        .total-count { font-size: 13px; color: #475569; margin-bottom: 12px; }
       `}</style>
 
       <div className="container">
@@ -144,6 +140,7 @@ export default function Broadcasts() {
           <div className="empty">등록된 방송이 없습니다.</div>
         ) : (
           <>
+            <div className="total-count">전체 {totalCount.toLocaleString()}개</div>
             <div className="list">
               {campaigns.map((c) => (
                 <div key={c.id} className={`card ${c.status === 'ON_AIR' ? 'live' : ''}`}>
@@ -168,11 +165,13 @@ export default function Broadcasts() {
                 </div>
               ))}
             </div>
-            {hasNext && (
-              <div className="load-more">
-                <button className="btn-more" onClick={handleLoadMore} disabled={loadingMore}>
-                  {loadingMore ? '불러오는 중...' : '더 보기'}
-                </button>
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button className="btn-page" onClick={() => setPage(1)} disabled={page === 1}>처음</button>
+                <button className="btn-page" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>이전</button>
+                <span className="page-info">{page} / {totalPages}</span>
+                <button className="btn-page" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>다음</button>
+                <button className="btn-page" onClick={() => setPage(totalPages)} disabled={page === totalPages}>마지막</button>
               </div>
             )}
           </>

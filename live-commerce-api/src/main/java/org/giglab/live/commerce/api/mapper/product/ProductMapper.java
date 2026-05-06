@@ -13,6 +13,8 @@ import org.giglab.live.commerce.api.dto.product.GetDocumentListResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductLinkedCampaignsResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductListRequest;
 import org.giglab.live.commerce.api.dto.product.GetProductListResponse;
+import org.giglab.live.commerce.api.dto.product.GetProductPageRequest;
+import org.giglab.live.commerce.api.dto.product.GetProductPageResponse;
 import org.giglab.live.commerce.api.dto.product.GetProductResponse;
 import org.giglab.live.commerce.api.dto.product.LinkedCampaignItem;
 import org.giglab.live.commerce.api.dto.product.ParsedProductResponse;
@@ -21,8 +23,10 @@ import org.giglab.live.commerce.core.product.application.dto.CreateProductComman
 import org.giglab.live.commerce.core.product.application.dto.CreateProductResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductLinkedCampaignsResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductListResult;
+import org.giglab.live.commerce.core.product.application.dto.GetProductPageResult;
 import org.giglab.live.commerce.core.product.application.dto.GetProductResult;
 import org.giglab.live.commerce.core.product.application.dto.ProductListQuery;
+import org.giglab.live.commerce.core.product.application.dto.ProductPageQuery;
 import org.giglab.live.commerce.core.product.application.dto.ProductSummary;
 import org.giglab.live.commerce.core.product.application.dto.ai.AskProductQuestionResult;
 import org.giglab.live.commerce.core.product.application.dto.ai.EmbedAllDocumentsResult;
@@ -53,6 +57,12 @@ public interface ProductMapper {
 
   @Mapping(target = "status", ignore = true)
   ProductListQuery toProductListQuery(GetProductListRequest request);
+
+  @Mapping(target = "page", expression = "java(request.pageOrDefault())")
+  @Mapping(target = "size", expression = "java(request.sizeOrDefault())")
+  ProductPageQuery toProductPageQuery(GetProductPageRequest request);
+
+  GetProductPageResponse toGetProductPageResponse(GetProductPageResult result);
 
   @Mapping(target = "status", expression = "java(result.status().name())")
   @Mapping(target = "embeddingStatus", expression = "java(result.embeddingStatus().name())")

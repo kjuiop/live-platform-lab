@@ -6,13 +6,17 @@ import org.giglab.live.commerce.api.dto.campaign.CreateCampaignRequest;
 import org.giglab.live.commerce.api.dto.campaign.CreateCampaignResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListRequest;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignListResponse;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageRequest;
+import org.giglab.live.commerce.api.dto.campaign.GetCampaignPageResponse;
 import org.giglab.live.commerce.api.dto.campaign.GetCampaignResponse;
 import org.giglab.live.commerce.core.campaign.application.dto.BroadcastStatusResult;
 import org.giglab.live.commerce.core.campaign.application.dto.CampaignListQuery;
+import org.giglab.live.commerce.core.campaign.application.dto.CampaignPageQuery;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignReportCommand;
 import org.giglab.live.commerce.core.campaign.application.dto.CreateCampaignResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignListResult;
+import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignPageResult;
 import org.giglab.live.commerce.core.campaign.application.dto.GetCampaignResult;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,6 +32,12 @@ public interface CampaignMapper {
   CampaignListQuery toCampaignListQuery(GetCampaignListRequest request);
 
   GetCampaignListResponse toGetCampaignListResponse(GetCampaignListResult result);
+
+  @Mapping(target = "page", expression = "java(request.pageOrDefault())")
+  @Mapping(target = "size", expression = "java(request.sizeOrDefault())")
+  CampaignPageQuery toCampaignPageQuery(GetCampaignPageRequest request);
+
+  GetCampaignPageResponse toGetCampaignPageResponse(GetCampaignPageResult result);
 
   @Mapping(target = "status", expression = "java(result.status().name())")
   GetCampaignResponse toGetCampaignResponse(GetCampaignResult result);

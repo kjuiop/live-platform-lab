@@ -11,4 +11,8 @@ public class CampaignDomainException extends DomainException {
   public CampaignDomainException(CampaignErrorCode errorCode, String message) {
     super(errorCode, message);
   }
+
+  public CampaignDomainException(CampaignErrorCode errorCode, Throwable cause) {
+    super(errorCode, cause);
+  }
 }

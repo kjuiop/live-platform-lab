@@ -32,8 +32,7 @@ import org.giglab.live.commerce.core.product.domain.entity.types.ProductStatusTy
 @Table(
     name = "products",
     indexes = {
-      @Index(name = "idx_products_delete_yn_status_id", columnList = "delete_yn, status, id"),
-      @Index(name = "idx_products_delete_yn_name", columnList = "delete_yn, name")
+      @Index(name = "idx_products_delete_yn_status_id", columnList = "delete_yn, status, id")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)

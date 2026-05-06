@@ -33,8 +33,7 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 @Table(
     name = "campaigns",
     indexes = {
-      @Index(name = "idx_campaigns_delete_yn_status_id", columnList = "delete_yn, status, id"),
-      @Index(name = "idx_campaigns_delete_yn_title", columnList = "delete_yn, title")
+      @Index(name = "idx_campaigns_delete_yn_status_id", columnList = "delete_yn, status, id")
     })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)

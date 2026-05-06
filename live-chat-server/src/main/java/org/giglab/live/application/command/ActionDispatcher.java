@@ -14,16 +14,18 @@ public class ActionDispatcher {
 
   // action key -> handler 매핑
   // map 으로 변환해서 주입한 이유는 dispatch 시 O(1)로 handler 를 찾기 위해서이다.
-  private final Map<String, ActionHandler<ActionRequest, ActionResponse>> handlers;
+  private final Map<String, ActionHandler<ActionRequest, ? extends ActionResponse>> handlers;
 
   // JoinRoom, LeaveRoom, SendMessage 등 ActionHandler 구현체들을 주입받아 action key -> handler 매핑을 생성
   // 따라서 list 로 받는다.
-  public ActionDispatcher(List<ActionHandler<ActionRequest, ActionResponse>> list) {
+  public ActionDispatcher(List<ActionHandler<ActionRequest, ? extends ActionResponse>> list) {
     this.handlers = list.stream().collect(Collectors.toMap(h -> h.action().getKey(), h -> h));
   }
 
+  @SuppressWarnings("unchecked")
   public ActionResponse dispatch(ActionRequest req) {
-    ActionHandler<ActionRequest, ActionResponse> handler = handlers.get(req.action());
+    ActionHandler<ActionRequest, ActionResponse> handler =
+        (ActionHandler<ActionRequest, ActionResponse>) handlers.get(req.action());
     if (handler == null) {
       throw new ActionException(
           ActionErrorCode.UNSUPPORTED_ACTION, "Unsupported action: " + req.action());

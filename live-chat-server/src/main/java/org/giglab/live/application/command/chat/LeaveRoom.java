@@ -1,13 +1,14 @@
 package org.giglab.live.application.command.chat;
 
-import org.giglab.live.application.command.ActionHandler;
+import org.giglab.live.application.command.AbstractActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
 import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.dto.action.DefaultActionResponse;
 import org.springframework.stereotype.Service;
 
 @Service
-public class LeaveRoom implements ActionHandler<ActionRequest, ActionResponse> {
+public class LeaveRoom extends AbstractActionHandler<ActionRequest, ActionResponse> {
 
   @Override
   public ActionType action() {
@@ -15,7 +16,7 @@ public class LeaveRoom implements ActionHandler<ActionRequest, ActionResponse> {
   }
 
   @Override
-  public ActionResponse execute(ActionRequest req) {
-    return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
+  protected ActionResponse process(ActionRequest req) {
+    return DefaultActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
   }
 }

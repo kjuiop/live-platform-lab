@@ -9,6 +9,7 @@ import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.ChatMessageResponse;
 import org.giglab.live.application.dto.action.ActionResponse;
 import org.giglab.live.application.dto.action.Actor;
+import org.giglab.live.application.dto.action.DefaultActionResponse;
 import org.giglab.live.application.port.persistence.ChatMessagePort;
 import org.giglab.live.application.port.persistence.RoomSeqPort;
 import org.giglab.live.domain.model.ChatMessage;
@@ -92,7 +93,7 @@ public class ChatMessageService {
         msg.getSenderUserId() != null
             ? new Actor(msg.getSenderUserId(), msg.getSenderNickname(), msg.getSenderNickname())
             : null;
-    return new ActionResponse(
+    return new DefaultActionResponse(
         msg.getRoomId(), msg.getAction(), actor, msg.getPayload(), msg.getSentAt(), msg.getSeq());
   }
 

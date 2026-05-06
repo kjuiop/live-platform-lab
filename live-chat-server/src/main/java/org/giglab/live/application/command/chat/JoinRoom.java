@@ -1,13 +1,19 @@
 package org.giglab.live.application.command.chat;
 
-import org.giglab.live.application.command.ActionHandler;
+import lombok.RequiredArgsConstructor;
+import org.giglab.live.application.command.AbstractActionHandler;
 import org.giglab.live.application.command.ActionType;
 import org.giglab.live.application.dto.action.ActionRequest;
-import org.giglab.live.application.dto.action.ActionResponse;
+import org.giglab.live.application.dto.action.ActiveBanner;
+import org.giglab.live.application.dto.action.JoinRoomResponse;
+import org.giglab.live.application.port.persistence.BannerStatePort;
 import org.springframework.stereotype.Service;
 
 @Service
-public class JoinRoom implements ActionHandler<ActionRequest, ActionResponse> {
+@RequiredArgsConstructor
+public class JoinRoom extends AbstractActionHandler<ActionRequest, JoinRoomResponse> {
+
+  private final BannerStatePort bannerStatePort;
 
   @Override
   public ActionType action() {
@@ -15,7 +21,8 @@ public class JoinRoom implements ActionHandler<ActionRequest, ActionResponse> {
   }
 
   @Override
-  public ActionResponse execute(ActionRequest req) {
-    return ActionResponse.of(req.roomId(), req.action(), req.actor(), req.payload());
+  protected JoinRoomResponse process(ActionRequest req) {
+    ActiveBanner activeBanner = bannerStatePort.getActiveBanner(req.roomId()).orElse(null);
+    return JoinRoomResponse.of(req, activeBanner);
   }
 }

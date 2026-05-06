@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  redis_exporter:
+    image: oliver006/redis_exporter
+    container_name: live-platform-redis_exporter
+    ports:
+      - "9121:9121"
+    command:
+      - '--redis.addr=redis://redis:6379'
+    restart: unless-stopped
+    networks:
+      - live-platform-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: live-platform-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - live-platform-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: live-platform-grafana
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - live-platform-network
+
+volumes:
+  grafana_data:
+
+networks:
+  live-platform-network:
+    external: true

@@ -670,6 +670,7 @@ export default function BroadcastDetail() {
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeBannerProductId, setActiveBannerProductId] = useState<number | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const toggleProduct = (pid: number) => {
@@ -792,6 +793,20 @@ export default function BroadcastDetail() {
         setViewerCount(p.payload?.count ?? 0);
         return;
       }
+      if (p.action === 'PRODUCT.BANNER.ON') {
+        setActiveBannerProductId(p.productId ?? null);
+        return;
+      }
+      if (p.action === 'PRODUCT.BANNER.OFF') {
+        setActiveBannerProductId(null);
+        return;
+      }
+      if (p.action === 'CHAT.JOIN') {
+        if (p.activeBanner != null) {
+          setActiveBannerProductId(p.activeBanner.productId ?? null);
+        }
+        return;
+      }
     } catch {
       // fall through to normal handling
     }
@@ -850,6 +865,32 @@ export default function BroadcastDetail() {
     } catch {
       // leave 실패는 무시
     }
+  };
+
+  const publishBannerOn = (productId: number, productName: string) => {
+    if (!clientRef.current || !campaign?.chatRoomId || !wsConnected) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'PRODUCT.BANNER.ON',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: { productId, productName },
+      }));
+    } catch { /* 무시 */ }
+  };
+
+  const publishBannerOff = () => {
+    if (!clientRef.current || !campaign?.chatRoomId || !wsConnected) return;
+    const nick = nickname.trim() || '시청자';
+    try {
+      clientRef.current.send('/send/room.action', {}, JSON.stringify({
+        roomId: campaign.chatRoomId,
+        action: 'PRODUCT.BANNER.OFF',
+        actor: { userId: nick, username: nick, sender: nick },
+        payload: {},
+      }));
+    } catch { /* 무시 */ }
   };
 
   const SIM_VIEWER_NAMES = ['하나', '두리', '세리', '네모', '다솜', '여섯', '일곱', '여덟'];
@@ -1262,6 +1303,21 @@ export default function BroadcastDetail() {
 
         .timer-badge { position:absolute; bottom:16px; left:16px; background:rgba(0,0,0,0.75); border-radius:999px; padding:5px 14px; font-size:13px; font-weight:700; color:#fca5a5; backdrop-filter:blur(8px); font-variant-numeric:tabular-nums; letter-spacing:0.04em; }
 
+        .product-banner { position:absolute; bottom:0; left:0; right:0; padding:16px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); animation:bannerIn 0.3s ease; }
+        @keyframes bannerIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .product-banner-inner { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px 16px; }
+        .product-banner-left { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
+        .product-banner-tag { font-size:10px; font-weight:700; color:#fcd34d; letter-spacing:0.06em; text-transform:uppercase; }
+        .product-banner-name { font-size:16px; font-weight:800; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .product-banner-cta { padding:8px 18px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+        .product-banner-cta:hover { opacity:0.85; }
+
+        .banner-toggle { width:36px; height:20px; border-radius:999px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.15); cursor:pointer; position:relative; transition:background 0.2s, border-color 0.2s; flex-shrink:0; }
+        .banner-toggle:hover { background:rgba(255,255,255,0.18); }
+        .banner-toggle.on { background:rgba(251,191,36,0.7); border-color:rgba(251,191,36,0.9); }
+        .banner-toggle-knob { position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.4); }
+        .banner-toggle.on .banner-toggle-knob { transform:translateX(16px); }
+
         .broadcast-actions { margin-top:18px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:10px; }
         .btn-start { flex:1; padding:12px; background:linear-gradient(135deg,#10b981,#059669); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
         .btn-start:hover:not(:disabled) { opacity:0.85; }
@@ -1317,6 +1373,21 @@ export default function BroadcastDetail() {
                   종료{startedAtLabel && ` · ${startedAtLabel} 시작`}
                 </div>
               )}
+              {activeBannerProductId && (() => {
+                const bp = campaign.campaignProducts.find((p) => p.productId === activeBannerProductId);
+                if (!bp) return null;
+                return (
+                  <div className="product-banner">
+                    <div className="product-banner-inner">
+                      <div className="product-banner-left">
+                        <div className="product-banner-tag">🏷️ 지금 이 상품</div>
+                        <div className="product-banner-name">{bp.name}</div>
+                      </div>
+                      <button className="product-banner-cta">구매하기 →</button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* 방송 정보 */}
@@ -1381,9 +1452,26 @@ export default function BroadcastDetail() {
                             <span className="product-match-name">{p.name}</span>
                             <span className="product-match-order">#{p.displayOrder}</span>
                           </div>
-                          {uiStatus !== 'ended' && (
-                            <button className="btn-remove-product" onClick={() => toggleProduct(pid)}>✕</button>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                            {isLive && (
+                              <div
+                                className={`banner-toggle ${activeBannerProductId === pid ? 'on' : ''}`}
+                                onClick={() => {
+                                  if (activeBannerProductId === pid) {
+                                    publishBannerOff();
+                                  } else {
+                                    publishBannerOn(p.productId, p.name);
+                                  }
+                                }}
+                                title={activeBannerProductId === pid ? '배너 끄기' : '배너 켜기'}
+                              >
+                                <div className="banner-toggle-knob" />
+                              </div>
+                            )}
+                            {uiStatus !== 'ended' && (
+                              <button className="btn-remove-product" onClick={() => toggleProduct(pid)}>✕</button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

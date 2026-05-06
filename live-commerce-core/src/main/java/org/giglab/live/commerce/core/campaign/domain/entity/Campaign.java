@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -29,7 +30,12 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.YnType;
 @Getter
 @Builder
 @Entity
-@Table(name = "campaigns")
+@Table(
+    name = "campaigns",
+    indexes = {
+      @Index(name = "idx_campaigns_delete_yn_status_id", columnList = "delete_yn, status, id"),
+      @Index(name = "idx_campaigns_delete_yn_title", columnList = "delete_yn, title")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Campaign extends AuditedEntity {

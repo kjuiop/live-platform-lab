@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -28,7 +29,12 @@ import org.giglab.live.commerce.core.product.domain.entity.types.ProductStatusTy
 @Getter
 @Builder
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    indexes = {
+      @Index(name = "idx_products_delete_yn_status_id", columnList = "delete_yn, status, id"),
+      @Index(name = "idx_products_delete_yn_name", columnList = "delete_yn, name")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product extends AuditedEntity {

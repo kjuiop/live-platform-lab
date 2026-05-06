@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +21,9 @@ import org.giglab.live.commerce.core.global.jpa.entity.types.StringListConverter
 @Getter
 @Builder
 @Entity
-@Table(name = "campaign_reports")
+@Table(
+    name = "campaign_reports",
+    indexes = {@Index(name = "idx_campaign_reports_campaign_id", columnList = "campaign_id")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignReport extends AuditedEntity {

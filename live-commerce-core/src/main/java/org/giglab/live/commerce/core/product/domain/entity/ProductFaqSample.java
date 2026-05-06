@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,9 @@ import org.giglab.live.commerce.core.global.jpa.entity.AuditedEntity;
 @Getter
 @Builder
 @Entity
-@Table(name = "product_faq_samples")
+@Table(
+    name = "product_faq_samples",
+    indexes = {@Index(name = "idx_product_faq_samples_product_id", columnList = "product_id")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductFaqSample extends AuditedEntity {

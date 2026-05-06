@@ -48,8 +48,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 성공 - 201 CREATED")
   void createRoomSuccessReturns201() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle("테스트 방송");
+    CreateRoomRequest request = new CreateRoomRequest("테스트 방송");
 
     CreateRoomResponse response =
         new CreateRoomResponse(
@@ -78,8 +77,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 실패 - 빈 제목 400 BAD_REQUEST")
   void createRoomEmptyTitleReturns400() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle(""); // 빈 문자열
+    CreateRoomRequest request = new CreateRoomRequest(""); // 빈 문자열
 
     // when & then
     mockMvc
@@ -97,8 +95,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 실패 - 50자 초과 제목 400 BAD_REQUEST")
   void createRoomTitleExceeds50CharactersReturns400() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle("A".repeat(51)); // 51자
+    CreateRoomRequest request = new CreateRoomRequest("A".repeat(51)); // 51자
 
     // when & then
     mockMvc
@@ -118,8 +115,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 실패 - null 제목 400 BAD_REQUEST")
   void createRoomNullTitleReturns400() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle(null); // null
+    CreateRoomRequest request = new CreateRoomRequest(null); // null
 
     // when & then
     mockMvc
@@ -136,8 +132,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 실패 - 공백만 있는 제목 400 BAD_REQUEST")
   void createRoomBlankTitleReturns400() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle("   "); // 공백만
+    CreateRoomRequest request = new CreateRoomRequest("   "); // 공백만
 
     // when & then
     mockMvc
@@ -154,8 +149,7 @@ class RoomControllerTest {
   @DisplayName("채팅방 생성 성공 - 정확히 50자 제목 201 CREATED")
   void createRoomTitleExactly50CharactersReturns201() throws Exception {
     // given
-    CreateRoomRequest request = new CreateRoomRequest();
-    request.setTitle("A".repeat(50)); // 정확히 50자
+    CreateRoomRequest request = new CreateRoomRequest("A".repeat(50)); // 정확히 50자
 
     CreateRoomResponse response =
         new CreateRoomResponse("ROOM_123456789ABC", "A".repeat(50), Instant.now(), Instant.now());

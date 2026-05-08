@@ -135,6 +135,7 @@ function ChatQnAPanel({
   const faqBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const faqContainerRef = useRef<HTMLDivElement>(null);
+  const prevTabRef = useRef<string>(tab);
   const isAtChatBottomRef = useRef(true);
   const [faqInput, setFaqInput] = useState('');
 
@@ -160,11 +161,14 @@ function ChatQnAPanel({
   }, [messages, tab]);
 
   useEffect(() => {
-    if (tab === 'faq') {
+    const tabChanged = prevTabRef.current !== tab;
+    prevTabRef.current = tab;
+    // 탭 전환 시에는 스크롤하지 않고, faqMessages 변경 시에만 스크롤
+    if (tab === 'faq' && !tabChanged) {
       const el = faqContainerRef.current;
       if (el) el.scrollTop = el.scrollHeight;
     }
-  }, [faqMessages]);
+  }, [faqMessages, tab]);
 
   const handleChatScroll = useCallback(() => {
     const el = chatContainerRef.current;

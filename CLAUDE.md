@@ -8,10 +8,12 @@ AI 기반 라이브 커머스 플랫폼. 실시간 채팅·RAG Q&A·LLM 인사�
 
 ```
 live-platform-lab/
-├── live-commerce-core/   # 핵심 도메인 (Hexagonal Architecture)
-├── live-commerce-api/    # REST API 서버 (포트 8090)
-├── live-chat-server/     # WebSocket/STOMP 채팅 서버 (포트 8080)
-└── web-client/           # Next.js 14 프론트엔드 (포트 3000)
+├── live-commerce-core/    # 핵심 도메인 (Hexagonal Architecture)
+├── live-commerce-api/     # REST API 서버 (포트 8090)
+├── live-chat-server/      # WebSocket/STOMP 채팅 서버 (포트 8080)
+├── live-event-collector/  # 이벤트 수집 → Kafka 발행 (포트 8070)
+├── live-analytics-api/    # ClickHouse 기반 분석 API (포트 8060)
+└── web-client/            # Next.js 14 프론트엔드 (포트 3000)
 ```
 
 각 모듈의 상세 내용은 해당 디렉토리의 CLAUDE.md를 참고할 것.
@@ -69,6 +71,8 @@ type: feat | fix | refactor | docs | chore | perf
 ./gradlew :live-chat-server:compileJava
 ./gradlew :live-commerce-core:compileJava
 ./gradlew :live-commerce-api:compileJava
+./gradlew :live-event-collector:compileJava
+./gradlew :live-analytics-api:compileJava
 
 # 인프라
 make infra-up          # Redis, MySQL, MongoDB, Elasticsearch

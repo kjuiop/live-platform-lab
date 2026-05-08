@@ -6,7 +6,7 @@
 
 - **포트**: 8090
 - **패키지**: `org.giglab.live.commerce.api`
-- **Swagger**: http://localhost:8090/swagger-ui.html
+- **Swagger**: http://localhost:8090/swagger-ui
 
 ## 패키지 구조
 

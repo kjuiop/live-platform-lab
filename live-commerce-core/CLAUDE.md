@@ -44,7 +44,8 @@ SCHEDULED → ON_AIR → ENDED
 
 - `campaign.start()`: 상태를 ON_AIR로 변경
 - `campaign.assignChatRoom(roomId)`: chatRoomId 저장
-- `campaign.end()`: 상태를 ENDED로 변경, chatRoomId null 처리
+- `campaign.end()`: 상태를 ENDED로 변경, endedAt 설정
+- `campaign.clearChatRoom()`: chatRoomId를 null로 초기화 (`EndCampaignUseCase`는 현재 호출하지 않음)
 
 ### 트랜잭션 분리 원칙
 

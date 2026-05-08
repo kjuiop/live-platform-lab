@@ -49,3 +49,5 @@ db_dev.trace.db
 .DS_Store
 docs/claude
 uploads
+# Claude Code
+.claude/settings.local.json

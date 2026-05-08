@@ -51,4 +51,3 @@ docs/claude
 uploads
 # Claude Code
 .claude/settings.local.json
-.claude/settings.json

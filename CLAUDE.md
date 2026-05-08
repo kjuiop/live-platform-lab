@@ -31,9 +31,12 @@ live-platform-lab/
 ### 브랜치 전략
 
 ```
-main          ← 프로덕션
-develop       ← 통합 브랜치
-feature/#{이슈번호}   ← 기능 개발
+main                 ← 프로덕션
+develop              ← 통합 브랜치
+feature/#{이슈번호}  ← 기능 개발
+fix/#{이슈번호}      ← 버그 수정
+refactor/#{이슈번호} ← 리팩토링
+chore/#{이슈번호}    ← 설정·문서·도구
 ```
 
 ### 커밋 컨벤션

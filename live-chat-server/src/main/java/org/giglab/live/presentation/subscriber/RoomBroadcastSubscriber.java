@@ -45,7 +45,7 @@ public class RoomBroadcastSubscriber implements MessageListener {
         recoverIfGap(roomId, seq);
       }
 
-      messagingTemplate.convertAndSend(StompDestination.ROOM_PREFIX + roomId, payload);
+      messagingTemplate.convertAndSend(StompDestination.ROOM_PREFIX + roomId, body);
       log.debug("STOMP broadcast - roomId={}, seq={}", roomId, seq);
     } catch (Exception e) {
       log.error("Redis 수신 메시지 처리 실패 - channel={}", channel, e);

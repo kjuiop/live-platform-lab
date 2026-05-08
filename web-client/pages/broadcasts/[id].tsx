@@ -134,6 +134,7 @@ function ChatQnAPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const faqContainerRef = useRef<HTMLDivElement>(null);
   const isAtChatBottomRef = useRef(true);
   const [faqInput, setFaqInput] = useState('');
 
@@ -159,8 +160,11 @@ function ChatQnAPanel({
   }, [messages, tab]);
 
   useEffect(() => {
-    if (tab === 'faq') faqBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [faqMessages, tab]);
+    if (tab === 'faq') {
+      const el = faqContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }, [faqMessages]);
 
   const handleChatScroll = useCallback(() => {
     const el = chatContainerRef.current;
@@ -321,7 +325,7 @@ function ChatQnAPanel({
       ) : (
         /* 라이브: 실시간 AI FAQ 탭 */
         <>
-          <div className="lp-faq-body">
+          <div className="lp-faq-body" ref={faqContainerRef}>
             {faqMessages.length === 0 ? (
               <div className="lp-faq-info">AI에게 상품 관련 질문을 해보세요. 답변이 채팅방 전체에 공유됩니다.</div>
             ) : (

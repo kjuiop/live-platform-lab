@@ -134,7 +134,10 @@ function ChatQnAPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const faqBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const faqContainerRef = useRef<HTMLDivElement>(null);
+  const prevTabRef = useRef<string>(tab);
   const isAtChatBottomRef = useRef(true);
+  const isAtFaqBottomRef = useRef(true);
   const [faqInput, setFaqInput] = useState('');
 
   const chatMessages = useMemo(
@@ -159,13 +162,25 @@ function ChatQnAPanel({
   }, [messages, tab]);
 
   useEffect(() => {
-    if (tab === 'faq') faqBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [faqMessages, tab]);
+    const tabChanged = prevTabRef.current !== tab;
+    prevTabRef.current = tab;
+    // 탭 전환 시에는 스크롤하지 않고, FAQ 메시지 수 증가 시에만 스크롤
+    if (tab === 'faq' && !tabChanged && isAtFaqBottomRef.current) {
+      const el = faqContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }, [faqMessages.length, tab]);
 
   const handleChatScroll = useCallback(() => {
     const el = chatContainerRef.current;
     if (!el) return;
     isAtChatBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
+
+  const handleFaqScroll = useCallback(() => {
+    const el = faqContainerRef.current;
+    if (!el) return;
+    isAtFaqBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   }, []);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -321,7 +336,7 @@ function ChatQnAPanel({
       ) : (
         /* 라이브: 실시간 AI FAQ 탭 */
         <>
-          <div className="lp-faq-body">
+          <div className="lp-faq-body" ref={faqContainerRef} onScroll={handleFaqScroll}>
             {faqMessages.length === 0 ? (
               <div className="lp-faq-info">AI에게 상품 관련 질문을 해보세요. 답변이 채팅방 전체에 공유됩니다.</div>
             ) : (

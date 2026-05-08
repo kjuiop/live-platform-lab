@@ -120,7 +120,7 @@ Query query = new Query(
 
 | 분류 | 기술 |
 |------|------|
-| Language | Java 21 |
+| Language | Java 25 |
 | Framework | Spring Boot 4.0, Spring AI |
 | Real-time | Spring WebSocket, STOMP, Redis Pub/Sub |
 | ORM | Spring Data JPA, QueryDSL, Spring Data MongoDB |
@@ -150,8 +150,11 @@ Query query = new Query(
 ## 실행 방법
 
 ```bash
-# 인프라 (Redis, MySQL, MongoDB, Elasticsearch, Prometheus, Grafana)
+# 인프라 (Redis, MySQL, MongoDB, Elasticsearch)
 docker compose -f docker-compose.infra.yml up -d
+
+# 모니터링 (Prometheus, Grafana, Redis Exporter)
+docker compose -f docker-compose.infra.yml -f docker-compose.monitoring.yml up -d
 
 # 채팅 서버
 docker compose -f docker-compose.infra.yml -f docker-compose.chat.yml up -d
@@ -159,8 +162,11 @@ docker compose -f docker-compose.infra.yml -f docker-compose.chat.yml up -d
 # 커머스 API
 docker compose -f docker-compose.infra.yml -f docker-compose.api.yml up -d
 
+# 이벤트 수집 (Kafka, ClickHouse, Vector)
+docker compose -f docker-compose.infra.yml -f docker-compose.collector.yml up -d
+
 # 전체 스택
-docker compose -f docker-compose.infra.yml -f docker-compose.chat.yml -f docker-compose.api.yml up -d
+docker compose -f docker-compose.infra.yml -f docker-compose.monitoring.yml -f docker-compose.chat.yml -f docker-compose.api.yml up -d
 ```
 
 ### 이미지 빌드
